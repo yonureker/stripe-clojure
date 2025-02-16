@@ -276,3 +276,25 @@ stripe-clojure can use a connection pool to manage HTTP connections. Connection 
                                                          :insecure? false}}))
 ```
 
+## Testing
+
+stripe-clojure comes with a suite of tests in the `test/` folder, and you can run these tests with your own Stripe test API key.
+
+By default, the test API key is defined in `src/stripe_clojure/config.clj` like so:
+
+```clojure:src/stripe_clojure/config.clj
+(def api-keys
+  {:test (or (System/getenv "STRIPE_TEST_API_KEY") "test_api_key")})
+```
+
+To test with your own key, set the environment variable `STRIPE_TEST_API_KEY` before running the tests. For instance, on Unix-like systems you can do:
+
+```bash
+export STRIPE_TEST_API_KEY='sk_test_1234567890abcdef'
+```
+
+Then, run the tests using Leiningen:
+
+```bash
+lein test
+```
