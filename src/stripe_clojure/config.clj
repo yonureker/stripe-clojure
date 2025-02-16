@@ -3,7 +3,7 @@
 
 ;; Default Configuration
 (def api-keys
-  {:test "test_api_key"})
+  {:test (or (System/getenv "STRIPE_TEST_API_KEY") "test_api_key")})
 
 ;; API Endpoints
 (def stripe-api-namespace "v1")
