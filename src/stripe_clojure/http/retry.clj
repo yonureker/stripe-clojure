@@ -4,7 +4,7 @@
   (let [base-delay 250
         max-delay 20000
         exponential-delay (* base-delay (Math/pow 2 attempt))
-        jitter (rand-int (int (/ exponential-delay 2)))
+        jitter (rand-int (/ exponential-delay 2))
         final-delay (min (+ exponential-delay jitter) max-delay)]
     (Thread/sleep final-delay)))
 
