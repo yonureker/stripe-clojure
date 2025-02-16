@@ -1,4 +1,4 @@
-(defproject org.clojars.yonureker/stripe-clojure "0.1.0"
+(defproject org.clojars.yonureker/stripe-clojure "0.1.1"
   :description "Clojure library for Stripe API"
   :url "http://github.com/yonureker/stripe-clojure"
   :license {:name "MIT License"
