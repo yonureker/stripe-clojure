@@ -1,7 +1,7 @@
 
 # Stripe Clojure Library
 
-[![Clojars Project](https://img.shields.io/clojars/v/io.github.yonureker/stripe-clojure.svg)]
+![Clojars Project](https://img.shields.io/clojars/v/io.github.yonureker/stripe-clojure.svg)
 
 
 The Stripe Clojure library provides convenient access to the Stripe API from applications written in Clojure.
