@@ -293,6 +293,8 @@ To test with your own key, set the environment variable `STRIPE_TEST_API_KEY` be
 export STRIPE_TEST_API_KEY='sk_test_1234567890abcdef'
 ```
 
+Install stripe-mock and run it. Instructions are available [here](https://github.com/stripe/stripe-mock?tab=readme-ov-file#homebrew)
+
 Then, run the tests using Leiningen:
 
 ```bash
