@@ -1,10 +1,13 @@
 
 # Stripe Clojure Library
 
+[![Clojars Project](https://img.shields.io/clojars/v/io.github.yonureker/stripe-clojure.svg)]
+
+
 The Stripe Clojure library provides convenient access to the Stripe API from applications written in Clojure.
 
-> [!WARNING]
-> This library is still under development and the API is not stable yet. Breaking changes are expected.
+> [!CAUTION]
+> This library is still under development and the API is not stable. Breaking changes are expected.
 
 ## Installation
 
@@ -42,7 +45,6 @@ All you need is to initialize a stripe client instance with the secret API key a
 (customers/create-customer stripe-client {:name "Onur Eker"
                                           :email "yonureker@gmail.com})
 ```
-
 
 
 **Examples:**
@@ -95,7 +97,7 @@ This approach lets you create multiple, independent client instances with differ
 (customers/retrieve-customer us-client "cus_123445")
 (customers/list-customers eu-client {:limit 10})
 (customers/create-customer no-retry-client {:name "onur"
-                                            :email "yonureker@gmail.com"})
+                                            :email "yonureker@gmail.com})
 
 ;; They can be shutdown, releasing any internal and pooled resources.
 (stripe/shutdown-stripe-client! eu-client)
@@ -146,6 +148,19 @@ These fields can be configured when creating a stripe client instance.
 `:full-response?`         | `false`             | Option to enable the complete HTTP response (including metadata, headers, status etc.); or just the `:body` (e.g. created customer object)|
 
 `:api-version`, `:stripe-account`, `:max-network-retries`, `:timeout`, and `:full-response?` can be overriden on a per-request basis.
+
+## Per-request Options
+
+In addition to the global options set during initialization, many API methods allow you to override a subset of these options on a per-request basis (passed as part of `opts` map). For example, you can override:
+
+- `:api-version`, and `:stripe-account` – to dynamically switch contexts.
+- `:max-network-retries` and `:timeout` – if a particular call requires alternative networking parameters.
+- `:full-response?` – to get more detailed request/response info for debugging.
+- `:idempotency-key` – for safely retryable POST requests.
+- `:expand` – to automatically expand linked objects in a single API request (reducing the need for additional fetches).
+- `:auto-paginate?` – when set to `true`, automatically follows the pagination cursor to return the complete dataset as a lazy sequence.
+
+These options provide flexibility to tailor behavior both globally and at a per-request level.
 
 ## Network retries
 
@@ -247,3 +262,17 @@ stripe-clojure supports auto-pagination for both list and search endpoints that 
 ```
 
 In this example, the list and search endpoints are both configured to auto-paginate. Results are processed as lazy sequences, with each API call fetching up to 50 items, until all matching data is retrieved.
+
+## Connection Pooling
+
+stripe-clojure can use a connection pool to manage HTTP connections. Connection pooling is disabled by default. You can enable it by setting `:use-connection-pool? true` when initializing a stripe client instance and configuring the pool with `:pool-options`. Here is an example:
+
+```clojure
+(def stripe-client (stripe/init-stripe {:api-key "your_stripe_api_key"
+                                          :use-connection-pool? true
+                                          :pool-options {:timeout 5
+                                                         :threads 4
+                                                         :default-per-route 2
+                                                         :insecure? false}}))
+```
+
