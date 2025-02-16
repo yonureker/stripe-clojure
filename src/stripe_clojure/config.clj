@@ -136,13 +136,15 @@
    :timeout 80000
    :full-response? false})
 
+;; Connection pool options
 (def default-connection-pool-options
   {:timeout 5
    :threads 4
    :default-per-route 2
    :insecure? false})
 
-
+;; Stripe rate limits
+;; https://docs.stripe.com/rate-limits
 (def default-rate-limit-config
   {:live {:default {:read 100 :write 100}
           :files {:read 20 :write 20}     
