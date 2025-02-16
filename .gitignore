@@ -1,0 +1,22 @@
+/target
+/classes
+/checkouts
+profiles.clj
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+/.lein-*
+/.nrepl-port
+.hgignore
+.hg/
+.DS_Store
+
+#dev
+.calva
+.lsp
+.vscode
+.clj-kondo
+
+#hidden test files
+/test/stripe_clojure/unit/
