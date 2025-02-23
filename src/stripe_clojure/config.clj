@@ -156,4 +156,7 @@
           :search {:read 20 :write 0}
           :meter {:read 1000 :write 1000}}})
 
-(def mock-mode {:protocol "http" :host "localhost" :port 12111 :api-key (:test api-keys)})
+(def mock-mode {:protocol "http" 
+                :host "localhost" 
+                :port 12111 
+                :api-key (:test api-keys)})
