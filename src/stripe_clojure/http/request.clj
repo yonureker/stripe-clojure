@@ -20,40 +20,6 @@
           {:status 500                    ;; ensure we have a status
            :error e}))))
 
-(defn- parse-body
-  "Parses the error body if it's a string, otherwise returns it as-is."
-  [body]
-  (if (string? body)
-    (try
-      (json/parse-string body true)
-      (catch Exception _
-        {:error {:message "Failed to parse error response body"}}))
-    body))
-
-(defn create-error-response
-  "Creates a structured error response from the original response.
-   If full-response? is true, it returns the full response with parsed body.
-   Otherwise, it returns a simplified error object."
-  [response full-response?]
-  (let [parsed-body (parse-body (:body response))
-        error-map (get parsed-body :error parsed-body)
-        simplified-error (merge error-map
-                                {:status (:status response)
-                                 :request-id (get-in response [:headers "Request-Id"])})]
-    (if full-response?
-      (assoc response :body parsed-body)
-      simplified-error)))
-
-(defn process-response
-  "Process the response based on its status and the full-response flag."
-  [response full-response?]
-  (let [parsed-response (update response :body parse-body)]
-    (if (>= (:status response) 400)
-      (create-error-response parsed-response full-response?)
-      (if full-response?
-        parsed-response
-        (:body parsed-response)))))
-
 (defn- idempotent-method?
   "Checks if the HTTP method is naturally idempotent."
   [method]
