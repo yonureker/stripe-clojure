@@ -125,7 +125,7 @@
           suffix (subs api-key (- (count api-key) 4))]
       (str prefix "..." suffix))))
 
-(def base-api-version "2024-12-18.acacia")
+(def base-api-version "2025-01-27.acacia")
 
 (def default-client-config
   {:protocol "https"
@@ -134,7 +134,8 @@
    :api-version base-api-version
    :max-network-retries 1
    :timeout 80000
-   :full-response? false})
+   :full-response? false
+   :kebabify-keys? false})
 
 ;; Connection pool options
 (def default-connection-pool-options
@@ -155,4 +156,7 @@
           :search {:read 20 :write 0}
           :meter {:read 1000 :write 1000}}})
 
-(def mock-mode {:protocol "http" :host "localhost" :port 12111 :api-key (:test api-keys)})
+(def mock-mode {:protocol "http" 
+                :host "localhost" 
+                :port 12111 
+                :api-key (:test api-keys)})
