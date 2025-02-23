@@ -51,17 +51,17 @@ All you need is to initialize a stripe client instance with the secret API key a
 
 ```clojure
 ;; passing params and opts
-(customers/create-customer client-instance {:name "Onur" :email "yonureker@gmail.com"} 
+(customers/create-customer stripe-client {:name "Onur" :email "yonureker@gmail.com"} 
                                            {:max-network-retries 5 :idempotency-key "key_1234"})
 
 ;; passing id and opts
-(payment-intents/retrieve-payment-intent client-instance "pi_1234" {:max-network-retries 5})
+(payment-intents/retrieve-payment-intent stripe-client "pi_1234" {:max-network-retries 5})
 
 ;; passing id only
-(customers/retrieve-customer client-instance "pi_1234")
+(customers/retrieve-customer stripe-client "pi_1234")
 
 ;; passing opts only
-(customers/list-customers client-instance {} {:auto-paginate? true})
+(customers/list-customers stripe-client {} {:auto-paginate? true})
 
 ```
 
@@ -97,7 +97,7 @@ This approach lets you create multiple, independent client instances with differ
 (customers/retrieve-customer us-client "cus_123445")
 (customers/list-customers eu-client {:limit 10})
 (customers/create-customer no-retry-client {:name "onur"
-                                            :email "yonureker@gmail.com})
+                                            :email "yonureker@gmail.com"})
 
 ;; They can be shutdown, releasing any internal and pooled resources.
 (stripe/shutdown-stripe-client! eu-client)
@@ -237,10 +237,10 @@ The Stripe Clojure client emits `request` and `response` events, allowing you to
 
 ```clojure
 (ns your-namespace
-  (:require [stripe-clojure.client :as stripe]))
+  (:require [stripe-clojure.core :as stripe]))
 
 ;; Initialize the Stripe client
-(def stripe-client (stripe/create-client "sk_test_..."))
+(def stripe-client (stripe/init-stripe {:api-key "sk_test_..."}))
 
 ;; Define an event handler function for requests
 (defn on-request [request]
@@ -257,7 +257,7 @@ The Stripe Clojure client emits `request` and `response` events, allowing you to
 `request` object
 
 ```clojure
-{:api_version "latest"
+{:api_version "2020-05-28"
  :account "acct_TEST"              ;; Only present if provided
  :idempotency_key "abc123"         ;; Only present if provided
  :method "POST"
@@ -269,7 +269,7 @@ The Stripe Clojure client emits `request` and `response` events, allowing you to
 `response` object
 
 ```clojure
-{:api_version "latest"
+{:api_version "2020-05-28"
  :account "acct_TEST"              ;; Only present if provided
  :idempotency_key "abc123"         ;; Only present if provided
  :method "POST"
