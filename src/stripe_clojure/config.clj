@@ -134,7 +134,8 @@
    :api-version base-api-version
    :max-network-retries 1
    :timeout 80000
-   :full-response? false})
+   :full-response? false
+   :kebabify-keys? false})
 
 ;; Connection pool options
 (def default-connection-pool-options
