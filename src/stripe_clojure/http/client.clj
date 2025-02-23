@@ -38,6 +38,35 @@
       (.shutdown cm))
     nil))
 
+;; ================= EVENT LISTENER =================
+(def valid-event-types
+  "Set of supported event types"
+  #{:request      ; Emitted when a request is made to Stripe's API
+    :response})   ; Emitted when a response is received
+    
+(defn on
+  "Add an event listener to the Stripe client."
+  [stripe-client event-type handler]
+  (when-not (valid-event-types event-type)
+    (throw (ex-info "Unsupported event type"
+                    {:event-type event-type
+                     :valid-types valid-event-types})))
+  (swap! (-> stripe-client :config :listeners)
+         conj {:type event-type :handler handler}))
+
+(defn off
+  "Remove an event listener from the Stripe client."
+  [stripe-client event-type handler]
+  (when-not (valid-event-types event-type)
+    (throw (ex-info "Unsupported event type"
+                    {:event-type event-type
+                     :valid-types valid-event-types})))
+  (swap! (-> stripe-client :config :listeners)
+         (fn [listeners]
+           (vec (remove #(and (= (:type %) event-type)
+                              (= (:handler %) handler))
+                        listeners)))))
+
 ;; ================= HELPER FUNCTIONS (MOVED UP) =================
 (defn- create-http-client
   "Creates an HTTP client, optionally with a connection pool."
@@ -61,11 +90,13 @@
                                          :port
                                          :full-response?
                                          :rate-limits
-                                         :throttler])
+                                         :throttler
+                                         :kebabify-keys?])
         config    (merge config/default-client-config
                              selected-opts
                              {:connection-manager connection-manager
-                              :use-connection-pool? (boolean (:use-connection-pool? opts))})]
+                              :use-connection-pool? (boolean (:use-connection-pool? opts))
+                              :listeners (atom [])})]
     config))
 
 (defn create-instance
