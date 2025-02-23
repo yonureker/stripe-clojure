@@ -37,3 +37,13 @@
 (def get-config
   "Get the current Stripe configuration with sensitive data masked."
   client/get-client-config)
+
+(defn on
+  "Add an event listener to the Stripe client."
+  [stripe-client event-type handler]
+  (client/on stripe-client event-type handler))
+
+(defn off
+  "Remove an event listener from the Stripe client."
+  [stripe-client event-type handler]
+  (client/off stripe-client event-type handler))
