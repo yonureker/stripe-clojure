@@ -124,7 +124,8 @@ Use a configuration map to initialize a stripe client instance:
                                                          :threads 4
                                                          :default-per-route 2
                                                          :insecure? false}
-                                          :full-response? false}))
+                                          :full-response? true
+                                          :kebabify-keys? true}))
 
 
 ```
@@ -146,6 +147,7 @@ These fields can be configured when creating a stripe client instance.
 `:use-connection-pool?`         | `false`             | To enable connection pool.|
 `:pool-options`         | `See config.clj`             | Configuration for behavior of the HTTP connection pool.|
 `:full-response?`         | `false`             | Option to enable the complete HTTP response (including metadata, headers, status etc.); or just the `:body` (e.g. created customer object)|
+`:kebabify-keys?`         | `false`             | Option to recursively kebab-case all keys in the response object, including nested structures.|
 
 `:api-version`, `:stripe-account`, `:max-network-retries`, `:timeout`, and `:full-response?` can be overriden on a per-request basis.
 
@@ -227,6 +229,59 @@ We can pass multiple fields with `:expand`,
  }
 ```
 
+## Request and Response Events
+
+The Stripe Clojure client emits `request` and `response` events, allowing you to hook into the lifecycle of API requests. This can be useful for logging, debugging, or modifying requests and responses.
+
+**Example Usage:**
+
+```clojure
+(ns your-namespace
+  (:require [stripe-clojure.client :as stripe]))
+
+;; Initialize the Stripe client
+(def stripe-client (stripe/create-client "sk_test_..."))
+
+;; Define an event handler function for requests
+(defn on-request [request]
+  ;; Do something with the request
+  (println "Request event:" request))
+
+;; Add the event handler function
+(stripe/on stripe-client "request" on-request)
+
+;; Remove the event handler function
+(stripe/off stripe-client "request" on-request)
+```
+
+`request` object
+
+```clojure
+{:api_version "latest"
+ :account "acct_TEST"              ;; Only present if provided
+ :idempotency_key "abc123"         ;; Only present if provided
+ :method "POST"
+ :path "/v1/customers"
+ :request_start_time 1565125303932 ;; Unix timestamp in milliseconds
+}
+```
+
+`response` object
+
+```clojure
+{:api_version "latest"
+ :account "acct_TEST"              ;; Only present if provided
+ :idempotency_key "abc123"         ;; Only present if provided
+ :method "POST"
+ :path "/v1/customers"
+ :status 402
+ :request_id "req_Ghc9r26ts73DRf"
+ :elapsed 445                      ;; Elapsed time in milliseconds
+ :request_start_time 1565125303932 ;; Unix timestamp in milliseconds
+ :request_end_time 1565125304377   ;; Unix timestamp in milliseconds
+}
+```
+
 ## Auto-Pagination
 
 stripe-clojure supports auto-pagination for both list and search endpoints that return paginated results. When you set `:auto-paginate? true`, the library automatically follows the `has_more` flag by issuing successive requests (using the `:starting_after` parameter) until all pages are fetched. The results are returned as a lazy sequence, so you can process data on demand without loading everything into memory. You can also control the number of results per API call using the `:limit` option.
@@ -295,6 +350,20 @@ export STRIPE_TEST_API_KEY='sk_test_1234567890abcdef'
 
 Install stripe-mock and run it. Instructions are available [here](https://github.com/stripe/stripe-mock?tab=readme-ov-file#homebrew)
 
+Using Homebrew:
+
+```bash
+brew install stripe/stripe-mock/stripe-mock
+
+# start a stripe-mock service at login
+brew services start stripe-mock
+
+# upgrade if you already have it
+brew upgrade stripe-mock
+
+# restart the service after upgrading
+brew services restart stripe-mock
+```
 Then, run the tests using Leiningen:
 
 ```bash
