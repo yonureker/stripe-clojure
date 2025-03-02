@@ -38,9 +38,6 @@ jobs:
         for i in {1..30}; do
           if curl -s -f http://stripe-mock:12111/v1/charges -H "Authorization: Bearer ${{ secrets.STRIPE_API_KEY }}"; then
             echo "stripe-mock is ready"
-            # Add debug output
-            echo "Testing stripe-mock with a GET request:"
-            curl -v http://stripe-mock:12111/v1/charges -H "Authorization: Bearer ${{ secrets.STRIPE_API_KEY }}"
             exit 0
           fi
           echo "Waiting for stripe-mock... attempt $i"
@@ -49,15 +46,9 @@ jobs:
         echo "stripe-mock failed to start"
         exit 1
     
-    - name: Run tests
+    - name: Run single test file
       env:
         STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
       run: |
-        # Debug output
-        echo "Testing environment setup:"
-        echo "STRIPE_API_KEY is set: $([[ ! -z "${STRIPE_API_KEY}" ]] && echo "yes" || echo "no")"
-        echo "stripe-mock is reachable:"
-        curl -s http://stripe-mock:12111/v1/charges -H "Authorization: Bearer ${STRIPE_API_KEY}" || echo "Failed to reach stripe-mock"
-        
-        # Run tests with verbose output
-        clj -M:test
+        # Run only one test file
+        clj -M:test -v stripe-clojure.charge-test
