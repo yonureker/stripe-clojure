@@ -157,6 +157,6 @@
           :meter {:read 1000 :write 1000}}})
 
 (def mock-mode {:protocol "http" 
-                :host "localhost" 
+                :host (or (System/getenv "STRIPE_MOCK_HOST") "localhost")
                 :port 12111 
                 :api-key (:test api-keys)})

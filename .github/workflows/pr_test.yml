@@ -24,6 +24,7 @@ jobs:
       image: clojure:temurin-17-tools-deps
       env:
         STRIPE_TEST_API_KEY: ${{ secrets.STRIPE_TEST_API_KEY }}
+        STRIPE_MOCK_HOST: stripe-mock
     
     steps:
     - uses: actions/checkout@v3
