@@ -4,70 +4,33 @@
             [stripe-clojure.http.request :as request]
             [stripe-clojure.config :as config]))
 
-;; ================= PROTOCOL & RECORD =================
-(defprotocol StripeClient
-  "Defines the operations for Stripe API client instances."
-  (get-client-config [this]
-    "Returns the Stripe configuration with sensitive data masked.")
-  (execute-request [this method endpoint params opts]
-    "Executes an API request using the instance configuration.")
-  (shutdown [this]
-    "Shuts down internal resources (e.g., connection pools)."))
+;; ================= HELPER FUNCTIONS =================
+(defn mask-client-config
+  "Returns the client configuration with sensitive data (like the API key) masked."
+  [client-config]
+  (-> client-config
+      (dissoc :connection-manager :throttler)
+      (assoc :api-key (config/mask-api-key (:api-key client-config)))))
 
-(defrecord StripeClientInstance [config request-fn]
-  StripeClient
-  (get-client-config [_]
-    (-> config
-        (dissoc :connection-manager)
-        (dissoc :throttler)
-        (assoc :api-key (config/mask-api-key (:api-key config)))))
-  (execute-request [_ method endpoint params opts]
-    ;; Merge the instance defaults (config) with any per-request overrides.
-    (let [effective-config (merge config
-                                  (select-keys opts
-                                               [:api-key
-                                                :api-version
-                                                :stripe-account
-                                                :max-network-retries
-                                                :timeout
-                                                :full-response?]))]
-      ;; Delegate the actual HTTP call to 'make-request'.
-      (request/make-request method endpoint params opts effective-config)))
-  (shutdown [_]
-    (when-let [cm (:connection-manager config)]
-      (.shutdown cm))
-    nil))
+(defn merge-client-config
+  "Merges per-request options with the instance's configuration."
+  [base-config request-opts]
+  (merge base-config
+         (select-keys request-opts
+                      [:api-key
+                       :api-version
+                       :stripe-account
+                       :max-network-retries
+                       :timeout
+                       :full-response?])))
 
-;; ================= EVENT LISTENER =================
-(def valid-event-types
-  "Set of supported event types"
-  #{:request      ; Emitted when a request is made to Stripe's API
-    :response})   ; Emitted when a response is received
-    
-(defn on
-  "Add an event listener to the Stripe client."
-  [stripe-client event-type handler]
-  (when-not (valid-event-types event-type)
-    (throw (ex-info "Unsupported event type"
-                    {:event-type event-type
-                     :valid-types valid-event-types})))
-  (swap! (-> stripe-client :config :listeners)
-         conj {:type event-type :handler handler}))
+(defn shutdown-connection-manager
+  "Shuts down the client connection manager if it exists."
+  [client-config]
+  (when-let [cm (:connection-manager client-config)]
+    (.shutdown cm))
+  nil)
 
-(defn off
-  "Remove an event listener from the Stripe client."
-  [stripe-client event-type handler]
-  (when-not (valid-event-types event-type)
-    (throw (ex-info "Unsupported event type"
-                    {:event-type event-type
-                     :valid-types valid-event-types})))
-  (swap! (-> stripe-client :config :listeners)
-         (fn [listeners]
-           (vec (remove #(and (= (:type %) event-type)
-                              (= (:handler %) handler))
-                        listeners)))))
-
-;; ================= HELPER FUNCTIONS (MOVED UP) =================
 (defn- create-http-client
   "Creates an HTTP client, optionally with a connection pool."
   [use-connection-pool? pool-options]
@@ -98,6 +61,26 @@
                               :use-connection-pool? (boolean (:use-connection-pool? opts))
                               :listeners (atom [])})]
     config))
+
+;; ================= PROTOCOL & RECORD =================
+(defprotocol StripeClient
+  "Defines the operations for Stripe API client instances."
+  (get-client-config [this]
+    "Returns the Stripe configuration with sensitive data masked.")
+  (execute-request [this method endpoint params opts]
+    "Executes an API request using the instance configuration.")
+  (shutdown [this]
+    "Shuts down internal resources (e.g., connection pools)."))
+
+(defrecord StripeClientInstance [config request-fn]
+  StripeClient
+  (get-client-config [_]
+    (mask-client-config config))
+  (execute-request [_ method endpoint params opts]
+    (let [effective-config (merge-client-config config opts)]
+      (request/make-request method endpoint params opts effective-config)))
+  (shutdown [_]
+    (shutdown-connection-manager config)))
 
 (defn create-instance
   "Creates and returns a new Stripe client instance without using any global state.
