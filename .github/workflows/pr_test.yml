@@ -51,4 +51,4 @@ jobs:
         STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
       run: |
         # Run only one test file
-        clj -M:test stripe-clojure.mock.charges-test
+        clj -M:test -n stripe-clojure.mock.charges-test
