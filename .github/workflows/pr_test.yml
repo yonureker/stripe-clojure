@@ -48,10 +48,25 @@ jobs:
         echo "stripe-mock failed to start"
         exit 1
     
-    - name: Run single test file
+    - name: Debug environment
       run: |
-        # Debug: Print environment variable
-        echo "STRIPE_API_KEY is set: $([[ ! -z "${STRIPE_API_KEY}" ]] && echo "yes" || echo "no")"
+        echo "Environment variables:"
+        env | grep STRIPE
+        echo "Direct secret access:"
+        echo "Has secret: ${{ secrets.STRIPE_API_KEY != '' }}"
+    
+    - name: Run single test file
+      shell: bash
+      env:
+        STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+      run: |
+        # Debug environment
+        echo "Environment check:"
+        if [ -n "$STRIPE_API_KEY" ]; then
+          echo "STRIPE_API_KEY is set"
+        else
+          echo "STRIPE_API_KEY is NOT set"
+        fi
         
         # Run only charges test namespace
         clj -M:test -n stripe-clojure.mock.charges-test
