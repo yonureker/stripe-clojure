@@ -35,38 +35,37 @@ jobs:
         key: ${{ runner.os }}-deps-${{ hashFiles('**/deps.edn') }}
         restore-keys: ${{ runner.os }}-deps-
     
-    - name: Verify stripe-mock
+    - name: Debug Stripe configuration
+      shell: bash
+      env:
+        STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
       run: |
-        for i in {1..30}; do
-          if curl -s -f http://stripe-mock:12111/v1/charges -H "Authorization: Bearer ${{ secrets.STRIPE_API_KEY }}"; then
-            echo "stripe-mock is ready"
-            exit 0
-          fi
-          echo "Waiting for stripe-mock... attempt $i"
-          sleep 1
-        done
-        echo "stripe-mock failed to start"
-        exit 1
-    
-    - name: Debug environment
-      run: |
-        echo "Environment variables:"
-        env | grep STRIPE
-        echo "Direct secret access:"
-        echo "Has secret: ${{ secrets.STRIPE_API_KEY != '' }}"
+        echo "Creating debug.clj..."
+        cat << EOF > debug.clj
+        (require '[stripe-clojure.core :as stripe])
+        
+        (println "\nEnvironment variable check:")
+        (let [env-key (System/getenv "STRIPE_API_KEY")]
+          (println "  STRIPE_API_KEY set?:" (boolean env-key))
+          (println "  Length:" (when env-key (count env-key))))
+        
+        (println "\nStripe client config:")
+        (let [client (stripe/init-stripe {:mock true})
+              config (stripe/get-config client)]
+          (println "Mock client config:")
+          (println config)
+          
+          (let [real-client (stripe/init-stripe {:api-key (System/getenv "STRIPE_API_KEY")})
+                real-config (stripe/get-config real-client)]
+            (println "\nReal client config:")
+            (println real-config)))
+        EOF
+        
+        echo "\nRunning debug.clj..."
+        clj -M debug.clj
     
     - name: Run single test file
       shell: bash
       env:
         STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
-      run: |
-        # Debug environment
-        echo "Environment check:"
-        if [ -n "$STRIPE_API_KEY" ]; then
-          echo "STRIPE_API_KEY is set"
-        else
-          echo "STRIPE_API_KEY is NOT set"
-        fi
-        
-        # Run only charges test namespace
-        clj -M:test -n stripe-clojure.mock.charges-test
+      run: clj -M:test -n stripe-clojure.mock.charges-test
