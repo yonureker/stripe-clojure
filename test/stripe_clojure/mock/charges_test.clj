@@ -1,12 +1,16 @@
 (ns stripe-clojure.mock.charges-test
   (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
             [clojure.test :refer [deftest is testing]]
-            [stripe-clojure.charges :as charges]))
+            [stripe-clojure.charges :as charges]
+            [stripe-clojure.core :as stripe]))
+
+(println (stripe/get-config stripe-mock-client))
 
 (deftest create-charge-test
   (testing "Create charge"
     (let [params {:amount 1000 :currency "usd" :source "tok_visa"}
-          response (charges/create-charge stripe-mock-client params)]
+          response (charges/create-charge stripe-mock-client params)
+          _ (println response)]
       (is (map? response))
       (is (= "charge" (:object response)))
       (is (string? (:id response)))
