@@ -1,11 +1,11 @@
 (ns stripe-clojure.mock.setup-attempts-test
-  (:require [stripe-clojure.test-util :refer [stripe-client]]
+  (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
             [clojure.test :refer [deftest is testing]]
             [stripe-clojure.setup-attempts :as setup-attempts]))
 
-(deftest ^:integration list-setup-attempts-test
+(deftest list-setup-attempts-test
   (testing "List setup attempts"
-    (let [response (setup-attempts/list-setup-attempts stripe-client {:limit 2 :setup_intent "seti_mock"})]
+    (let [response (setup-attempts/list-setup-attempts stripe-mock-client {:limit 2 :setup_intent "seti_mock"})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))

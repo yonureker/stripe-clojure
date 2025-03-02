@@ -1,70 +1,70 @@
 (ns stripe-clojure.mock.financial-connections.accounts-test
-  (:require [stripe-clojure.test-util :refer [stripe-client]]
+  (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
             [clojure.test :refer [deftest is testing]]
             [stripe-clojure.financial-connections.accounts :as accounts]))
 
-(deftest ^:integration retrieve-account-test
+(deftest retrieve-account-test
   (testing "Retrieve a financial connections account using a dummy id"
     (let [dummy-id "acct_mock"
-          response (accounts/retrieve-account stripe-client dummy-id)]
+          response (accounts/retrieve-account stripe-mock-client dummy-id)]
       (is (map? response))
       (is (= "financial_connections.account" (:object response)))
       (when (:id response)
         (is (string? (:id response)))))))
 
-(deftest ^:integration list-accounts-test
+(deftest list-accounts-test
   (testing "List financial connections accounts using stripe‑mock"
-    (let [response (accounts/list-accounts stripe-client)]
+    (let [response (accounts/list-accounts stripe-mock-client)]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response))))))
 
-(deftest ^:integration disconnect-account-test
+(deftest disconnect-account-test
   (testing "Disconnect a financial connections account using stripe‑mock"
     (let [dummy-id "acct_mock"
-          response (accounts/disconnect-account stripe-client dummy-id)]
+          response (accounts/disconnect-account stripe-mock-client dummy-id)]
       (is (map? response))
       (is (= "financial_connections.account" (:object response)))
       (when (:id response)
         (is (string? (:id response)))))))
 
-(deftest ^:integration list-owners-test
+(deftest list-owners-test
   (testing "List owners for a financial connections account"
     (let [dummy-id "acct_mock"
           ;; For listing owners, no required params are necessary.
-          response (accounts/list-owners stripe-client dummy-id {:ownership "test"})]
+          response (accounts/list-owners stripe-mock-client dummy-id {:ownership "test"})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response))))))
 
-(deftest ^:integration refresh-account-test
+(deftest refresh-account-test
   (testing "Refresh a financial connections account with required features parameter"
     (let [dummy-id "acct_mock"
           ;; Required param: for example, refreshing the "balance" data.
           params {:features ["balance"]}
-          response (accounts/refresh-account stripe-client dummy-id params)]
+          response (accounts/refresh-account stripe-mock-client dummy-id params)]
       (is (map? response))
       (is (= "financial_connections.account" (:object response)))
       (when (:id response)
         (is (string? (:id response)))))))
 
-(deftest ^:integration subscribe-account-test
+(deftest subscribe-account-test
   (testing "Subscribe to data refreshes for a financial connections account with required features parameter"
     (let [dummy-id "acct_mock"
           ;; Required param: for example, subscribing to "transactions" data.
           params {:features ["transactions"]}
-          response (accounts/subscribe-account stripe-client dummy-id params)]
+          response (accounts/subscribe-account stripe-mock-client dummy-id params)]
       (is (map? response))
       (is (= "financial_connections.account" (:object response)))
       (when (:id response)
         (is (string? (:id response)))))))
 
-(deftest ^:integration unsubscribe-account-test
+(deftest unsubscribe-account-test
   (testing "Unsubscribe from data refreshes for a financial connections account with required features parameter"
     (let [dummy-id "acct_mock"
           ;; Required param: for example, unsubscribing from "transactions" data.
           params {:features ["transactions"]}
-          response (accounts/unsubscribe-account stripe-client dummy-id params)]
+          response (accounts/unsubscribe-account stripe-mock-client dummy-id params)]
       (is (map? response))
       (is (= "financial_connections.account" (:object response)))
       (when (:id response)
