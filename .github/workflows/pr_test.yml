@@ -37,4 +37,4 @@ jobs:
         restore-keys: ${{ runner.os }}-deps-
     
     - name: Run single test file
-      run: clj -M:test -n stripe-clojure.mock.charges-test
+      run: clj -M:test
