@@ -23,7 +23,7 @@ jobs:
     container: 
       image: clojure:temurin-17-tools-deps
       env:
-        STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+        STRIPE_TEST_API_KEY: ${{ secrets.STRIPE_TEST_API_KEY }}
     
     steps:
     - uses: actions/checkout@v3
@@ -35,37 +35,5 @@ jobs:
         key: ${{ runner.os }}-deps-${{ hashFiles('**/deps.edn') }}
         restore-keys: ${{ runner.os }}-deps-
     
-    - name: Debug Stripe configuration
-      shell: bash
-      env:
-        STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
-      run: |
-        echo "Creating debug.clj..."
-        cat << EOF > debug.clj
-        (require '[stripe-clojure.core :as stripe])
-        
-        (println "\nEnvironment variable check:")
-        (let [env-key (System/getenv "STRIPE_API_KEY")]
-          (println "  STRIPE_API_KEY set?:" (boolean env-key))
-          (println "  Length:" (when env-key (count env-key))))
-        
-        (println "\nStripe client config:")
-        (let [client (stripe/init-stripe {:mock true})
-              config (stripe/get-config client)]
-          (println "Mock client config:")
-          (println config)
-          
-          (let [real-client (stripe/init-stripe {:api-key (System/getenv "STRIPE_API_KEY")})
-                real-config (stripe/get-config real-client)]
-            (println "\nReal client config:")
-            (println real-config)))
-        EOF
-        
-        echo "\nRunning debug.clj..."
-        clj -M debug.clj
-    
     - name: Run single test file
-      shell: bash
-      env:
-        STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
       run: clj -M:test -n stripe-clojure.mock.charges-test
