@@ -1,12 +1,12 @@
 (ns stripe-clojure.mock.customers-test
-  (:require [stripe-clojure.test-util :refer [stripe-client]]
+  (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
             [clojure.test :refer [deftest is testing]]
             [stripe-clojure.customers :as customers]))
 
 (deftest create-customer-test
   (testing "Create customer"
     (let [params {:email "test@example.com"}
-          response (customers/create-customer stripe-client params)]
+          response (customers/create-customer stripe-mock-client params)]
       (is (map? response))
       (is (= "customer" (:object response)))
       (is (string? (:id response)))
@@ -14,7 +14,7 @@
 
 (deftest retrieve-customer-test
   (testing "Retrieve customer"
-    (let [response (customers/retrieve-customer stripe-client "cus_mock")]
+    (let [response (customers/retrieve-customer stripe-mock-client "cus_mock")]
       (is (map? response))
       (is (= "customer" (:object response)))
       (is (string? (:id response)))
@@ -23,7 +23,7 @@
 (deftest update-customer-test
   (testing "Update customer"
     (let [params {:email "updated@example.com"}
-          response (customers/update-customer stripe-client "cus_mock" params)]
+          response (customers/update-customer stripe-mock-client "cus_mock" params)]
       (is (map? response))
       (is (= "customer" (:object response)))
       (is (string? (:id response)))
@@ -31,7 +31,7 @@
 
 (deftest delete-customer-test
   (testing "Delete customer"
-    (let [response (customers/delete-customer stripe-client "cus_mock")]
+    (let [response (customers/delete-customer stripe-mock-client "cus_mock")]
       (is (map? response))
       (is (= "customer" (:object response)))
       (is (string? (:id response)))
@@ -39,7 +39,7 @@
 
 (deftest list-customers-test
   (testing "List customers"
-    (let [response (customers/list-customers stripe-client {:limit 2})]
+    (let [response (customers/list-customers stripe-mock-client {:limit 2})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))
@@ -51,7 +51,7 @@
 
 (deftest search-customers-test
   (testing "Search customers"
-    (let [response (customers/search-customers stripe-client {:query "email:'test@example.com'"})]
+    (let [response (customers/search-customers stripe-mock-client {:query "email:'test@example.com'"})]
       (is (map? response))
       (is (= "search_result" (:object response)))
       (is (vector? (:data response)))
@@ -63,7 +63,7 @@
 
 (deftest list-balance-transactions-test
   (testing "List balance transactions"
-    (let [response (customers/list-balance-transactions stripe-client "cus_mock" {:limit 2})]
+    (let [response (customers/list-balance-transactions stripe-mock-client "cus_mock" {:limit 2})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))
@@ -76,7 +76,7 @@
 (deftest create-balance-transaction-test
   (testing "Create balance transaction"
     (let [params {:amount 200 :currency "usd"}
-          response (customers/create-balance-transaction stripe-client "cus_mock" params)]
+          response (customers/create-balance-transaction stripe-mock-client "cus_mock" params)]
       (is (map? response))
       (is (= "customer_balance_transaction" (:object response)))
       (is (string? (:id response)))
@@ -84,7 +84,7 @@
 
 (deftest retrieve-balance-transaction-test
   (testing "Retrieve balance transaction"
-    (let [response (customers/retrieve-balance-transaction stripe-client "cus_mock" "bt_mock")]
+    (let [response (customers/retrieve-balance-transaction stripe-mock-client "cus_mock" "bt_mock")]
       (is (map? response))
       (is (= "customer_balance_transaction" (:object response)))
       (is (string? (:id response)))
@@ -93,7 +93,7 @@
 (deftest update-balance-transaction-test
   (testing "Update balance transaction"
     (let [params {:description "test_description"}
-          response (customers/update-balance-transaction stripe-client "cus_mock" "bt_mock" params)]
+          response (customers/update-balance-transaction stripe-mock-client "cus_mock" "bt_mock" params)]
       (is (map? response))
       (is (= "customer_balance_transaction" (:object response)))
       (is (string? (:id response)))
@@ -101,7 +101,7 @@
 
 (deftest retrieve-cash-balance-test
   (testing "Retrieve cash balance"
-    (let [response (customers/retrieve-cash-balance stripe-client "cus_mock")]
+    (let [response (customers/retrieve-cash-balance stripe-mock-client "cus_mock")]
       (is (map? response))
       (is (= "cash_balance" (:object response)))
       (is (contains? response :available)))))
@@ -109,14 +109,14 @@
 (deftest update-cash-balance-test
   (testing "Update cash balance"
     (let [params {:settings {:reconciliation_mode "manual"}}
-          response (customers/update-cash-balance stripe-client "cus_mock" params)]
+          response (customers/update-cash-balance stripe-mock-client "cus_mock" params)]
       (is (map? response))
       (is (= "cash_balance" (:object response)))
       (is (contains? response :settings)))))
 
 (deftest list-cash-balance-transactions-test
   (testing "List cash balance transactions"
-    (let [response (customers/list-cash-balance-transactions stripe-client "cus_mock" {:limit 2})]
+    (let [response (customers/list-cash-balance-transactions stripe-mock-client "cus_mock" {:limit 2})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))
@@ -127,7 +127,7 @@
 
 (deftest retrieve-cash-balance-transaction-test
   (testing "Retrieve cash balance transaction"
-    (let [response (customers/retrieve-cash-balance-transaction stripe-client "cus_mock" "cbst_mock")]
+    (let [response (customers/retrieve-cash-balance-transaction stripe-mock-client "cus_mock" "cbst_mock")]
       (is (map? response))
       (is (= "customer_cash_balance_transaction" (:object response)))
       (is (string? (:id response)))
@@ -135,7 +135,7 @@
 
 (deftest list-payment-methods-test
   (testing "List payment methods"
-    (let [response (customers/list-payment-methods stripe-client "cus_mock" {:limit 2})]
+    (let [response (customers/list-payment-methods stripe-mock-client "cus_mock" {:limit 2})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))
@@ -146,7 +146,7 @@
 
 (deftest list-sources-test
   (testing "List sources"
-    (let [response (customers/list-sources stripe-client "cus_mock" {:limit 2})]
+    (let [response (customers/list-sources stripe-mock-client "cus_mock" {:limit 2})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))
@@ -158,7 +158,7 @@
 (deftest create-source-test
   (testing "Create source"
     (let [params {:source "tok_visa"}
-          response (customers/create-source stripe-client "cus_mock" params)]
+          response (customers/create-source stripe-mock-client "cus_mock" params)]
       (is (map? response))
       (is (= "account" (:object response)))
       (is (string? (:id response))))))
@@ -166,7 +166,7 @@
 (deftest update-source-test
   (testing "Update source"
     (let [params {:metadata {}}
-          response (customers/update-source stripe-client "cus_mock" "src_mock" params)]
+          response (customers/update-source stripe-mock-client "cus_mock" "src_mock" params)]
       (is (map? response))
       (is (= "card" (:object response)))
       (is (string? (:id response)))
@@ -174,14 +174,14 @@
 
 (deftest delete-source-test
   (testing "Delete source"
-    (let [response (customers/delete-source stripe-client "cus_mock" "src_mock")]
+    (let [response (customers/delete-source stripe-mock-client "cus_mock" "src_mock")]
       (is (map? response))
       (is (= "account" (:object response)))
       (is (string? (:id response))))))
 
 (deftest list-tax-ids-test
   (testing "List tax IDs"
-    (let [response (customers/list-tax-ids stripe-client "cus_mock" {:limit 2})]
+    (let [response (customers/list-tax-ids stripe-mock-client "cus_mock" {:limit 2})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))
@@ -193,7 +193,7 @@
 (deftest create-tax-id-test
   (testing "Create tax ID"
     (let [params {:type "eu_vat" :value "DE123456789"}
-          response (customers/create-tax-id stripe-client "cus_mock" params)]
+          response (customers/create-tax-id stripe-mock-client "cus_mock" params)]
       (is (map? response))
       (is (= "tax_id" (:object response)))
       (is (string? (:id response)))
@@ -202,7 +202,7 @@
 
 (deftest delete-tax-id-test
   (testing "Delete tax ID"
-    (let [response (customers/delete-tax-id stripe-client "cus_mock" "taxid_mock")]
+    (let [response (customers/delete-tax-id stripe-mock-client "cus_mock" "taxid_mock")]
       (is (map? response))
       (is (= "tax_id" (:object response)))
       (is (string? (:id response)))
@@ -211,14 +211,14 @@
 (deftest verify-source-test
   (testing "Verify source"
     (let [params {:amounts [32 45]}
-          response (customers/verify-source stripe-client "cus_mock" "ba_mock" params)]
+          response (customers/verify-source stripe-mock-client "cus_mock" "ba_mock" params)]
       (is (map? response))
       (is (= "bank_account" (:object response)))
       (is (string? (:id response))))))
 
 (deftest retrieve-card-test
   (testing "Retrieve card"
-    (let [response (customers/retrieve-card stripe-client "cus_mock" "card_mock")]
+    (let [response (customers/retrieve-card stripe-mock-client "cus_mock" "card_mock")]
       (is (map? response))
       (is (= "card" (:object response)))
       (is (string? (:id response)))
@@ -226,7 +226,7 @@
 
 (deftest list-cards-test
   (testing "List cards"
-    (let [response (customers/list-cards stripe-client "cus_mock" {:limit 2})]
+    (let [response (customers/list-cards stripe-mock-client "cus_mock" {:limit 2})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))
@@ -238,7 +238,7 @@
 
 (deftest delete-discount-test
   (testing "Delete discount"
-    (let [response (customers/delete-discount stripe-client "cus_mock")]
+    (let [response (customers/delete-discount stripe-mock-client "cus_mock")]
       (is (map? response))
       (is (= "discount" (:object response)))
       (is (string? (:id response)))
@@ -246,7 +246,7 @@
 
 (deftest retrieve-payment-method-test
   (testing "Retrieve payment method"
-    (let [response (customers/retrieve-payment-method stripe-client "cus_mock" "pm_mock")]
+    (let [response (customers/retrieve-payment-method stripe-mock-client "cus_mock" "pm_mock")]
       (is (map? response))
       (is (= "payment_method" (:object response)))
       (is (string? (:id response)))
@@ -254,14 +254,14 @@
 
 (deftest retrieve-source-test
   (testing "Retrieve source"
-    (let [response (customers/retrieve-source stripe-client "cus_mock" "src_mock")]
+    (let [response (customers/retrieve-source stripe-mock-client "cus_mock" "src_mock")]
       (is (map? response))
       (is (= "account" (:object response)))
       (is (string? (:id response))))))
 
 (deftest retrieve-tax-id-test
   (testing "Retrieve tax ID"
-    (let [response (customers/retrieve-tax-id stripe-client "cus_mock" "taxid_mock")]
+    (let [response (customers/retrieve-tax-id stripe-mock-client "cus_mock" "taxid_mock")]
       (is (map? response))
       (is (= "tax_id" (:object response)))
       (is (string? (:id response)))

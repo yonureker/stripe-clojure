@@ -1,11 +1,11 @@
 (ns stripe-clojure.mock.treasury.transactions-test
-  (:require [stripe-clojure.test-util :refer [stripe-client]]
+  (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
             [clojure.test :refer [deftest is testing]]
             [stripe-clojure.treasury.transactions :as tt]))
 
-(deftest ^:integration retrieve-transaction-test
+(deftest retrieve-transaction-test
   (testing "Retrieve treasury transaction"
-    (let [response (tt/retrieve-transaction stripe-client "txn_mock")]
+    (let [response (tt/retrieve-transaction stripe-mock-client "txn_mock")]
       (is (map? response))
       (is (= "treasury.transaction" (:object response)))
       (is (string? (:id response)))
@@ -16,9 +16,9 @@
       (is (contains? response :created))
       (is (number? (:created response))))))
 
-(deftest ^:integration list-transactions-test
+(deftest list-transactions-test
   (testing "List treasury transactions"
-    (let [response (tt/list-transactions stripe-client {:limit 2 :financial_account "fa_mock"})]
+    (let [response (tt/list-transactions stripe-mock-client {:limit 2 :financial_account "fa_mock"})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))

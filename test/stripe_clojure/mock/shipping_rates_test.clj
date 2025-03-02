@@ -1,14 +1,14 @@
 (ns stripe-clojure.mock.shipping-rates-test
-  (:require [stripe-clojure.test-util :refer [stripe-client]]
+  (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
             [clojure.test :refer [deftest is testing]]
             [stripe-clojure.shipping-rates :as shipping-rates]))
 
-(deftest ^:integration create-shipping-rate-test
+(deftest create-shipping-rate-test
   (testing "Create shipping rate"
     (let [params {:display_name "Test Shipping"
                   :type "fixed_amount"
                   :fixed_amount {:amount 500 :currency "usd"}}
-          response (shipping-rates/create-shipping-rate stripe-client params)]
+          response (shipping-rates/create-shipping-rate stripe-mock-client params)]
       (is (map? response))
       (is (= "shipping_rate" (:object response)))
       (is (string? (:id response)))
@@ -17,9 +17,9 @@
       (is (= 500 (get-in response [:fixed_amount :amount])))
       (is (= "usd" (get-in response [:fixed_amount :currency]))))))
 
-(deftest ^:integration retrieve-shipping-rate-test
+(deftest retrieve-shipping-rate-test
   (testing "Retrieve shipping rate"
-    (let [response (shipping-rates/retrieve-shipping-rate stripe-client "sr_mock")]
+    (let [response (shipping-rates/retrieve-shipping-rate stripe-mock-client "sr_mock")]
       (is (map? response))
       (is (= "shipping_rate" (:object response)))
       (is (string? (:id response)))
@@ -27,17 +27,17 @@
       (is (contains? response :fixed_amount))
       (is (contains? response :type)))))
 
-(deftest ^:integration update-shipping-rate-test
+(deftest update-shipping-rate-test
   (testing "Update shipping rate"
     (let [params {:metadata {:test "test"}}
-          response (shipping-rates/update-shipping-rate stripe-client "sr_mock" params)]
+          response (shipping-rates/update-shipping-rate stripe-mock-client "sr_mock" params)]
       (is (map? response))
       (is (= "shipping_rate" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:integration list-shipping-rates-test
+(deftest list-shipping-rates-test
   (testing "List shipping rates"
-    (let [response (shipping-rates/list-shipping-rates stripe-client {:limit 2})]
+    (let [response (shipping-rates/list-shipping-rates stripe-mock-client {:limit 2})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))
