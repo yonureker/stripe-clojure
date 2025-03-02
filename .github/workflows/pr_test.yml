@@ -1,0 +1,50 @@
+name: PR Tests
+
+on:
+  pull_request:
+    branches: [ develop ]
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - 'deps.edn'
+      - '.github/workflows/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      stripe-mock:
+        image: stripe/stripe-mock:latest
+        ports:
+          - 12111:12111
+          - 12112:12112
+        options: >-
+          --health-cmd "curl -f http://localhost:12111/v1/customers"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+    
+    container: 
+      image: clojure:temurin-17-tools-deps
+      
+    env:
+      STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-deps-${{ hashFiles('**/deps.edn') }}
+        restore-keys: ${{ runner.os }}-deps-
+    
+    - name: Verify stripe-mock
+      run: |
+        apt-get update && apt-get install -y curl
+        curl -i http://stripe-mock:12111/v1/charges -H "Authorization: Bearer ${{ secrets.STRIPE_API_KEY }}"
+    
+    - name: Run tests
+      run: clj -M:test
