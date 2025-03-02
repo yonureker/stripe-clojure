@@ -22,9 +22,8 @@ jobs:
     
     container: 
       image: clojure:temurin-17-tools-deps
-      
-    env:
-      STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}  # Any value works for mock tests
+      env:
+        STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
     
     steps:
     - uses: actions/checkout@v3
@@ -38,9 +37,16 @@ jobs:
     
     - name: Verify stripe-mock
       run: |
-        apt-get update && apt-get install -y curl
-        # Using localhost as shown in the README
-        curl -i http://localhost:12111/v1/charges -H "Authorization: Bearer ${{ secrets.STRIPE_API_KEY }}"
+        for i in {1..30}; do
+          if curl -s -f http://stripe-mock:12111/v1/charges -H "Authorization: Bearer ${{ secrets.STRIPE_API_KEY }}"; then
+            echo "stripe-mock is ready"
+            exit 0
+          fi
+          echo "Waiting for stripe-mock... attempt $i"
+          sleep 1
+        done
+        echo "stripe-mock failed to start"
+        exit 1
     
     - name: Run tests
       run: clj -M:test --exclude integration
