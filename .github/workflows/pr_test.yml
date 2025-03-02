@@ -22,8 +22,6 @@ jobs:
     
     container: 
       image: clojure:temurin-17-tools-deps
-      env:
-        STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
     
     steps:
     - uses: actions/checkout@v3
@@ -40,6 +38,9 @@ jobs:
         for i in {1..30}; do
           if curl -s -f http://stripe-mock:12111/v1/charges -H "Authorization: Bearer ${{ secrets.STRIPE_API_KEY }}"; then
             echo "stripe-mock is ready"
+            # Add debug output
+            echo "Testing stripe-mock with a GET request:"
+            curl -v http://stripe-mock:12111/v1/charges -H "Authorization: Bearer ${{ secrets.STRIPE_API_KEY }}"
             exit 0
           fi
           echo "Waiting for stripe-mock... attempt $i"
@@ -49,4 +50,14 @@ jobs:
         exit 1
     
     - name: Run tests
-      run: clj -M:test --exclude integration
+      env:
+        STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+      run: |
+        # Debug output
+        echo "Testing environment setup:"
+        echo "STRIPE_API_KEY is set: $([[ ! -z "${STRIPE_API_KEY}" ]] && echo "yes" || echo "no")"
+        echo "stripe-mock is reachable:"
+        curl -s http://stripe-mock:12111/v1/charges -H "Authorization: Bearer ${STRIPE_API_KEY}" || echo "Failed to reach stripe-mock"
+        
+        # Run tests with verbose output
+        clj -M:test
