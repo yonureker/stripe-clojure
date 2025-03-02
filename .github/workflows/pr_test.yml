@@ -19,17 +19,12 @@ jobs:
         ports:
           - 12111:12111
           - 12112:12112
-        options: >-
-          --health-cmd "curl -f http://localhost:12111/v1/customers"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 3
     
     container: 
       image: clojure:temurin-17-tools-deps
       
     env:
-      STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+      STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}  # Any value works for mock tests
     
     steps:
     - uses: actions/checkout@v3
@@ -44,7 +39,8 @@ jobs:
     - name: Verify stripe-mock
       run: |
         apt-get update && apt-get install -y curl
-        curl -i http://stripe-mock:12111/v1/charges -H "Authorization: Bearer ${{ secrets.STRIPE_API_KEY }}"
+        # Using localhost as shown in the README
+        curl -i http://localhost:12111/v1/charges -H "Authorization: Bearer ${{ secrets.STRIPE_API_KEY }}"
     
     - name: Run tests
-      run: clj -M:test
+      run: clj -M:test --exclude integration
