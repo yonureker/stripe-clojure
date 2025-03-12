@@ -1,38 +1,38 @@
 (ns stripe-clojure.mock.issuing.cards-test
-  (:require [stripe-clojure.test-util :refer [stripe-client]]
+  (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
             [clojure.test :refer [deftest is testing]]
             [stripe-clojure.issuing.cards :as cards]))
 
-(deftest ^:integration create-card-test
+(deftest create-card-test
   (testing "Create an issuing card using stripe‑mock with required parameters"
     (let [params {:currency "usd"
                   :type "physical"
                   :cardholder "user_mock"}
-          response (cards/create-card stripe-client params)]
+          response (cards/create-card stripe-mock-client params)]
       (is (map? response))
       (is (= "issuing.card" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:integration retrieve-card-test
+(deftest retrieve-card-test
   (testing "Retrieve an issuing card using a dummy card id"
     (let [dummy-id "card_mock"
-          response (cards/retrieve-card stripe-client dummy-id)]
+          response (cards/retrieve-card stripe-mock-client dummy-id)]
       (is (map? response))
       (is (= "issuing.card" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:integration update-card-test
+(deftest update-card-test
   (testing "Update an issuing card using stripe‑mock with update parameters"
     (let [dummy-id "card_mock"
           params {:metadata {:updated "true"}}
-          response (cards/update-card stripe-client dummy-id params)]
+          response (cards/update-card stripe-mock-client dummy-id params)]
       (is (map? response))
       (is (= "issuing.card" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:integration list-cards-test
+(deftest list-cards-test
   (testing "List issuing cards using stripe‑mock"
-    (let [response (cards/list-cards stripe-client {})]
+    (let [response (cards/list-cards stripe-mock-client {})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))

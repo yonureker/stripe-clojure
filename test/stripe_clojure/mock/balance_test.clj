@@ -1,11 +1,11 @@
 (ns stripe-clojure.mock.balance-test
-  (:require [stripe-clojure.test-util :refer [stripe-client]]
+  (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
             [clojure.test :refer [deftest is testing]]
             [stripe-clojure.balance :as balance]))
 
-(deftest ^:integration retrieve-balance-test
+(deftest retrieve-balance-test
   (testing "Retrieve current account balance"
-    (let [response (balance/retrieve-balance stripe-client)]
+    (let [response (balance/retrieve-balance stripe-mock-client)]
       (is (map? response))
       (is (= "balance" (:object response)))
       (is (contains? response :available))

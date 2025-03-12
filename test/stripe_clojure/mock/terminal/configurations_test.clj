@@ -1,36 +1,36 @@
 (ns stripe-clojure.mock.terminal.configurations-test
-  (:require [stripe-clojure.test-util :refer [stripe-client]]
+  (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
             [clojure.test :refer [deftest is testing]]
             [stripe-clojure.terminal.configurations :as tc]))
 
-(deftest ^:integration create-configuration-test
+(deftest create-configuration-test
   (testing "Create terminal configuration"
     (let [params {:name "Test Config"}
-          response (tc/create-configuration stripe-client params)]
+          response (tc/create-configuration stripe-mock-client params)]
       (is (map? response))
       (is (= "terminal.configuration" (:object response)))
       (is (string? (:id response)))
       (is (= "Test Config" (:name response))))))
 
-(deftest ^:integration retrieve-configuration-test
+(deftest retrieve-configuration-test
   (testing "Retrieve terminal configuration"
-    (let [response (tc/retrieve-configuration stripe-client "tc_mock")]
+    (let [response (tc/retrieve-configuration stripe-mock-client "tc_mock")]
       (is (map? response))
       (is (= "terminal.configuration" (:object response)))
       (is (string? (:id response)))
       (is (contains? response :name)))))
 
-(deftest ^:integration update-configuration-test
+(deftest update-configuration-test
   (testing "Update terminal configuration"
     (let [params {:name "test"}
-          response (tc/update-configuration stripe-client "tc_mock" params)]
+          response (tc/update-configuration stripe-mock-client "tc_mock" params)]
       (is (map? response))
       (is (= "terminal.configuration" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:integration list-configurations-test
+(deftest list-configurations-test
   (testing "List terminal configurations"
-    (let [response (tc/list-configurations stripe-client {:limit 2})]
+    (let [response (tc/list-configurations stripe-mock-client {:limit 2})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))
@@ -40,9 +40,9 @@
         (is (string? (:id config)))
         (is (contains? config :name))))))
 
-(deftest ^:integration delete-configuration-test
+(deftest delete-configuration-test
   (testing "Delete terminal configuration"
-    (let [response (tc/delete-configuration stripe-client "tc_mock")]
+    (let [response (tc/delete-configuration stripe-mock-client "tc_mock")]
       (is (map? response))
       (is (= "terminal.configuration" (:object response)))
       (is (string? (:id response)))

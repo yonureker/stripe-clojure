@@ -1,9 +1,9 @@
 (ns stripe-clojure.mock.files-test
-  (:require [stripe-clojure.test-util :refer [stripe-client]]
+  (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
             [clojure.test :refer [deftest is testing]]
             [stripe-clojure.files :as files]))
 
-;; (deftest ^:integration create-file-test
+;; (deftest create-file-test
 ;;   (testing "Create file"
 ;;     (let [temp-file (io/file "test/resources/dummy.pdf")
 ;;           _ (spit temp-file "dummy content")
@@ -16,17 +16,17 @@
 ;;       (is (= purpose (:purpose response)))
 ;;       (is (number? (:created response))))))
 
-(deftest ^:integration retrieve-file-test
+(deftest retrieve-file-test
   (testing "Retrieve file"
-    (let [response (files/retrieve-file stripe-client "file_mock")]
+    (let [response (files/retrieve-file stripe-mock-client "file_mock")]
       (is (map? response))
       (is (= "file" (:object response)))
       (is (string? (:id response)))
       (is (string? (:purpose response))))))
 
-(deftest ^:integration list-files-test
+(deftest list-files-test
   (testing "List files"
-    (let [response (files/list-files stripe-client {:limit 2})]
+    (let [response (files/list-files stripe-mock-client {:limit 2})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))

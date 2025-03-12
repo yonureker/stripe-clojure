@@ -12,11 +12,17 @@ pom.xml.asc
 .hg/
 .DS_Store
 
+# Dependency caches
+/.cpcache/
+/.m2/
+
 #dev
 .calva
 .lsp
 .vscode
 .clj-kondo
+*.iml
+/.idea/
 
 #hidden test files
 /test/stripe_clojure/unit/

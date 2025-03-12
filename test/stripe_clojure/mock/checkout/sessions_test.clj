@@ -1,9 +1,9 @@
 (ns stripe-clojure.mock.checkout.sessions-test
-  (:require [stripe-clojure.test-util :refer [stripe-client]]
+  (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
             [clojure.test :refer [deftest is testing]]
             [stripe-clojure.checkout.sessions :as sessions]))
 
-(deftest ^:integration create-session-test
+(deftest create-session-test
   (testing "Create a checkout session using stripe‑mock with required parameters"
     (let [params {:payment_method_types ["card"]
                   :line_items [{:price_data {:currency "usd"
@@ -13,7 +13,7 @@
                   :mode "payment"
                   :success_url "https://example.com/success"
                   :cancel_url "https://example.com/cancel"}
-          response (sessions/create-session stripe-client params)]
+          response (sessions/create-session stripe-mock-client params)]
       (is (map? response))
       (is (= "checkout.session" (:object response)))
       (is (= "https://example.com/success" (:success_url response)))
@@ -21,45 +21,45 @@
       (when (:id response)
         (is (string? (:id response)))))))
 
-(deftest ^:integration retrieve-session-test
+(deftest retrieve-session-test
   (testing "Retrieve a checkout session using a dummy id"
     (let [dummy-id "sess_mock"
-          response (sessions/retrieve-session stripe-client dummy-id)]
+          response (sessions/retrieve-session stripe-mock-client dummy-id)]
       (is (map? response))
       (is (= "checkout.session" (:object response)))
       (when (:id response)
         (is (string? (:id response)))))))
 
-(deftest ^:integration update-session-test
+(deftest update-session-test
   (testing "Update a checkout session using stripe‑mock"
     (let [dummy-id "sess_mock"
           params {:metadata {:order_id "order_123"}}
-          response (sessions/update-session stripe-client dummy-id params)]
+          response (sessions/update-session stripe-mock-client dummy-id params)]
       (is (map? response))
       (is (= "checkout.session" (:object response)))
       (when (:id response)
         (is (string? (:id response)))))))
 
-(deftest ^:integration list-sessions-test
+(deftest list-sessions-test
   (testing "List checkout sessions using stripe‑mock"
-    (let [response (sessions/list-sessions stripe-client)]
+    (let [response (sessions/list-sessions stripe-mock-client)]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response))))))
 
-(deftest ^:integration expire-session-test
+(deftest expire-session-test
   (testing "Expire a checkout session using stripe‑mock"
     (let [dummy-id "sess_mock"
-          response (sessions/expire-session stripe-client dummy-id)]
+          response (sessions/expire-session stripe-mock-client dummy-id)]
       (is (map? response))
       (is (= "checkout.session" (:object response)))
       (when (:id response)
         (is (string? (:id response)))))))
 
-(deftest ^:integration list-line-items-test
+(deftest list-line-items-test
   (testing "List line items for a checkout session using stripe‑mock"
     (let [dummy-id "sess_mock"
-          response (sessions/list-line-items stripe-client dummy-id)]
+          response (sessions/list-line-items stripe-mock-client dummy-id)]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response))))))

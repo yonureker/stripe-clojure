@@ -1,9 +1,9 @@
 (ns stripe-clojure.mock.issuing.cardholders-test
-  (:require [stripe-clojure.test-util :refer [stripe-client]]
+  (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
             [clojure.test :refer [deftest is testing]]
             [stripe-clojure.issuing.cardholders :as cardholders]))
 
-(deftest ^:integration create-cardholder-test
+(deftest create-cardholder-test
   (testing "Create a new issuing cardholder using stripe‑mock with required parameters"
     (let [params {:name  "Test Cardholder"
                   :billing {:address {:country "US"
@@ -11,31 +11,31 @@
                                       :line1 "123 Main St"
                                       :postal_code "94101"
                                       :state "CA"}}}
-          response (cardholders/create-cardholder stripe-client params)]
+          response (cardholders/create-cardholder stripe-mock-client params)]
       (is (map? response))
       (is (= "issuing.cardholder" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:integration retrieve-cardholder-test
+(deftest retrieve-cardholder-test
   (testing "Retrieve an issuing cardholder using a dummy id"
     (let [dummy-id "cardholder_mock"
-          response (cardholders/retrieve-cardholder stripe-client dummy-id)]
+          response (cardholders/retrieve-cardholder stripe-mock-client dummy-id)]
       (is (map? response))
       (is (= "issuing.cardholder" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:integration update-cardholder-test
+(deftest update-cardholder-test
   (testing "Update an issuing cardholder using stripe‑mock with update parameters"
     (let [dummy-id "cardholder_mock"
           params {:metadata {:updated "true"}}
-          response (cardholders/update-cardholder stripe-client dummy-id params)]
+          response (cardholders/update-cardholder stripe-mock-client dummy-id params)]
       (is (map? response))
       (is (= "issuing.cardholder" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:integration list-cardholders-test
+(deftest list-cardholders-test
   (testing "List issuing cardholders using stripe‑mock"
-    (let [response (cardholders/list-cardholders stripe-client {})]
+    (let [response (cardholders/list-cardholders stripe-mock-client {})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))

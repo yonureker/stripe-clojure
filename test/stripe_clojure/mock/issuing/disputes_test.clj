@@ -1,35 +1,35 @@
 (ns stripe-clojure.mock.issuing.disputes-test
-  (:require [stripe-clojure.test-util :refer [stripe-client]]
+  (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
             [clojure.test :refer [deftest is testing]]
             [stripe-clojure.issuing.disputes :as disputes]))
 
-(deftest ^:integration create-dispute-test
+(deftest create-dispute-test
   (testing "Create an issuing dispute with required parameters"
     (let [params {:transaction "ipi_mock"
                   :evidence {:reason "other"
                              :other {:explanation "hello"}}}
-          response (disputes/create-dispute stripe-client params)]
+          response (disputes/create-dispute stripe-mock-client params)]
       (is (map? response))
       (is (= "issuing.dispute" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:integration retrieve-dispute-test
+(deftest retrieve-dispute-test
   (testing "Retrieve an issuing dispute using a dummy dispute id"
-    (let [response (disputes/retrieve-dispute stripe-client "id_mock")]
+    (let [response (disputes/retrieve-dispute stripe-mock-client "id_mock")]
       (is (map? response))
       (is (= "issuing.dispute" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:integration update-dispute-test
+(deftest update-dispute-test
   (testing "Update an issuing dispute with update parameters"
-    (let [response (disputes/update-dispute stripe-client "id_mock" {:metadata {:updated "true"}})]
+    (let [response (disputes/update-dispute stripe-mock-client "id_mock" {:metadata {:updated "true"}})]
       (is (map? response))
       (is (= "issuing.dispute" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:integration list-disputes-test
+(deftest list-disputes-test
   (testing "List issuing disputes"
-    (let [response (disputes/list-disputes stripe-client {})]
+    (let [response (disputes/list-disputes stripe-mock-client {})]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))
@@ -38,9 +38,9 @@
         (is (= "issuing.dispute" (:object d)))
         (is (string? (:id d)))))))
 
-(deftest ^:integration submit-dispute-test
+(deftest submit-dispute-test
   (testing "Submit an issuing dispute"
-    (let [response (disputes/submit-dispute stripe-client "id_mock")]
+    (let [response (disputes/submit-dispute stripe-mock-client "id_mock")]
       (is (map? response))
       (is (= "issuing.dispute" (:object response)))
       (is (string? (:id response))))))

@@ -38,6 +38,14 @@
             {}
             pairs)))
 
+;; Constant-time string equality to mitigate timing attacks.
+(defn- constant-time-equals?
+  "Performs a constant-time comparison of two strings."
+  [^String a ^String b]
+  (if (not= (count a) (count b))
+    false
+    (zero? (reduce bit-or 0 (map bit-xor (.getBytes a "UTF-8") (.getBytes b "UTF-8"))))))
+
 (defn verify-signature
   "Verifies the signature of a Stripe webhook event.
 
@@ -56,7 +64,7 @@
       (throw (ex-info "Invalid signature format" {:type :invalid-signature-format})))
     (let [timestamp (Long/parseLong (get signature-parts "t"))
           current-timestamp (long (/ (System/currentTimeMillis) 1000))
-          time-diff (- current-timestamp timestamp)]
+          time-diff (Math/abs (- current-timestamp timestamp))]
       (when (> time-diff tolerance)
         (throw (ex-info "Timestamp outside tolerance window"
                         {:type :timestamp-mismatch
@@ -64,7 +72,7 @@
                          :difference time-diff})))
       (let [signed-payload (str timestamp "." payload)
             computed-signature (compute-signature signed-payload webhook-secret)]
-        (if (= (get signature-parts "v1") computed-signature)
+        (if (constant-time-equals? (get signature-parts "v1") computed-signature)
           true
           (throw (ex-info "Signature mismatch" {:type :invalid-signature})))))))
 

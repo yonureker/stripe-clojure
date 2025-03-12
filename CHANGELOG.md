@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.2.0] - 2025-03-12
+
+- Replaced project.clj with deps.edn
+- Implemented automated testing for pull requests using GitHub Actions.
+- Added malli schemas
+- Params for Stripe client initialization and request opts are now validated
+- Idempotency keys are auto generated if missing
+- Cleaned up logic for max network retries (now either from client config or opts)
+
 ## [0.1.4] - 2025-02-23
 
 ### Added
