@@ -2,7 +2,8 @@
 
  :deps {org.clojure/clojure {:mvn/version "1.11.0"}
         cheshire/cheshire {:mvn/version "5.10.0"}
-        clj-http/clj-http {:mvn/version "3.12.3"}}
+        clj-http/clj-http {:mvn/version "3.12.3"}
+        metosin/malli {:mvn/version "0.9.0"}}
 
  :aliases
  {:test {:extra-paths ["test"]
