@@ -77,7 +77,7 @@
 
 (deftest list-capabilities-test
   (testing "List capabilities"
-    (let [response (accounts/list-capabilities stripe-mock-client "acct_mock" {:limit 2})]
+    (let [response (accounts/list-capabilities stripe-mock-client "acct_mock")]
       (is (map? response))
       (is (= "list" (:object response)))
       (is (vector? (:data response)))

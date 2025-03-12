@@ -1,7 +1,10 @@
 (ns stripe-clojure.core
   (:require [stripe-clojure.http.client :as client]
             [stripe-clojure.config :as config]
-            [stripe-clojure.http.events :as events]))
+            [stripe-clojure.http.events :as events]
+            [stripe-clojure.schemas.client :as schema]
+            [malli.core :as m]
+            [malli.error :as me]))
 
 ;; Public API - keeping same docstrings and functionality
 (defn init-stripe
@@ -23,9 +26,13 @@
    (cond
      (contains? opts :mock)
      (client/create-instance config/mock-mode)
-  
+     
      (contains? opts :api-key)
-     (client/create-instance opts)
+     (if-let [errors (m/explain schema/StripeClient opts)]
+       (let [humanized (me/humanize errors)]
+         (throw (ex-info (str "Validation failed when initializing Stripe client: " (pr-str humanized)) 
+                         {:errors humanized})))
+       (client/create-instance opts))
   
      :else
      (throw (ex-info "API key required for initialization" {:opts opts}))))

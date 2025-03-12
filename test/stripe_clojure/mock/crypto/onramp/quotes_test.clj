@@ -1,7 +1,7 @@
-(ns stripe-clojure.mock.crypto.onramp.quotes-test
-  (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
-            [clojure.test :refer [deftest is testing]]
-            [stripe-clojure.crypto.onramp.quotes :as quotes]))
+;; (ns stripe-clojure.mock.crypto.onramp.quotes-test
+;;   (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
+;;             [clojure.test :refer [deftest is testing]]
+;;             [stripe-clojure.crypto.onramp.quotes :as quotes]))
 
 ;; TODO: Not available in stripe‑mock yet
 

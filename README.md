@@ -6,9 +6,6 @@
 
 The Stripe Clojure library provides convenient access to the Stripe API from applications written in Clojure.
 
-> [!CAUTION]
-> This library is still under development and the API is not stable. Breaking changes are expected.
-
 ## Installation
 
 #### Leiningen / Boot
@@ -16,7 +13,7 @@ The Stripe Clojure library provides convenient access to the Stripe API from app
 In `project.clj` file, add the dependency to `:dependencies`
 
 ```clojure
-[io.github.yonureker/stripe-clojure "0.1.4"]
+[io.github.yonureker/stripe-clojure "0.2.0"]
 ```
 
 #### deps.edn
@@ -24,7 +21,7 @@ In `project.clj` file, add the dependency to `:dependencies`
 If you are using `deps.edn` file, add the dependency to `:deps `
 
 ```clojure
-io.github.yonureker/stripe-clojure {:mvn/version "0.1.4"}
+io.github.yonureker/stripe-clojure {:mvn/version "0.2.0"}
 ```
 
 ## Usage
@@ -171,8 +168,6 @@ Unless you explicitly set `:max-network-retries` to zero (either globally when i
 - **409 (Conflict):** Indicates a rare race condition.
 - **429 (Too Many Requests):** Signals that the rate limit has been exceeded.
 - **Statuses greater than 500:** Covering server errors such as 500, 503, and others.
-
-There's one important exception: failed POST requests that do not include an `:idempotency-key` will never be retried, regardless of your `:max-network-retries` setting. This prevents unintended duplicate actions when the operation isn't safely repeatable.
 
 ## Expanding responses
 
@@ -364,8 +359,8 @@ brew upgrade stripe-mock
 # restart the service after upgrading
 brew services restart stripe-mock
 ```
-Then, run the tests using Leiningen:
+Then, using Clojure CLI tools:
 
 ```bash
-lein test
+clj -M:test
 ```
