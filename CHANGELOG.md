@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.2.0] - 2025-03-12
+## [0.2.1] - 2025-03-12
 
 - Replaced project.clj with deps.edn
 - Implemented automated testing for pull requests using GitHub Actions.
