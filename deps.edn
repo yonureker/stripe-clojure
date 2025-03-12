@@ -16,5 +16,10 @@
                      org.clojure/tools.nrepl {:mvn/version "0.2.13"}
                      cider/cider-nrepl {:mvn/version "0.28.5"}}}
 
-  :build {:deps {org.clojure/tools.build {:mvn/version "0.9.6"}}
-          :ns-default build}}}
+  :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.7"}}
+          :ns-default build}
+  
+  :deploy {:extra-deps {slipset/deps-deploy {:mvn/version "RELEASE"}}
+           :exec-fn deps-deploy.deps-deploy/deploy
+           :exec-args {:installer :remote
+                       :artifact "target/stripe-clojure-0.2.0.jar"}}}}

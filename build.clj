@@ -42,31 +42,3 @@
               :jar-file jar-file
               :class-dir class-dir})
   (println "Installed" (str lib) version "to local Maven repository"))
-
-;; Deploy to Clojars
-(defn deploy [opts]
-  (println "Deploying to Clojars...")
-  (jar nil)
-
-  ;; Get credentials from environment or opts
-  (let [username (or (System/getenv "CLOJARS_USERNAME")
-                     (:username opts)
-                     (do (print "Clojars username: ")
-                         (flush)
-                         (read-line)))
-        password (or (System/getenv "CLOJARS_PASSWORD")
-                     (:password opts)
-                     (do (print "Clojars password or token: ")
-                         (flush)
-                         (read-line)))]
-
-    (b/deploy {:basis basis
-               :lib lib
-               :version version
-               :jar-file jar-file
-               :class-dir class-dir
-               :repository {"clojars" {:url "https://repo.clojars.org/"}
-                            #_"github" #_{:url "https://maven.pkg.github.com/yonureker/stripe-clojure"}}
-               :credentials {"clojars" {:username username
-                                        :password password}}}))
-  (println "Deployed" (str lib) version "to Clojars"))
