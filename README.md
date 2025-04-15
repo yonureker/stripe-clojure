@@ -6,6 +6,8 @@
 
 The Stripe Clojure library provides convenient access to the Stripe API from applications written in Clojure.
 
+:star:[Listed by Stripe](https://docs.stripe.com/sdks/community) as a community-supported SDK for Clojure.
+
 ## Installation
 
 #### Leiningen / Boot
