@@ -74,7 +74,8 @@
                   :currency "usd"
                   :source "tok_visa"
                   :expand ["balance_transaction"]}
-          response (charges/create-charge stripe-mock-client params)]
+          opts {:idempotency-key "abcd-efgh-ijkl-mnop"}
+          response (charges/create-charge stripe-mock-client params opts)]
       (is (map? response))
       (is (= "charge" (:object response)))
       (is (string? (:id response)))
