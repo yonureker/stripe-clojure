@@ -13,7 +13,7 @@ The Stripe Clojure library provides convenient access to the Stripe API from app
 In `project.clj` file, add the dependency to `:dependencies`
 
 ```clojure
-[io.github.yonureker/stripe-clojure "0.2.1"]
+[io.github.yonureker/stripe-clojure "0.2.2"]
 ```
 
 #### deps.edn
@@ -21,7 +21,7 @@ In `project.clj` file, add the dependency to `:dependencies`
 If you are using `deps.edn` file, add the dependency to `:deps `
 
 ```clojure
-io.github.yonureker/stripe-clojure {:mvn/version "0.2.1"}
+io.github.yonureker/stripe-clojure {:mvn/version "0.2.2"}
 ```
 
 ## Usage
