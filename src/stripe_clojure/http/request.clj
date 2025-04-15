@@ -78,12 +78,11 @@
                       idempotency-key (assoc :idempotency-key idempotency-key)
                       test-clock (assoc :stripe-test-clock test-clock)
                       (seq custom-headers) (merge custom-headers))
-        formatted-headers (util/format-headers all-headers)
         expand-params (util/format-expand expand)
         flattened-params (util/flatten-params params)
         request-params (merge flattened-params expand-params)
         timeout-value (or timeout 80000)
-        options (cond-> {:headers formatted-headers
+        options (cond-> {:headers all-headers
                          :as :json
                          :socket-timeout timeout-value
                          :conn-timeout timeout-value}

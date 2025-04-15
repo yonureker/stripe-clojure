@@ -7,111 +7,137 @@
 
 (defn flatten-params
   "Recursively flattens a nested map into a single-level map with keys formatted
-  in a way that matches Stripe API's expectations for form data.
+    in a way that matches Stripe API's expectations for form data.
+  
+    Transformations performed:
+    1. Kebab-case keys are converted to snake_case (e.g., :first-name → \"first_name\")
+    2. Nested maps use bracket notation (e.g., {:customer {:name \"Jane\"}} → {\"customer[name]\" \"Jane\"})
+    3. Arrays/collections use indexed brackets (e.g., {:items [{:price \"x\"}]} → {\"items[0][price]\" \"x\"})
+    4. String values are preserved as-is (not treated as collections)
+  
+    Examples:
+    
+    Simple nested map:
+    (flatten-params {:customer {:name \"Jane\", :email \"jane@example.com\"}})
+    => {\"customer[name]\" \"Jane\", \"customer[email]\" \"jane@example.com\"}
+    
+    Array of primitives:
+    (flatten-params {:tags [\"premium\", \"subscription\"]})
+    => {\"tags[0]\" \"premium\", \"tags[1]\" \"subscription\"}
+    
+    Complex nested structure with arrays of objects:
+    (flatten-params {:subscription-schedule 
+                    {:phases [{:items [{:price \"price_123\", :quantity 1}]
+                              :iterations 12}]}})
+    => {\"subscription_schedule[phases][0][items][0][price]\" \"price_123\",
+        \"subscription_schedule[phases][0][items][0][quantity]\" 1,
+        \"subscription_schedule[phases][0][iterations]\" 12}
+    
+    Parameters:
+    - params: A nested map of parameters.
+  
+    Returns:
+    A flat map with formatted keys suitable for Stripe API requests."
+  ^clojure.lang.IPersistentMap [params]
+  (let [^java.util.HashMap kebab-cache (java.util.HashMap.)
+        result (transient {})]
 
-  Nested maps are flattened using square bracket notation. Arrays (or collections)
-  that are not strings have each element indexed in the key.
+    (letfn [(^String get-snake-case [^String s]
+              (or (.get kebab-cache s)
+                  (let [converted (str/replace s "-" "_")]
+                    (.put kebab-cache s converted)
+                    converted)))
 
-  Example:
-  (flatten-params {:customer {:name \"Jane\"
-                              :emails [\"jane@example.com\" \"jdoe@example.com\"]}})
-  Might yield:
-  {\"customer[name]\" \"Jane\",
-   \"customer[emails][0]\" \"jane@example.com\",
-   \"customer[emails][1]\" \"jdoe@example.com\"}
+            (^String build-key [^String prefix ^clojure.lang.Keyword k]
+              (let [k-str (name k)
+                    base-name (get-snake-case k-str)]
+                (if (empty? prefix)
+                  base-name
+                  (str prefix "[" base-name "]"))))
 
-  Parameters:
-  - params: A nested map of parameters.
+            (process-map [^String prefix m]
+              (reduce-kv (fn [_ k v]
+                           (let [new-prefix (build-key prefix k)]
+                             (process-value new-prefix v)))
+                         nil
+                         m))
 
-  Returns:
-  A flat map with formatted keys."
-  [params]
-  (letfn [(kebab->snake [s]
-            (str/replace s "-" "_"))
-          (flatten-key [prefix k]
-            (let [base-name (-> k name kebab->snake)]
-              (if (empty? prefix)
-                base-name
-                (str prefix "[" base-name "]"))))
-          (flatten* [prefix acc [k v]]
-            (cond
-              (map? v)
-              (reduce (partial flatten* (flatten-key prefix k)) acc v)
+            (process-indexed-coll [^String prefix coll]
+              (let [cnt (count coll)]
+                (loop [idx 0]
+                  (when (< idx cnt)
+                    (let [item (nth coll idx)
+                          key-with-idx (str prefix "[" idx "]")]
+                      (process-value key-with-idx item)
+                      (recur (unchecked-inc idx)))))))
 
-              (and (coll? v) (not (string? v)))
-              (reduce (fn [a [i x]]
-                        (if (map? x)
-                          (reduce (partial flatten* (str (flatten-key prefix k) "[" i "]")) a x)
-                          (assoc a (str (flatten-key prefix k) "[" i "]") x)))
-                      acc
-                      (map-indexed vector v))
+            (process-value [^String prefix v]
+              (cond
+                (map? v) (process-map prefix v)
 
-              :else
-              (assoc acc (flatten-key prefix k) v)))]
-    (reduce (partial flatten* "") {} params)))
+                (and (coll? v) (not (string? v)))
+                (if (counted? v)
+                  (process-indexed-coll prefix v)
+                  (process-indexed-coll prefix (vec v)))
+
+                :else (assoc! result prefix v)))]
+
+      (when params
+        (process-map "" params))
+      (persistent! result))))
 
 (defn format-expand
-  "Formats the 'expand' parameter for a Stripe API request.
+  "Converts an expand parameter (either a single string or a sequence of strings) 
+  into the indexed format required by Stripe's API.
 
-  It converts either a single expand field (as a string) or a sequence of fields 
-  into a map with keys formatted as \"expand[<index>]\" and the value as the field name.
+  Transformations performed:
+  1. Single string is wrapped in a vector first
+  2. Each value is assigned an indexed key: \"expand[0]\", \"expand[1]\", etc.
+  3. Returns an empty map if the input is nil or empty
+
+  Examples:
+  
+  Single field:
+  (format-expand \"customer\")
+  => {\"expand[0]\" \"customer\"}
+  
+  Multiple fields:
+  (format-expand [\"customer\", \"invoice.subscription\"])
+  => {\"expand[0]\" \"customer\", \"expand[1]\" \"invoice.subscription\"}
+  
+  Empty input:
+  (format-expand nil)
+  => {}
 
   Parameters:
   - expand: Either a string or a sequence of strings representing the fields to expand.
 
   Returns:
-  A map with formatted expand parameters.
-
-  Example:
-  (format-expand \"customer\")
-  => {\"expand[0]\" \"customer\"}"
-  [expand]
-  (if (seq expand)
-    (into {} (map-indexed (fn [idx item] [(str "expand[" idx "]") item])
-                          (if (string? expand) [expand] expand)))
-    {}))
-
-(defn keyword-to-header
-  "Converts a keyword into a properly formatted HTTP header string.
-
-  The conversion process involves:
-  1. Converting the keyword to a string.
-  2. Replacing dashes with underscores.
-  3. Splitting on underscores.
-  4. Capitalizing each section.
-  5. Joining the sections with dashes.
-
-  For example:
-  :stripe-account => \"Stripe-Account\"
-
-  Parameters:
-  - k: A keyword representing the header.
-
-  Returns:
-  A well-formatted header string."
-  [k]
-  (-> (name k)
-      (str/replace #"-" "_")
-      (str/split #"_")
-      (->> (map str/capitalize)
-           (str/join "-"))))
-
-(defn format-headers
-  "Formats a map of HTTP headers for Stripe API requests.
-
-  This function converts a map with keyword keys into a new map where
-  the keys are proper HTTP header strings (using `keyword-to-header`) and
-  the values remain unchanged.
-
-  Parameters:
-  - headers: A map with keyword keys.
-
-  Returns:
-  A new map with properly formatted HTTP header keys."
-  [headers]
-  (into {}
-        (for [[k v] headers]
-          [(keyword-to-header k) v])))
+  A map with formatted expand parameters suitable for Stripe API requests."
+  ^clojure.lang.IPersistentMap [expand]
+  (if-not (seq expand)
+    {}
+    (let [values (if (string? expand) [expand] expand)
+          result (transient {})]
+      (if (counted? values)
+        ;; Fast path for vectors and other counted collections
+        (let [cnt (count values)]
+          (loop [idx 0]
+            (when (< idx cnt)
+              (let [key (str "expand[" idx "]")
+                    val (nth values idx)]
+                #_{:clj-kondo/ignore [:unused-value]}
+                (assoc! result key val)
+                (recur (unchecked-inc idx))))))
+        ;; Fallback for non-counted collections
+        (loop [idx 0, items (seq values)]
+          (when items
+            (let [key (str "expand[" idx "]")
+                  val (first items)]
+              #_{:clj-kondo/ignore [:unused-value]}
+              (assoc! result key val)
+              (recur (unchecked-inc idx) (next items))))))
+      (persistent! result))))
 
 (defn underscore-to-kebab
   "Converts a string from underscore_case to kebab-case.
