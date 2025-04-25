@@ -6,7 +6,7 @@
 
 (defn create-session
   "Creates a session for a customer to manage their subscription and billing details.
-   \nStripe API docs: https://stripe.com/docs/api/customer_portal/create"
+   \nStripe API docs: https://stripe.com/docs/api/customer_portal/sessions/create"
   ([stripe-client params]
    (create-session stripe-client params {}))
   ([stripe-client params opts]
