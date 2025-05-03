@@ -125,7 +125,7 @@
           suffix (subs api-key (- (count api-key) 4))]
       (str prefix "..." suffix))))
 
-(def base-api-version "2025-01-27.acacia")
+(def base-api-version "2025-04-30.basil")
 
 (def default-client-config
   {:protocol "https"
