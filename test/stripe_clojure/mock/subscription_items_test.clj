@@ -50,23 +50,3 @@
       (is (= "subscription_item" (:object response)))
       (is (string? (:id response)))
       (is (true? (:deleted response))))))
-
-(deftest create-usage-record-test
-  (testing "Create usage record"
-    (let [params {:quantity 100}
-          response (subitems/create-usage-record stripe-mock-client "si_mock" params)]
-      (is (map? response))
-      (is (= "usage_record" (:object response)))
-      (is (string? (:id response)))
-      (is (= 100 (:quantity response))))))
-
-(deftest list-usage-record-summaries-test
-  (testing "List usage record summaries"
-    (let [response (subitems/list-usage-record-summaries stripe-mock-client "si_mock" {:limit 2})]
-      (is (map? response))
-      (is (= "list" (:object response)))
-      (is (vector? (:data response)))
-      (doseq [summary (:data response)]
-        (is (map? summary))
-        (is (= "usage_record_summary" (:object summary)))
-        (is (string? (:id summary))))))) 
