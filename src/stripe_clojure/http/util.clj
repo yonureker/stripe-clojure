@@ -5,86 +5,72 @@
 ;; Utility functions for formatting parameters and headers
 ;; -----------------------------------------------------------
 
+;; Use a single recursive helper function that takes the accumulator
+(declare flatten-value)
+
+(defn- get-snake-case 
+  [^String s]
+  (str/replace s "-" "_"))
+
+(defn- build-key 
+  [^String prefix k]
+  (let [k-str (if (keyword? k) (name k) (str k))
+        base-name (if (keyword? k) (get-snake-case k-str) k-str)]
+    (if (empty? prefix)
+      (str base-name)
+      (str prefix "[" base-name "]"))))
+
+(defn- flatten-collection
+  [acc ^String prefix coll]
+  (let [items (if (counted? coll) coll (vec coll))
+        cnt (count items)]
+    (loop [idx 0
+           current-acc acc]
+      (if (< idx cnt)
+        (let [item (nth items idx)
+              key-with-idx (build-key prefix idx)
+              next-acc (flatten-value current-acc key-with-idx item)]
+          (recur (unchecked-inc idx) next-acc))
+        current-acc))))
+
+(defn- flatten-map
+  [acc ^String prefix m]
+  (reduce-kv (fn [current-acc k v]
+               (let [new-prefix (build-key prefix k)]
+                 (flatten-value current-acc new-prefix v)))
+             acc
+             m))
+
+(defn- flatten-value
+  [acc ^String prefix v]
+  (cond
+    (map? v) (flatten-map acc prefix v)
+
+    (and (coll? v) (not (string? v)))
+    (flatten-collection acc prefix v)
+
+    :else (assoc! acc prefix v)))
+
 (defn flatten-params
   "Recursively flattens a nested map into a single-level map with keys formatted
     in a way that matches Stripe API's expectations for form data.
-  
+
     Transformations performed:
     1. Kebab-case keys are converted to snake_case (e.g., :first-name → \"first_name\")
     2. Nested maps use bracket notation (e.g., {:customer {:name \"Jane\"}} → {\"customer[name]\" \"Jane\"})
     3. Arrays/collections use indexed brackets (e.g., {:items [{:price \"x\"}]} → {\"items[0][price]\" \"x\"})
     4. String values are preserved as-is (not treated as collections)
-  
-    Examples:
-    
-    Simple nested map:
-    (flatten-params {:customer {:name \"Jane\", :email \"jane@example.com\"}})
-    => {\"customer[name]\" \"Jane\", \"customer[email]\" \"jane@example.com\"}
-    
-    Array of primitives:
-    (flatten-params {:tags [\"premium\", \"subscription\"]})
-    => {\"tags[0]\" \"premium\", \"tags[1]\" \"subscription\"}
-    
-    Complex nested structure with arrays of objects:
-    (flatten-params {:subscription-schedule 
-                    {:phases [{:items [{:price \"price_123\", :quantity 1}]
-                              :iterations 12}]}})
-    => {\"subscription_schedule[phases][0][items][0][price]\" \"price_123\",
-        \"subscription_schedule[phases][0][items][0][quantity]\" 1,
-        \"subscription_schedule[phases][0][iterations]\" 12}
-    
+
     Parameters:
     - params: A nested map of parameters.
-  
+
     Returns:
     A flat map with formatted keys suitable for Stripe API requests."
-  ^clojure.lang.IPersistentMap [params]
-  (let [^java.util.HashMap kebab-cache (java.util.HashMap.)
-        result (transient {})]
-
-    (letfn [(^String get-snake-case [^String s]
-              (or (.get kebab-cache s)
-                  (let [converted (str/replace s "-" "_")]
-                    (.put kebab-cache s converted)
-                    converted)))
-
-            (^String build-key [^String prefix ^clojure.lang.Keyword k]
-              (let [k-str (name k)
-                    base-name (get-snake-case k-str)]
-                (if (empty? prefix)
-                  base-name
-                  (str prefix "[" base-name "]"))))
-
-            (process-map [^String prefix m]
-              (reduce-kv (fn [_ k v]
-                           (let [new-prefix (build-key prefix k)]
-                             (process-value new-prefix v)))
-                         nil
-                         m))
-
-            (process-indexed-coll [^String prefix coll]
-              (let [cnt (count coll)]
-                (loop [idx 0]
-                  (when (< idx cnt)
-                    (let [item (nth coll idx)
-                          key-with-idx (str prefix "[" idx "]")]
-                      (process-value key-with-idx item)
-                      (recur (unchecked-inc idx)))))))
-
-            (process-value [^String prefix v]
-              (cond
-                (map? v) (process-map prefix v)
-
-                (and (coll? v) (not (string? v)))
-                (if (counted? v)
-                  (process-indexed-coll prefix v)
-                  (process-indexed-coll prefix (vec v)))
-
-                :else (assoc! result prefix v)))]
-
-      (when params
-        (process-map "" params))
-      (persistent! result))))
+  [params]
+  (when params
+    (let [result (transient {})
+          final-result (flatten-map result "" params)]
+      (persistent! final-result))))
 
 (defn format-expand
   "Converts an expand parameter (either a single string or a sequence of strings) 
