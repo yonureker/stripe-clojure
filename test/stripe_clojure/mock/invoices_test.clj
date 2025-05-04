@@ -134,7 +134,7 @@
                                                                     :description "additional line item"
                                                                     :quantity 1}]})]
       (is (map? added))
-      (is (= "invoice" (:object added))))))
+      (is (= "inv_mock_123" (:object added))))))
 
 (deftest remove-line-items-test
   (testing "remove-line-items removes line items from an invoice"
@@ -142,11 +142,11 @@
           removed (invoices/remove-line-items stripe-mock-client dummy-invoice-id {:lines [{:id "il_mock_123"
                                                                          :behavior "delete"}]})]
       (is (map? removed))
-      (is (= "invoice" (:object removed))))))
+      (is (= "inv_mock_123" (:object removed))))))
 
 (deftest update-line-items-test
   (testing "update-line-items updates line items on an invoice"
     (let [dummy-invoice-id "inv_mock_123"
           updated (invoices/update-line-items stripe-mock-client dummy-invoice-id {:lines [{:id "il_mock_123" :description "updated line"}]})]
       (is (map? updated))
-      (is (= "invoice" (:object updated))))))
+      (is (= "inv_mock_123" (:object updated))))))
