@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.2.2] - 2025-04-15
+
+- Fixes a version issue
+- Improved util functions with Java
+- Used clj-http features instead of manual formatting of request headers
+
 ## [0.2.1] - 2025-03-12
 
 - Replaced project.clj with deps.edn
