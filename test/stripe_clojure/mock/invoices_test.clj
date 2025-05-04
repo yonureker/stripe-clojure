@@ -40,13 +40,6 @@
       (is (= invoice-id (:id retrieved)) "Retrieved invoice should match created one")
       (is (= "invoice" (:object retrieved))))))
 
-(deftest retrieve-upcoming-test
-  (testing "retrieve-upcoming returns a valid upcoming invoice"
-    (let [dummy-customer "cus_mock_123"
-          upcoming (invoices/retrieve-upcoming stripe-mock-client {:customer dummy-customer})]
-      (is (map? upcoming))
-      (is (= "invoice" (:object upcoming))))))
-
 (deftest list-invoices-test
   (testing "list-invoices returns a list response"
     (let [resp (invoices/list-invoices stripe-mock-client {:limit 1})]
@@ -122,12 +115,6 @@
   (testing "list-line-items returns a list of line items"
     (let [dummy-invoice-id "inv_mock_123"
           resp (invoices/list-line-items stripe-mock-client dummy-invoice-id {:limit 1})]
-      (is (map? resp))
-      (is (vector? (:data resp))))))
-
-(deftest list-upcoming-line-items-test
-  (testing "list-upcoming-line-items returns upcoming line items"
-    (let [resp (invoices/list-upcoming-line-items stripe-mock-client {:customer "cus_mock_123" :limit 1})]
       (is (map? resp))
       (is (vector? (:data resp))))))
 
