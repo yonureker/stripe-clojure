@@ -54,27 +54,3 @@
             (str stripe-subscription-items-endpoint "/" subscription-item-id)
             nil
             opts)))
-
-(defn create-usage-record
-  "Creates a usage record for a specified subscription item.
-   \nStripe API docs: https://stripe.com/docs/api/usage_records/create"
-  ([stripe-client subscription-item-id params]
-   (create-usage-record stripe-client subscription-item-id params {}))
-  ([stripe-client subscription-item-id params opts]
-   (request stripe-client :post
-            (str stripe-subscription-items-endpoint "/" subscription-item-id "/usage_records")
-            params
-            opts)))
-
-(defn list-usage-record-summaries
-  "Lists all usage record summaries for a specified subscription item.
-   \nStripe API docs: https://stripe.com/docs/api/usage_records/subscription_item_summary_list"
-  ([stripe-client subscription-item-id]
-   (list-usage-record-summaries stripe-client subscription-item-id {}))
-  ([stripe-client subscription-item-id params]
-   (list-usage-record-summaries stripe-client subscription-item-id params {}))
-  ([stripe-client subscription-item-id params opts]
-   (request stripe-client :get
-            (str stripe-subscription-items-endpoint "/" subscription-item-id "/usage_record_summaries")
-            params
-            opts)))
