@@ -22,4 +22,4 @@
   :deploy {:extra-deps {slipset/deps-deploy {:mvn/version "RELEASE"}}
            :exec-fn deps-deploy.deps-deploy/deploy
            :exec-args {:installer :remote
-                       :artifact "target/stripe-clojure-0.2.2.jar"}}}}
+                       :artifact "target/stripe-clojure-0.3.0.jar"}}}}

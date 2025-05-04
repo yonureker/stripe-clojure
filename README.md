@@ -15,7 +15,7 @@ The Stripe Clojure library provides convenient access to the Stripe API from app
 In `project.clj` file, add the dependency to `:dependencies`
 
 ```clojure
-[io.github.yonureker/stripe-clojure "0.2.2"]
+[io.github.yonureker/stripe-clojure "0.3.0"]
 ```
 
 #### deps.edn
@@ -23,7 +23,7 @@ In `project.clj` file, add the dependency to `:dependencies`
 If you are using `deps.edn` file, add the dependency to `:deps `
 
 ```clojure
-io.github.yonureker/stripe-clojure {:mvn/version "0.2.2"}
+io.github.yonureker/stripe-clojure {:mvn/version "0.3.0"}
 ```
 
 ## Usage
@@ -245,10 +245,10 @@ The Stripe Clojure client emits `request` and `response` events, allowing you to
   (println "Request event:" request))
 
 ;; Add the event handler function
-(stripe/on stripe-client "request" on-request)
+(stripe/on stripe-client :request on-request)
 
 ;; Remove the event handler function
-(stripe/off stripe-client "request" on-request)
+(stripe/off stripe-client :request on-request)
 ```
 
 `request` object
