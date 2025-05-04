@@ -52,6 +52,7 @@
    :invoices (str "/" stripe-api-namespace "/invoices")
    :invoice-items (str "/" stripe-api-namespace "/invoiceitems")
    :invoice-rendering-templates (str "/" stripe-api-namespace "/invoice_rendering_templates")
+   :invoice-payments (str "/" stripe-api-namespace "/invoice_payments")
    :issuing-authorizations (str "/" stripe-api-namespace "/issuing/authorizations")
    :issuing-cardholders (str "/" stripe-api-namespace "/issuing/cardholders")
    :issuing-cards (str "/" stripe-api-namespace "/issuing/cards")
