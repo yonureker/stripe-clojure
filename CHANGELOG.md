@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.3.0] - 2025-05-04
+
+- [#17](https://github.com/yonureker/stripe-clojure/issues/17): Fixed flattening params issue with vector payload 
+- [#18](https://github.com/yonureker/stripe-clojure/pull/18): Bumped stripe version to `2025-04-30.basil`.
+- [#19](https://github.com/yonureker/stripe-clojure/pull/19): Adds support for invoice payment resources. 
+- [#20](https://github.com/yonureker/stripe-clojure/pull/20): Remove support for `list-upcoming-line-items` and `retrieve-upcoming` methods on Invoice resource. 
+- [#21](https://github.com/yonureker/stripe-clojure/pull/21): Remove support for `create-usage-record` and `list-usage-record-summaries` methods on Subscription items. 
+- [#23](https://github.com/yonureker/stripe-clojure/pull/23): Fixes a mock test with invoices. 
+- [#16](https://github.com/yonureker/stripe-clojure/pull/16): Stripe docs API url fix in `create-session` docstring. 
+
 ## [0.2.2] - 2025-04-15
 
 - Fixes a version issue
