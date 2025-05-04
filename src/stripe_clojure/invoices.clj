@@ -47,14 +47,6 @@
   ([stripe-client invoice-id opts]
    (request stripe-client :get (str stripe-invoices-endpoint "/" invoice-id) {} opts)))
 
-(defn retrieve-upcoming
-  "Retrieves the upcoming invoice.
-   \nStripe API docs: https://stripe.com/docs/api/invoices/upcoming"
-  ([stripe-client params]
-   (retrieve-upcoming stripe-client params {}))
-  ([stripe-client params opts]
-   (request stripe-client :get (str stripe-invoices-endpoint "/upcoming") params opts)))
-
 (defn list-invoices
   "Returns a list of invoices.
    Stripe API docs: https://stripe.com/docs/api/invoices/list
@@ -163,17 +155,6 @@
   ([stripe-client invoice-id params opts]
    (request stripe-client :get
                 (str stripe-invoices-endpoint "/" invoice-id "/lines")
-                params
-                opts)))
-
-(defn list-upcoming-line-items
-  "Lists all line items for an upcoming invoice.
-   \nStripe API docs: https://stripe.com/docs/api/invoices/upcoming_lines"
-  ([stripe-client params]
-   (list-upcoming-line-items stripe-client params {}))
-  ([stripe-client params opts]
-   (request stripe-client :get
-                (str stripe-invoices-endpoint "/upcoming/lines")
                 params
                 opts)))
 
