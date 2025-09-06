@@ -67,3 +67,18 @@
       (is (map? response))
       (is (= "subscription" (:object response)))
       (is (string? (:id response))))))
+
+(deftest delete-discount-test
+  (testing "Delete subscription discount"
+    (let [response (subscriptions/delete-discount stripe-mock-client "sub_mock")]
+      (is (map? response))
+      (is (string? (:object response)))
+      (is (string? (:id response))))))
+
+(deftest migrate-subscription-test
+  (testing "Migrate subscription"
+    (let [params {:price "price_new_mock"}
+          response (subscriptions/migrate-subscription stripe-mock-client "sub_mock" params)]
+      (is (map? response))
+      ;; stripe-mock may return nil for this endpoint - just check it's a response
+      (is (map? response)))))

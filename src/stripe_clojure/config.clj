@@ -9,8 +9,11 @@
 (def stripe-api-namespace "v1")
 
 (def stripe-endpoints
-  {:account-links (str "/" stripe-api-namespace "/account_links")
+  {:account (str "/" stripe-api-namespace "/account")
+   :account-links (str "/" stripe-api-namespace "/account_links")
+   :account-sessions (str "/" stripe-api-namespace "/account_sessions")
    :accounts (str "/" stripe-api-namespace "/accounts")
+   :apple-pay-domains (str "/" stripe-api-namespace "/apple_pay/domains")
    :application-fees (str "/" stripe-api-namespace "/application_fees")
    :apps-secrets (str "/" stripe-api-namespace "/apps/secrets")
    :balance (str "/" stripe-api-namespace "/balance")
@@ -30,6 +33,7 @@
    :climate-products (str "/" stripe-api-namespace "/climate/products")
    :climate-suppliers (str "/" stripe-api-namespace "/climate/suppliers")
    :confirmation-tokens (str "/" stripe-api-namespace "/confirmation_tokens")
+   :country-specs (str "/" stripe-api-namespace "/country_specs")
    :coupons (str "/" stripe-api-namespace "/coupons")
    :credit-notes (str "/" stripe-api-namespace "/credit_notes")
    :crypto-onramp-sessions (str "/" stripe-api-namespace "/crypto/onramp_sessions")
@@ -41,6 +45,8 @@
    :entitlements-features (str "/" stripe-api-namespace "/entitlements/features")
    :ephemeral-keys (str "/" stripe-api-namespace "/ephemeral_keys")
    :events (str "/" stripe-api-namespace "/events")
+   :exchange-rates (str "/" stripe-api-namespace "/exchange_rates")
+   :external-accounts (str "/" stripe-api-namespace "/external_accounts")
    :files (str "/" stripe-api-namespace "/files")
    :file-links (str "/" stripe-api-namespace "/file_links")
    :financial-connections-accounts (str "/" stripe-api-namespace "/financial_connections/accounts")
@@ -59,8 +65,11 @@
    :issuing-disputes (str "/" stripe-api-namespace "/issuing/disputes")
    :issuing-personalization-designs (str "/" stripe-api-namespace "/issuing/personalization_designs")
    :issuing-physical-bundles (str "/" stripe-api-namespace "/issuing/physical_bundles")
+   :issuing-settlements (str "/" stripe-api-namespace "/issuing/settlements")
    :issuing-tokens (str "/" stripe-api-namespace "/issuing/tokens")
    :issuing-transactions (str "/" stripe-api-namespace "/issuing/transactions")
+   :link-account-sessions (str "/" stripe-api-namespace "/link_account_sessions")
+   :linked-accounts (str "/" stripe-api-namespace "/linked_accounts")
    :mandates (str "/" stripe-api-namespace "/mandates")
    :payment-intents (str "/" stripe-api-namespace "/payment_intents")
    :payment-links (str "/" stripe-api-namespace "/payment_links")
@@ -126,7 +135,7 @@
           suffix (subs api-key (- (count api-key) 4))]
       (str prefix "..." suffix))))
 
-(def base-api-version "2025-04-30.basil")
+(def base-api-version "2025-08-27.basil")
 
 (def default-client-config
   {:protocol "https"

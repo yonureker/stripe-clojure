@@ -201,3 +201,14 @@
                 (str stripe-invoices-endpoint "/" invoice-id "/update_lines")
                 params
                 opts)))
+
+(defn attach-payment
+  "Attaches a payment to an invoice.
+   \nStripe API docs: https://stripe.com/docs/api/invoices/attach_payment"
+  ([stripe-client invoice-id params]
+   (attach-payment stripe-client invoice-id params {}))
+  ([stripe-client invoice-id params opts]
+   (request stripe-client :post
+                (str stripe-invoices-endpoint "/" invoice-id "/attach_payment")
+                params
+                opts)))

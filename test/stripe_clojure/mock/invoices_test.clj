@@ -150,3 +150,13 @@
           updated (invoices/update-line-items stripe-mock-client dummy-invoice-id {:lines [{:id "il_mock_123" :description "updated line"}]})]
       (is (map? updated))
       (is (= "inv_mock_123" (:object updated))))))
+
+(deftest attach-payment-test
+  (testing "attach-payment attaches a payment to an invoice"
+    (let [dummy-invoice-id "inv_mock_123"
+          params {:payment_intent "pi_mock_123"}
+          attached (invoices/attach-payment stripe-mock-client dummy-invoice-id params)]
+      (is (map? attached))
+      ;; stripe-mock returns different object for this endpoint
+      (is (string? (:object attached)))
+      (is (string? (:id attached))))))

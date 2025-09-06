@@ -90,4 +90,48 @@
       (is (= "charge" (:object response)))
       ;; Verify that the expanded field is returned as a map.
       (is (map? (:balance_transaction response)))
-      (is (= "balance_transaction" (:object (:balance_transaction response)))))))
+      (is (= "balance_transaction" (:object (:balance_transaction response))))))
+
+;; Dispute Tests
+(deftest retrieve-dispute-test
+  (testing "Retrieve dispute"
+    (let [response (charges/retrieve-dispute stripe-mock-client "ch_mock")]
+      (is (map? response))
+      (is (= "dispute" (:object response)))
+      (is (string? (:id response)))
+      (is (contains? response :status)))))
+
+(deftest close-dispute-test
+  (testing "Close dispute"
+    (let [response (charges/close-dispute stripe-mock-client "ch_mock")]
+      (is (map? response))
+      (is (= "dispute" (:object response)))
+      (is (string? (:id response)))
+      (is (contains? response :status)))))
+
+;; Refund Tests
+(deftest refund-charge-test
+  (testing "Refund charge"
+    (let [params {:amount 500}
+          response (charges/refund-charge stripe-mock-client "ch_mock" params)]
+      (is (map? response))
+      (is (= "charge" (:object response)))
+      (is (string? (:id response)))
+      (is (boolean? (:refunded response))))))
+
+(deftest create-refund-test
+  (testing "Create refund"
+    (let [params {:amount 500}
+          response (charges/create-refund stripe-mock-client "ch_mock" params)]
+      (is (map? response))
+      (is (= "refund" (:object response)))
+      (is (string? (:id response)))
+      (is (= 500 (:amount response))))))
+
+(deftest update-refund-test
+  (testing "Update refund"
+    (let [params {:metadata {:key "value"}}
+          response (charges/update-refund stripe-mock-client "ch_mock" "re_mock" params)]
+      (is (map? response))
+      (is (= "refund" (:object response)))
+      (is (string? (:id response)))))))

@@ -63,3 +63,19 @@
    (resume-subscription stripe-client subscription-id params {}))
   ([stripe-client subscription-id params opts]
    (request stripe-client :post (str stripe-subscriptions-endpoint "/" subscription-id "/resume") params opts)))
+
+(defn delete-discount
+  "Removes the currently applied discount on a subscription.
+   \nStripe API docs: https://stripe.com/docs/api/subscriptions/delete_discount"
+  ([stripe-client subscription-id]
+   (delete-discount stripe-client subscription-id {}))
+  ([stripe-client subscription-id opts]
+   (request stripe-client :delete (str stripe-subscriptions-endpoint "/" subscription-id "/discount") nil opts)))
+
+(defn migrate-subscription
+  "Migrates a subscription to a new price.
+   \nStripe API docs: https://stripe.com/docs/api/subscriptions/migrate"
+  ([stripe-client subscription-id params]
+   (migrate-subscription stripe-client subscription-id params {}))
+  ([stripe-client subscription-id params opts]
+   (request stripe-client :post (str stripe-subscriptions-endpoint "/" subscription-id "/migrate") params opts)))

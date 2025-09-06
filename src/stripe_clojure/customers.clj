@@ -329,3 +329,107 @@
                 (str stripe-customers-endpoint "/" customer-id "/tax_ids/" tax-id)
                 {}
                 opts)))
+
+;; Funding Instructions
+(defn create-funding-instructions
+  "Creates funding instructions for a customer.
+   \nStripe API docs: https://stripe.com/docs/api/customers/funding_instructions"
+  ([stripe-client customer-id params]
+   (create-funding-instructions stripe-client customer-id params {}))
+  ([stripe-client customer-id params opts]
+   (request stripe-client :post
+                (str stripe-customers-endpoint "/" customer-id "/funding_instructions")
+                params
+                opts)))
+
+;; Bank Accounts
+(defn create-bank-account
+  "Creates a bank account for a customer.
+   \nStripe API docs: https://stripe.com/docs/api/customer_bank_accounts/create"
+  ([stripe-client customer-id params]
+   (create-bank-account stripe-client customer-id params {}))
+  ([stripe-client customer-id params opts]
+   (request stripe-client :post
+                (str stripe-customers-endpoint "/" customer-id "/bank_accounts")
+                params
+                opts)))
+
+(defn update-bank-account
+  "Updates a customer's bank account.
+   \nStripe API docs: https://stripe.com/docs/api/customer_bank_accounts/update"
+  ([stripe-client customer-id bank-account-id params]
+   (update-bank-account stripe-client customer-id bank-account-id params {}))
+  ([stripe-client customer-id bank-account-id params opts]
+   (request stripe-client :post
+                (str stripe-customers-endpoint "/" customer-id "/bank_accounts/" bank-account-id)
+                params
+                opts)))
+
+(defn delete-bank-account
+  "Deletes a customer's bank account.
+   \nStripe API docs: https://stripe.com/docs/api/customer_bank_accounts/delete"
+  ([stripe-client customer-id bank-account-id]
+   (delete-bank-account stripe-client customer-id bank-account-id {}))
+  ([stripe-client customer-id bank-account-id opts]
+   (request stripe-client :delete
+                (str stripe-customers-endpoint "/" customer-id "/bank_accounts/" bank-account-id)
+                nil
+                opts)))
+
+(defn list-bank-accounts
+  "Lists all bank accounts for a customer.
+   \nStripe API docs: https://stripe.com/docs/api/customer_bank_accounts/list"
+  ([stripe-client customer-id]
+   (list-bank-accounts stripe-client customer-id {}))
+  ([stripe-client customer-id params]
+   (list-bank-accounts stripe-client customer-id params {}))
+  ([stripe-client customer-id params opts]
+   (request stripe-client :get
+                (str stripe-customers-endpoint "/" customer-id "/bank_accounts")
+                params
+                opts)))
+
+(defn verify-bank-account
+  "Verifies a customer's bank account.
+   \nStripe API docs: https://stripe.com/docs/api/customer_bank_accounts/verify"
+  ([stripe-client customer-id bank-account-id params]
+   (verify-bank-account stripe-client customer-id bank-account-id params {}))
+  ([stripe-client customer-id bank-account-id params opts]
+   (request stripe-client :post
+                (str stripe-customers-endpoint "/" customer-id "/bank_accounts/" bank-account-id "/verify")
+                params
+                opts)))
+
+;; Cards
+(defn create-card
+  "Creates a card for a customer.
+   \nStripe API docs: https://stripe.com/docs/api/cards/create"
+  ([stripe-client customer-id params]
+   (create-card stripe-client customer-id params {}))
+  ([stripe-client customer-id params opts]
+   (request stripe-client :post
+                (str stripe-customers-endpoint "/" customer-id "/cards")
+                params
+                opts)))
+
+(defn update-card
+  "Updates a customer's card.
+   \nStripe API docs: https://stripe.com/docs/api/cards/update"
+  ([stripe-client customer-id card-id params]
+   (update-card stripe-client customer-id card-id params {}))
+  ([stripe-client customer-id card-id params opts]
+   (request stripe-client :post
+                (str stripe-customers-endpoint "/" customer-id "/cards/" card-id)
+                params
+                opts)))
+
+(defn delete-card
+  "Deletes a customer's card.
+   \nStripe API docs: https://stripe.com/docs/api/cards/delete"
+  ([stripe-client customer-id card-id]
+   (delete-card stripe-client customer-id card-id {}))
+  ([stripe-client customer-id card-id opts]
+   (request stripe-client :delete
+                (str stripe-customers-endpoint "/" customer-id "/cards/" card-id)
+                nil
+                opts)))
