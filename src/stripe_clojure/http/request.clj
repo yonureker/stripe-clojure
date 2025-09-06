@@ -13,16 +13,20 @@
 (defn send-stripe-api-request
   "Sends an HTTP request to the Stripe API."
   [method url options]
+  (when-not (#{:get :post :delete} method)
+    (throw (ex-info "Unsupported HTTP method. Must be one of: :get, :post, :delete" 
+                    {:method method :supported-methods #{:get :post :delete}})))
   (try
     (case method
       :get    (http/get url options)
       :post   (http/post url options)
-      :delete (http/delete url options)
-      (throw (ex-info "Unsupported HTTP method" {:method method})))
+      :delete (http/delete url options))
     (catch Exception e
       (or (ex-data e)                    ;; ex-data might have :status
           {:status 500                    ;; ensure we have a status
-           :error e}))))
+           :error e
+           :error-type "network-error"
+           :message (.getMessage e)}))))
 
 (defn- idempotent-method?
   "Checks if the HTTP method is naturally idempotent."
@@ -47,11 +51,12 @@
    - opts: A map of additional options
    - config: The effective configuration (from closure)"
   [method url params opts config]
-  (when-let [errors (m/explain schema/RequestOpts opts)]
-    (let [humanized (me/humanize errors)]
+  ;; Always validate request options - prevents invalid API calls
+  (when (m/explain schema/RequestOpts opts)
+    (let [humanized (me/humanize (m/explain schema/RequestOpts opts))]
       (throw (ex-info (str "Invalid request options: " (pr-str humanized))
-                      {:errors humanized
-                       :provided-options opts}))))
+                              {:errors humanized
+                               :provided-options opts}))))
   
   (let [{:keys [api-key
                 api-version
@@ -65,6 +70,8 @@
         request-start-time (System/currentTimeMillis)
         base-url (construct-base-url config)
         full-url (str base-url url)
+        _ (when-not (re-matches #"^https?://.*" full-url)
+            (throw (ex-info "Invalid URL format" {:url full-url :base-url base-url :endpoint url})))
         base-headers {:authorization (str "Bearer " api-key)
                       :content-type "application/x-www-form-urlencoded"
                       :stripe-version api-version}
