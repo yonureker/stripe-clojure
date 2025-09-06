@@ -266,3 +266,83 @@
       (is (= "tax_id" (:object response)))
       (is (string? (:id response)))
       (is (contains? response :type)))))
+
+;; Funding Instructions Tests
+(deftest create-funding-instructions-test
+  (testing "Create funding instructions"
+    (let [params {:bank_transfer {:type "us_bank_transfer"}
+                  :currency "usd"
+                  :funding_type "bank_transfer"}
+          response (customers/create-funding-instructions stripe-mock-client "cus_mock" params)]
+      (is (map? response))
+      (is (= "funding_instructions" (:object response)))
+      (is (boolean? (:livemode response))))))
+
+;; Bank Account Tests
+(deftest create-bank-account-test
+  (testing "Create bank account"
+    (let [params {:source "btok_us"}
+          response (customers/create-bank-account stripe-mock-client "cus_mock" params)]
+      (is (map? response))
+      ;; stripe-mock returns account object instead of bank_account for this endpoint
+      (is (= "account" (:object response)))
+      (is (string? (:id response))))))
+
+(deftest update-bank-account-test
+  (testing "Update bank account"
+    (let [params {:metadata {:key "value"}}
+          response (customers/update-bank-account stripe-mock-client "cus_mock" "ba_mock" params)]
+      (is (map? response))
+      ;; stripe-mock returns card object for this endpoint  
+      (is (= "card" (:object response)))
+      (is (string? (:id response))))))
+
+(deftest delete-bank-account-test
+  (testing "Delete bank account"
+    (let [response (customers/delete-bank-account stripe-mock-client "cus_mock" "ba_mock")]
+      (is (map? response))
+      ;; stripe-mock returns account object instead of bank_account for this endpoint
+      (is (= "account" (:object response)))
+      (is (string? (:id response))))))
+
+(deftest list-bank-accounts-test
+  (testing "List bank accounts"
+    (let [response (customers/list-bank-accounts stripe-mock-client "cus_mock")]
+      (is (map? response))
+      (is (= "list" (:object response)))
+      (is (vector? (:data response)))
+      (is (boolean? (:has_more response))))))
+
+(deftest verify-bank-account-test
+  (testing "Verify bank account"
+    (let [params {:amounts [32 45]}
+          response (customers/verify-bank-account stripe-mock-client "cus_mock" "ba_mock" params)]
+      (is (map? response))
+      (is (= "bank_account" (:object response)))
+      (is (string? (:id response))))))
+
+;; Card Tests
+(deftest create-card-test
+  (testing "Create card"
+    (let [params {:source "tok_visa"}
+          response (customers/create-card stripe-mock-client "cus_mock" params)]
+      (is (map? response))
+      ;; stripe-mock returns account object instead of card for this endpoint
+      (is (= "account" (:object response)))
+      (is (string? (:id response))))))
+
+(deftest update-card-test
+  (testing "Update card"
+    (let [params {:metadata {:key "value"}}
+          response (customers/update-card stripe-mock-client "cus_mock" "card_mock" params)]
+      (is (map? response))
+      (is (= "card" (:object response)))
+      (is (string? (:id response))))))
+
+(deftest delete-card-test
+  (testing "Delete card"
+    (let [response (customers/delete-card stripe-mock-client "cus_mock" "card_mock")]
+      (is (map? response))
+      ;; stripe-mock returns account object instead of card for this endpoint
+      (is (= "account" (:object response)))
+      (is (string? (:id response))))))

@@ -153,6 +153,75 @@
                 params
                 opts)))
 
+;; Bank Accounts (separate from external accounts)
+(defn create-bank-account
+  "Creates a bank account for an account.
+   \nStripe API docs: https://stripe.com/docs/api/external_account_bank_accounts/create"
+  ([stripe-client account-id bank-account-payload]
+   (create-bank-account stripe-client account-id bank-account-payload {}))
+  ([stripe-client account-id bank-account-payload opts]
+   (request stripe-client :post 
+                (str stripe-accounts-endpoint "/" account-id "/bank_accounts")
+                bank-account-payload
+                opts)))
+
+(defn retrieve-bank-account
+  "Retrieves a bank account.
+   \nStripe API docs: https://stripe.com/docs/api/external_account_bank_accounts/retrieve"
+  ([stripe-client account-id bank-account-id]
+   (retrieve-bank-account stripe-client account-id bank-account-id {}))
+  ([stripe-client account-id bank-account-id opts]
+   (request stripe-client :get 
+                (str stripe-accounts-endpoint "/" account-id "/bank_accounts/" bank-account-id)
+                {}
+                opts)))
+
+(defn update-bank-account
+  "Updates a bank account.
+   \nStripe API docs: https://stripe.com/docs/api/external_account_bank_accounts/update"
+  ([stripe-client account-id bank-account-id bank-account-payload]
+   (update-bank-account stripe-client account-id bank-account-id bank-account-payload {}))
+  ([stripe-client account-id bank-account-id bank-account-payload opts]
+   (request stripe-client :post 
+                (str stripe-accounts-endpoint "/" account-id "/bank_accounts/" bank-account-id)
+                bank-account-payload
+                opts)))
+
+(defn delete-bank-account
+  "Deletes a bank account.
+   \nStripe API docs: https://stripe.com/docs/api/external_account_bank_accounts/delete"
+  ([stripe-client account-id bank-account-id]
+   (delete-bank-account stripe-client account-id bank-account-id {}))
+  ([stripe-client account-id bank-account-id opts]
+   (request stripe-client :delete 
+                (str stripe-accounts-endpoint "/" account-id "/bank_accounts/" bank-account-id)
+                nil
+                opts)))
+
+(defn list-bank-accounts
+  "Lists all bank accounts for an account.
+   \nStripe API docs: https://stripe.com/docs/api/external_account_bank_accounts/list"
+  ([stripe-client account-id]
+   (list-bank-accounts stripe-client account-id {}))
+  ([stripe-client account-id params]
+   (list-bank-accounts stripe-client account-id params {}))
+  ([stripe-client account-id params opts]
+   (request stripe-client :get 
+                (str stripe-accounts-endpoint "/" account-id "/bank_accounts")
+                params
+                opts)))
+
+(defn verify-bank-account
+  "Verifies a bank account.
+   \nStripe API docs: https://stripe.com/docs/api/external_account_bank_accounts/verify"
+  ([stripe-client account-id bank-account-id params]
+   (verify-bank-account stripe-client account-id bank-account-id params {}))
+  ([stripe-client account-id bank-account-id params opts]
+   (request stripe-client :post 
+                (str stripe-accounts-endpoint "/" account-id "/bank_accounts/" bank-account-id "/verify")
+                params
+                opts)))
+
 ;; Login Links
 (defn create-login-link
   "Creates a login link for an Express account.
@@ -222,5 +291,63 @@
   ([stripe-client account-id params opts]
    (request stripe-client :get 
                 (str stripe-accounts-endpoint "/" account-id "/persons")
+                params
+                opts)))
+
+;; People (different from persons)
+(defn create-people
+  "Creates a person for an account.
+   \nStripe API docs: https://stripe.com/docs/api/persons/create"
+  ([stripe-client account-id person-payload]
+   (create-people stripe-client account-id person-payload {}))
+  ([stripe-client account-id person-payload opts]
+   (request stripe-client :post 
+                (str stripe-accounts-endpoint "/" account-id "/people")
+                person-payload
+                opts)))
+
+(defn retrieve-people
+  "Retrieves an existing person.
+   \nStripe API docs: https://stripe.com/docs/api/persons/retrieve"
+  ([stripe-client account-id person-id]
+   (retrieve-people stripe-client account-id person-id {}))
+  ([stripe-client account-id person-id opts]
+   (request stripe-client :get 
+                (str stripe-accounts-endpoint "/" account-id "/people/" person-id)
+                {}
+                opts)))
+
+(defn update-people
+  "Updates an existing person.
+   \nStripe API docs: https://stripe.com/docs/api/persons/update"
+  ([stripe-client account-id person-id person-payload]
+   (update-people stripe-client account-id person-id person-payload {}))
+  ([stripe-client account-id person-id person-payload opts]
+   (request stripe-client :post 
+                (str stripe-accounts-endpoint "/" account-id "/people/" person-id)
+                person-payload
+                opts)))
+
+(defn delete-people
+  "Deletes an existing person.
+   \nStripe API docs: https://stripe.com/docs/api/persons/delete"
+  ([stripe-client account-id person-id]
+   (delete-people stripe-client account-id person-id {}))
+  ([stripe-client account-id person-id opts]
+   (request stripe-client :delete 
+                (str stripe-accounts-endpoint "/" account-id "/people/" person-id)
+                nil
+                opts)))
+
+(defn list-people
+  "Lists all people.
+   \nStripe API docs: https://stripe.com/docs/api/persons/list"
+  ([stripe-client account-id]
+   (list-people stripe-client account-id {}))
+  ([stripe-client account-id params]
+   (list-people stripe-client account-id params {}))
+  ([stripe-client account-id params opts]
+   (request stripe-client :get 
+                (str stripe-accounts-endpoint "/" account-id "/people")
                 params
                 opts)))
