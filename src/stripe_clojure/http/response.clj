@@ -8,8 +8,10 @@
   (if (string? body)
     (try
       (json/parse-string body true)
-      (catch Exception _
-        {:error {:message "Failed to parse error response body"}}))
+      (catch Exception e
+        {:error {:message "Failed to parse error response body"
+                 :original-body body
+                 :parse-error (.getMessage e)}}))
     body))
 
 

@@ -28,7 +28,11 @@
   "Shuts down the client connection manager if it exists."
   [client-config]
   (when-let [cm (:connection-manager client-config)]
-    (.shutdown cm))
+    (try
+      (.shutdown cm)
+      (catch Exception e
+        ;; Silently ignore shutdown errors - connection manager cleanup is non-critical
+        nil)))
   nil)
 
 (defn- create-http-client
