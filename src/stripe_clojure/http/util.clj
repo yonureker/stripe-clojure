@@ -13,12 +13,19 @@
   (str/replace s "-" "_"))
 
 (defn- build-key 
+  "Efficiently builds a key string with optional prefix and bracket notation."
   [^String prefix k]
   (let [k-str (if (keyword? k) (name k) (str k))
         base-name (if (keyword? k) (get-snake-case k-str) k-str)]
     (if (empty? prefix)
-      (str base-name)
-      (str prefix "[" base-name "]"))))
+      base-name
+      ;; Use StringBuilder for efficient string concatenation
+      (let [sb (StringBuilder. (+ (.length prefix) (.length base-name) 2))]
+        (.append sb prefix)
+        (.append sb "[")
+        (.append sb base-name)
+        (.append sb "]")
+        (.toString sb)))))
 
 (defn- flatten-collection
   [acc ^String prefix coll]
@@ -103,27 +110,23 @@
   ^clojure.lang.IPersistentMap [expand]
   (if-not (seq expand)
     {}
-    (let [values (if (string? expand) [expand] expand)
-          result (transient {})]
+    (let [values (if (string? expand) [expand] expand)]
       (if (counted? values)
         ;; Fast path for vectors and other counted collections
-        (let [cnt (count values)]
+        (let [cnt (count values)
+              result (transient {})]
           (loop [idx 0]
-            (when (< idx cnt)
+            (if (< idx cnt)
               (let [key (str "expand[" idx "]")
                     val (nth values idx)]
                 #_{:clj-kondo/ignore [:unused-value]}
                 (assoc! result key val)
-                (recur (unchecked-inc idx))))))
-        ;; Fallback for non-counted collections
-        (loop [idx 0, items (seq values)]
-          (when items
-            (let [key (str "expand[" idx "]")
-                  val (first items)]
-              #_{:clj-kondo/ignore [:unused-value]}
-              (assoc! result key val)
-              (recur (unchecked-inc idx) (next items))))))
-      (persistent! result))))
+                (recur (unchecked-inc idx)))
+              (persistent! result))))
+        ;; Fallback for non-counted collections - use reduce for simplicity
+        (into {} (map-indexed (fn [idx val]
+                                [(str "expand[" idx "]") val])
+                              values))))))
 
 (defn underscore-to-kebab
   "Converts a string from underscore_case to kebab-case.
@@ -137,7 +140,7 @@
 
   Returns:
   A kebab-case version of the input string."
-  [^String s]
+  ^String [^String s]
   (str/replace s \_ \-))
 
 (defn transform-keys
@@ -157,7 +160,7 @@
   (transform-keys {:some_key {:nested_key \"value\"}})
   => {:some-key {:nested-key \"value\"}}"
   [m]
-  (letfn [(transform-key [k]
+  (letfn [(transform-key ^clojure.lang.Keyword [k]
             (keyword (underscore-to-kebab (name k))))
           (transform-value [v]
             (cond
@@ -166,7 +169,7 @@
               :else v))]
     (if (map? m)
       (persistent!
-       (reduce-kv (fn [acc k v]
+       (reduce-kv (fn [^clojure.lang.ITransientMap acc k v]
                     (assoc! acc (transform-key k) (transform-value v)))
                   (transient {})
                   m))
