@@ -154,17 +154,28 @@
    :default-per-route 2
    :insecure? false})
 
-;; Stripe rate limits
+;; Stripe's actual server-side rate limits (from official docs)
 ;; https://docs.stripe.com/rate-limits
-(def default-rate-limit-config
-  {:live {:default {:read 100 :write 100}
-          :files {:read 20 :write 20}     
-          :search {:read 20 :write 0}     
-          :meter {:read 1000 :write 1000}}
-   :test {:default {:read 125 :write 125}   
-          :files {:read 20 :write 20}     
-          :search {:read 20 :write 0}
-          :meter {:read 1000 :write 1000}}})
+;; NOTE: These are for reference only. Client-side throttling is optional.
+(def stripe-server-rate-limits
+  "Stripe's actual server-side rate limits per their official documentation.
+   
+   Key insights:
+   - Live mode: 100 operations/second globally
+   - Test mode: 25 operations/second globally  
+   - Individual endpoints: 25 requests/second default
+   - Most limits are much lower than 1000 req/s"
+  {:live {:global 100                    ; Global limit: 100 operations/second
+          :endpoint-default 25           ; Per-endpoint: 25 requests/second
+          :files {:read 20 :write 20}    ; Files API: 20 read + 20 write/second
+          :search {:read 20}             ; Search API: 20 read/second
+          :meter {:write 1000}}          ; Meter events: 1000 calls/second (live only)
+   :test {:global 25                     ; Global limit: 25 operations/second  
+          :endpoint-default 25           ; Per-endpoint: 25 requests/second
+          :files {:read 20 :write 20}    ; Files API: 20 read + 20 write/second
+          :search {:read 20}             ; Search API: 20 read/second
+          ;; Note: Meter events count against basic limit in test mode
+          }})
 
 (def mock-mode {:protocol "http" 
                 :host (or (System/getenv "STRIPE_MOCK_HOST") "localhost")

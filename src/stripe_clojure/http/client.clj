@@ -30,7 +30,7 @@
   (when-let [cm (:connection-manager client-config)]
     (try
       (.shutdown cm)
-      (catch Exception e
+      (catch Exception _
         ;; Silently ignore shutdown errors - connection manager cleanup is non-critical
         nil)))
   nil)
@@ -76,7 +76,7 @@
   (shutdown [this]
     "Shuts down internal resources (e.g., connection pools)."))
 
-(defrecord StripeClientInstance [config request-fn]
+(defrecord StripeClientInstance [config]
   StripeClient
   (get-client-config [_]
     (mask-client-config config))
@@ -86,6 +86,18 @@
   (shutdown [_]
     (shutdown-connection-manager config)))
 
+(defn- needs-throttling?
+  "Determines if throttling is needed based on user-provided rate limits.
+   
+   Stripe's actual server-side limits are quite low (25-100 req/s), so any
+   user-provided rate limits likely indicate a need for client-side throttling."
+  [rate-limits]
+  (and (some? rate-limits)
+       (seq rate-limits)
+       ;; Any user-provided rate limits indicate they want throttling
+       ;; since Stripe's server limits are already quite restrictive (25-100 req/s)
+       true))
+
 (defn create-instance
   "Creates and returns a new Stripe client instance without using any global state.
    
@@ -94,7 +106,7 @@
    - :api-version, :stripe-account, :max-network-retries, :timeout,
    - :protocol (default: \"https\"),
    - :host (default: \"api.stripe.com\"), :port (default: 443),
-   - :rate-limits,
+   - :rate-limits (only creates throttler if limits are restrictive),
    - :use-connection-pool? (default: false),
    - :pool-options (if pooling is enabled).
    
@@ -103,14 +115,16 @@
   (when-not (:api-key opts)
     (throw (ex-info "API key is required" {:opts opts})))
 
-  (let [throttler (throttle/create-throttler (or (:rate-limits opts) {}))
-        opts-with-throttler (assoc opts :throttler throttler)
+  (let [;; Only create throttler if user provides restrictive rate limits
+        throttler (when (needs-throttling? (:rate-limits opts))
+                    (throttle/create-throttler (:rate-limits opts)))
+        opts-with-throttler (if throttler 
+                              (assoc opts :throttler throttler)
+                              opts)
         {:keys [connection-manager]} (create-http-client (:use-connection-pool? opts)
                                                          (:pool-options opts))
-        config (prepare-config opts-with-throttler connection-manager)
-        client-request-fn (fn [method endpoint params opts effective-config]
-                            (request/make-request method endpoint params opts effective-config))]
-    (->StripeClientInstance config client-request-fn)))
+        config (prepare-config opts-with-throttler connection-manager)]
+    (->StripeClientInstance config)))
 
 (defn request
   "Delegates to client/execute-request for backwards compatibility."
