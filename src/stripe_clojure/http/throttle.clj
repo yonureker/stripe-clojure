@@ -1,6 +1,5 @@
 (ns stripe-clojure.http.throttle
-  (:require [stripe-clojure.config :as config]
-            [clojure.string :as str]))
+  (:require [clojure.string :as str]))
 
 ;; -----------------------------------------------------------
 ;; Throttler and RateLimiter Records
@@ -16,16 +15,16 @@
 (defn create-throttler
   "Creates a per-instance throttler with the given rate limits.
   
-  Merges the provided `rate-limits` with the default configuration.
+  Uses only the provided rate-limits without any defaults, since throttling
+  is now opt-in only when users provide restrictive custom limits.
   
   Parameters:
   - rate-limits: A map of custom rate limits
   
   Returns:
-  A Throttler record with a merged rate-limit configuration and an atom for limiter state."
+  A Throttler record with the provided rate-limit configuration and an atom for limiter state."
   [rate-limits]
-  (let [merged-limits (merge-with merge config/default-rate-limit-config (or rate-limits {}))]
-    (->Throttler merged-limits (atom {}))))
+  (->Throttler (or rate-limits {}) (atom {})))
 
 (defn- make-rate-limiter
   "Creates a new rate limiter with a full token bucket.
@@ -178,16 +177,20 @@
 (defn with-throttling
   "Wraps the provided function `f` with throttling logic using the per-instance throttler.
   
-  ZERO-OVERHEAD DESIGN: Most production apps don't need throttling. This implementation
-  has absolutely minimal overhead when throttling is disabled or set to unlimited rates.
+  TRUE ZERO-OVERHEAD DESIGN: When no throttler is provided (nil), there is literally
+  zero overhead - the function executes directly with no additional logic.
   
   Performance characteristics:
-  - Unlimited rates (≥1000 req/s): ~1-5µs overhead (just function call)
-  - Moderate rates (1-999 req/s): Full throttling with token bucket
+  - No throttler (nil): 0ns overhead (direct function call)
+  - High rates (≥500 req/s): ~1-5µs overhead (just function call)
+  - Normal rates (1-499 req/s): Full throttling with token bucket
   - Rate limit 0: Throttling disabled entirely
   
+  Note: Stripe's actual server limits are 25-100 req/s, so most client-side
+  throttling will use the full token bucket algorithm.
+  
   Parameters:
-  - throttler: A Throttler instance.
+  - throttler: A Throttler instance or nil (for zero overhead).
   - method: HTTP method keyword (:get, :post, etc.).
   - url: The full URL for the API endpoint.
   - api-key: Used to determine whether the requests are in test or live mode.
@@ -196,9 +199,9 @@
   Returns:
   The result of invoking `f` after a token is successfully acquired."
   [^Throttler throttler method url api-key f]
-  ;; ULTRA-FAST PATH: Check for disabled throttling first (most common case)
+  ;; ULTRA-FAST PATH: No throttler = zero overhead (most common case)
   (if (nil? throttler)
-    (f)  ; No throttler = direct execution
+    (f)  ; Direct execution - no overhead at all
     (let [mode (if (or (nil? api-key) (str/starts-with? api-key "sk_test")) :test :live)
           ;; Pre-compute resource type only once
           resource (cond
@@ -216,8 +219,10 @@
         ;; TIER 1: Disabled (0) - Zero overhead
         (zero? rate-limit) (f)
         
-        ;; TIER 2: Unlimited (≥1000) - Minimal overhead  
-        (>= rate-limit 1000) (f)
+        ;; TIER 2: Very High (≥500) - Minimal overhead
+        ;; Most Stripe limits are 25-100 req/s, so 500+ is effectively unlimited
+        (>= rate-limit 500) (f)
         
-        ;; TIER 3: Limited (1-999) - Full throttling
+        ;; TIER 3: Normal (1-499) - Full throttling
+        ;; This covers most realistic Stripe usage scenarios
         :else (do (acquire! throttler mode resource operation) (f))))))
