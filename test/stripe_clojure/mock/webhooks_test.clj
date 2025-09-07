@@ -69,4 +69,23 @@
           header (str "t=" old-ts ",v1=" signature)
           tolerance 300]
       (is (thrown-with-msg? Exception #"Timestamp outside tolerance window"
-                            (wh/construct-event payload header test-webhook-secret {:tolerance tolerance})))))) 
+                            (wh/construct-event payload header test-webhook-secret {:tolerance tolerance}))))))
+
+(deftest test-empty-payload
+  (testing "verify-signature throws an exception when payload is empty"
+    (let [header (wh/generate-test-header-string {:payload "test" :secret test-webhook-secret})]
+      (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Payload is missing or empty"
+                            (wh/verify-signature "" header test-webhook-secret))))))
+
+(deftest test-empty-signature
+  (testing "verify-signature throws an exception when signature is empty"
+    (let [payload (json/generate-string {:id "evt_test" :object "event"})]
+      (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Signature header is missing or empty"
+                            (wh/verify-signature payload "" test-webhook-secret))))))
+
+(deftest test-invalid-timestamp-format
+  (testing "verify-signature throws an exception when timestamp format is invalid"
+    (let [payload (json/generate-string {:id "evt_test" :object "event"})
+          header "t=invalid_timestamp,v1=some_signature"]
+      (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Invalid timestamp format"
+                            (wh/verify-signature payload header test-webhook-secret)))))) 

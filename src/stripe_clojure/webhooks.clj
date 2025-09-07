@@ -57,19 +57,28 @@
 
   Returns true if the signature is valid, otherwise throws an ex-info exception."
   [payload signature webhook-secret & [{:keys [tolerance] :or {tolerance default-tolerance-in-seconds}}]]
+  (when (str/blank? payload)
+    (throw (ex-info "Payload is missing or empty" {:type :missing-payload})))
+  (when (str/blank? signature)
+    (throw (ex-info "Signature header is missing or empty" {:type :missing-signature})))
   (when (str/blank? webhook-secret)
     (throw (ex-info "Webhook secret is missing or empty" {:type :missing-webhook-secret})))
   (let [signature-parts (parse-signature signature)]
     (when-not (and (get signature-parts "t") (get signature-parts "v1"))
       (throw (ex-info "Invalid signature format" {:type :invalid-signature-format})))
-    (let [timestamp (Long/parseLong (get signature-parts "t"))
+    (let [timestamp (try
+                      (Long/parseLong (get signature-parts "t"))
+                      (catch NumberFormatException _
+                        (throw (ex-info "Invalid timestamp format" {:type :invalid-timestamp-format}))))
           current-timestamp (long (/ (System/currentTimeMillis) 1000))
           time-diff (Math/abs (- current-timestamp timestamp))]
       (when (> time-diff tolerance)
         (throw (ex-info "Timestamp outside tolerance window"
                         {:type :timestamp-mismatch
                          :tolerance tolerance
-                         :difference time-diff})))
+                         :difference time-diff
+                         :webhook-timestamp timestamp
+                         :current-timestamp current-timestamp})))
       (let [signed-payload (str timestamp "." payload)
             computed-signature (compute-signature signed-payload webhook-secret)]
         (if (constant-time-equals? (get signature-parts "v1") computed-signature)
@@ -112,7 +121,7 @@
     - :signature (optional, string): a precomputed signature to use instead of computing it.
 
   Returns a header string formatted as \"t=<timestamp>,v1=<signature>\"."
-  [{:keys [payload secret timestamp signature] :as opts}]
+  [{:keys [payload secret timestamp signature]}]
   (let [ts (or timestamp (quot (System/currentTimeMillis) 1000))
         signed-payload (str ts "." payload)
         sig (or signature (compute-signature signed-payload secret))]
