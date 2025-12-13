@@ -3,7 +3,7 @@
 
 ;; Project configuration
 (def lib 'io.github.yonureker/stripe-clojure)
-(def version "1.0.0")
+(def version "1.1.0")
 (def class-dir "target/classes")
 (def basis (b/create-basis {:project "deps.edn"}))
 (def jar-file (format "target/%s-%s.jar" (name lib) version))

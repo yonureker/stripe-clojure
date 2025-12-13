@@ -1,5 +1,24 @@
 # Change Log
 
+## [1.1.0] - 2025-12-12
+
+### API Update
+
+Updated to Stripe API version `2025-11-17.clover`.
+
+#### New Endpoints
+- `balance-settings` - Retrieve and update balance settings
+- `payment-attempt-records` - List and retrieve payment attempt records
+- `payment-records` - Report payments, payment attempts, and refunds
+- `tax/associations` - Find tax associations
+- `terminal/onboarding-links` - Create terminal onboarding links
+- `payment-intents/list-amount-details-line-items` - List line items for payment intents
+
+#### Bug Fixes
+- Fixed auto-pagination returning duplicate items when `starting_after` parameter wasn't being passed correctly
+- Fixed pagination not working with `:kebabify-keys? true` (now checks both `:has_more` and `:has-more`)
+- Fixed reflection warning in retry logic (`Thread/sleep` type hint)
+
 ## [1.0.0] - 2025-01-16
 
 ### 🚀 Major Release - Production Ready
