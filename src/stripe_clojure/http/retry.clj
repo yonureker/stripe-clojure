@@ -23,7 +23,7 @@
         ;; Compute a random jitter (up to half of the exponential delay).
         jitter (rand-int (int (/ exponential-delay 2)))
         ;; Ensure the delay does not exceed the maximum allowed.
-        final-delay (min (+ exponential-delay jitter) max-delay)]
+        final-delay (long (min (+ exponential-delay jitter) max-delay))]
     (Thread/sleep final-delay)))
 
 (defn- retryable-status?
