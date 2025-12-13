@@ -248,16 +248,27 @@ Retries use exponential backoff with jitter.
 
 ## Error Handling
 
-The SDK provides structured error information:
+API errors are returned as maps (not thrown as exceptions):
 
 ```clojure
-(try
-  (customers/retrieve-customer stripe-client "invalid_id")
-  (catch Exception e
-    (let [error-data (ex-data e)]
-      (println "Error:" (:message error-data))
-      (println "Type:" (:type error-data))
-      (println "Status:" (:status error-data)))))
+(let [result (customers/retrieve-customer stripe-client "invalid_id")]
+  (if (:type result)  ;; error responses have :type
+    (do
+      (println "Error:" (:message result))   ;; "No such customer: invalid_id"
+      (println "Type:" (:type result))       ;; "invalid_request_error"
+      (println "Code:" (:code result))       ;; "resource_missing"
+      (println "Status:" (:status result)))  ;; 404
+    (process-customer result)))
+```
+
+Error response structure:
+```clojure
+{:type "invalid_request_error"
+ :code "resource_missing"
+ :message "No such customer: 'invalid_id'"
+ :param "id"
+ :status 404
+ :request-id "req_..."}
 ```
 
 ## Multiple Environments
