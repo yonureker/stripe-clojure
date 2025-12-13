@@ -1,9 +1,11 @@
 (ns stripe-clojure.http.pagination)
 
 (defn- get-next-page-params
-  "Extract parameters for the next page from a Stripe API response."
+  "Extract parameters for the next page from a Stripe API response.
+   Handles both snake_case (:has_more) and kebab-case (:has-more) keys
+   to support the :kebabify-keys? option."
   [response]
-  (when (:has_more response)
+  (when (or (:has_more response) (:has-more response))
     {:starting-after (-> response :data last :id)}))
 
 (defn is-paginated-endpoint?
@@ -28,7 +30,7 @@
    - url: The API endpoint URL
    - params: The request parameters
    - options: Additional options, including :auto-paginate?
-   - make-request-fn: A function that makes a single API request
+   - make-request-fn: A function that takes params and makes a single API request
 
    Returns:
    If :auto-paginate? is true, returns a lazy sequence of all items across all pages.
@@ -36,9 +38,9 @@
   [method url params options make-request-fn]
   (if (:auto-paginate? options)
     (lazy-seq
-     (let [response (make-request-fn)
+     (let [response (make-request-fn params)
            items (:data response)]
        (if-let [next-page-params (get-next-page-params response)]
          (concat items (paginate method url (merge params next-page-params) options make-request-fn))
          items)))
-    (make-request-fn)))
+    (make-request-fn params)))

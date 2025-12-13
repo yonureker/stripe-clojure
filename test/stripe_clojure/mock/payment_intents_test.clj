@@ -101,3 +101,11 @@
       (is (= "payment_intent" (:object response))
           "Returned object should be 'payment_intent'")
       (is (contains? response :id) "Expected response to contain the :id key"))))
+
+(deftest list-amount-details-line-items-test
+  (testing "list-amount-details-line-items returns line items for a payment intent"
+    (let [dummy-id "pi_mock_123"
+          response (pi/list-amount-details-line-items stripe-mock-client dummy-id)]
+      (is (map? response) "Response should be a map")
+      (is (= "list" (:object response)) "Response object should be 'list'")
+      (is (vector? (:data response)) "The :data key should contain a vector"))))

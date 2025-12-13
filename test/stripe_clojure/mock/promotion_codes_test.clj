@@ -5,7 +5,7 @@
 
 (deftest create-promotion-code-test
   (testing "Create promotion code"
-    (let [params {:coupon "cpn_mock" :code "PROMO50"}
+    (let [params {:promotion {:type "coupon" :coupon "cpn_mock"} :code "PROMO50"}
           response (promo/create-promotion-code stripe-mock-client params)]
       (is (map? response))
       (is (= "promotion_code" (:object response)))

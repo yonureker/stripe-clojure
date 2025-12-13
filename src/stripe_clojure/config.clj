@@ -17,6 +17,7 @@
    :application-fees (str "/" stripe-api-namespace "/application_fees")
    :apps-secrets (str "/" stripe-api-namespace "/apps/secrets")
    :balance (str "/" stripe-api-namespace "/balance")
+   :balance-settings (str "/" stripe-api-namespace "/balance_settings")
    :balance-transactions (str "/" stripe-api-namespace "/balance_transactions")
    :billing-alerts (str "/" stripe-api-namespace "/billing/alerts")
    :billing-credit-balance-summary (str "/" stripe-api-namespace "/billing/credit_balance_summary")
@@ -71,11 +72,13 @@
    :link-account-sessions (str "/" stripe-api-namespace "/link_account_sessions")
    :linked-accounts (str "/" stripe-api-namespace "/linked_accounts")
    :mandates (str "/" stripe-api-namespace "/mandates")
+   :payment-attempt-records (str "/" stripe-api-namespace "/payment_attempt_records")
    :payment-intents (str "/" stripe-api-namespace "/payment_intents")
    :payment-links (str "/" stripe-api-namespace "/payment_links")
    :payment-method-configurations (str "/" stripe-api-namespace "/payment_method_configurations")
    :payment-method-domains (str "/" stripe-api-namespace "/payment_method_domains")
    :payment-methods (str "/" stripe-api-namespace "/payment_methods")
+   :payment-records (str "/" stripe-api-namespace "/payment_records")
    :payouts (str "/" stripe-api-namespace "/payouts")
    :plans (str "/" stripe-api-namespace "/plans")
    :prices (str "/" stripe-api-namespace "/prices")
@@ -97,6 +100,7 @@
    :subscriptions (str "/" stripe-api-namespace "/subscriptions")
    :subscription-items (str "/" stripe-api-namespace "/subscription_items")
    :subscription-schedules (str "/" stripe-api-namespace "/subscription_schedules")
+   :tax-associations (str "/" stripe-api-namespace "/tax/associations")
    :tax-calculations (str "/" stripe-api-namespace "/tax/calculations")
    :tax-registrations (str "/" stripe-api-namespace "/tax/registrations")
    :tax-settings (str "/" stripe-api-namespace "/tax/settings")
@@ -107,6 +111,7 @@
    :terminal-configurations (str "/" stripe-api-namespace "/terminal/configurations")
    :terminal-connection-tokens (str "/" stripe-api-namespace "/terminal/connection_tokens")
    :terminal-locations (str "/" stripe-api-namespace "/terminal/locations")
+   :terminal-onboarding-links (str "/" stripe-api-namespace "/terminal/onboarding_links")
    :terminal-readers (str "/" stripe-api-namespace "/terminal/readers")
    :test-helpers-customers (str "/" stripe-api-namespace "/test_helpers/customers")
    :test-helpers-confirmation-tokens (str "/" stripe-api-namespace "/test_helpers/confirmation_tokens")
@@ -135,7 +140,7 @@
           suffix (subs api-key (- (count api-key) 4))]
       (str prefix "..." suffix))))
 
-(def base-api-version "2025-08-27.basil")
+(def base-api-version "2025-11-17.clover")
 
 (def default-client-config
   {:protocol "https"

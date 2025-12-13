@@ -132,3 +132,16 @@
                 (str stripe-payment-intents-endpoint "/" payment-intent-id "/apply_customer_balance")
                 params
                 opts)))
+
+(defn list-amount-details-line-items
+  "Lists all line items of a given payment intent.
+   \nStripe API docs: https://docs.stripe.com/api/payment_intents/line_items"
+  ([stripe-client payment-intent-id]
+   (list-amount-details-line-items stripe-client payment-intent-id {}))
+  ([stripe-client payment-intent-id params]
+   (list-amount-details-line-items stripe-client payment-intent-id params {}))
+  ([stripe-client payment-intent-id params opts]
+   (request stripe-client :get
+                (str stripe-payment-intents-endpoint "/" payment-intent-id "/amount_details_line_items")
+                params
+                opts)))

@@ -119,7 +119,19 @@
         (let [raw-result (request-with-retry)
               request-id (get-in raw-result [:headers "request-id"])
               result (response/process-response raw-result full-response? kebabify-keys?)
-              make-request-fn #(response/process-response (request-with-retry) full-response? kebabify-keys?)
+              ;; make-request-fn takes params and builds fresh request options
+              make-request-fn (fn [page-params]
+                                (let [page-request-params (merge (util/flatten-params page-params) expand-params)
+                                      page-options (cond-> {:headers all-headers
+                                                            :as :json
+                                                            :socket-timeout timeout-value
+                                                            :conn-timeout timeout-value}
+                                                     connection-manager (assoc :connection-manager connection-manager)
+                                                     (seq page-request-params) (assoc :query-params page-request-params))
+                                      page-request-with-retry (retry/with-retry 
+                                                                #(send-stripe-api-request method full-url page-options) 
+                                                                max-network-retries)]
+                                  (response/process-response (page-request-with-retry) full-response? kebabify-keys?)))
               final-result (if should-paginate?
                              (pagination/paginate method full-url params opts make-request-fn)
                              result)
