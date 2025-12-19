@@ -3,7 +3,8 @@
             [clojure.test :refer [deftest is testing]]
             [stripe-clojure.terminal.onboarding-links :as onboarding-links]))
 
-(deftest create-onboarding-link-test
+;; NOTE: This test is skipped because stripe-mock doesn't support this endpoint yet
+(deftest ^:skip-mock create-onboarding-link-test
   (testing "Create terminal onboarding link"
     (let [params {:link_type "apple_terms_and_conditions"
                   :link_options {:apple_terms_and_conditions {:merchant_display_name "Test Merchant"}}}

@@ -63,7 +63,7 @@
         (when (= type event-type)
           (try
             (handler event-data)
-            (catch Exception e
+            (catch Exception _
               ;; Silently ignore listener failures - don't let them break the request
               ;; Applications can add their own error handling in listeners if needed
               nil)))))))

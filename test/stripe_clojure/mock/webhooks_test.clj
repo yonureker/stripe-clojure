@@ -1,5 +1,5 @@
 (ns stripe-clojure.mock.webhooks-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [cheshire.core :as json]
             [stripe-clojure.webhooks :as wh]))
 

@@ -10,7 +10,8 @@ Clojure SDK for the [Stripe API](https://stripe.com/docs/api). Listed by Stripe 
 
 - Complete Stripe API coverage
 - Auto-pagination with lazy sequences
-- Connection pooling and rate limiting
+- HTTP/2 with automatic connection management
+- Rate limiting support
 - Automatic retries with exponential backoff
 - Webhook signature verification
 - Request/response event hooks
@@ -19,13 +20,15 @@ Clojure SDK for the [Stripe API](https://stripe.com/docs/api). Listed by Stripe 
 
 Add to your `deps.edn`:
 ```clojure
-{:deps {io.github.yonureker/stripe-clojure {:mvn/version "1.1.0"}}}
+{:deps {io.github.yonureker/stripe-clojure {:mvn/version "2.0.0"}}}
 ```
 
 Or in `project.clj`:
 ```clojure
-[io.github.yonureker/stripe-clojure "1.1.0"]
+[io.github.yonureker/stripe-clojure "2.0.0"]
 ```
+
+> **Note:** Version 2.0.0 requires Java 11+. For Java 8 support, use version 1.1.0.
 
 ## Basic Usage
 
@@ -60,8 +63,6 @@ Create isolated client instances with custom configurations:
      :api-version "2025-11-17.clover"
      :max-network-retries 3
      :timeout 30000
-     :use-connection-pool? true
-     :pool-options {:threads 8 :timeout 10}
      :rate-limits {:live {:default {:read 50 :write 25}}}}))
 
 (def development-client
@@ -85,8 +86,6 @@ Create isolated client instances with custom configurations:
 | `:port` | `443` | API port number |
 | `:protocol` | `"https"` | Protocol to use (always use HTTPS in production) |
 | `:rate-limits` | [See config](src/stripe_clojure/config.clj) | Custom rate limiting configuration |
-| `:use-connection-pool?` | `false` | Enable HTTP connection pooling |
-| `:pool-options` | [See config](src/stripe_clojure/config.clj) | Connection pool settings |
 | `:full-response?` | `false` | Return complete HTTP response or just body |
 | `:kebabify-keys?` | `false` | Convert response keys to kebab-case |
 
@@ -288,21 +287,6 @@ Manage different environments with separate clients:
 (stripe/shutdown-stripe-client! us-client)
 ```
 
-## Connection Pooling
-
-Enable connection pooling for high-throughput applications:
-
-```clojure
-(def pooled-client
-  (stripe/init-stripe 
-    {:api-key "sk_live_..."
-     :use-connection-pool? true
-     :pool-options {:max-total 50
-                    :max-per-route 20
-                    :timeout 30
-                    :threads 8}}))
-```
-
 ## Rate Limiting
 
 Configure rate limiting aligned with Stripe's limits:
@@ -353,7 +337,7 @@ Verify webhook signatures:
 
 3. **Run tests:**
    ```bash
-   clj -M:test
+   clj -M:test -e :skip-mock
    ```
 
 ## Contributing

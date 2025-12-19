@@ -1,5 +1,16 @@
 # Change Log
 
+## [2.0.0] - 2025-12-18
+
+### Breaking Changes
+- Requires Java 11+ (previously Java 8+)
+- Removed `:use-connection-pool?` and `:pool-options` configuration options (deprecated with warning)
+
+### Changes
+- Replaced `clj-http` with `hato` for HTTP/2 support
+- Connection pooling is now automatic via HTTP/2 multiplexing
+- Removed `commons-codec` dependency (uses pure Java for hex encoding in webhooks)
+
 ## [1.1.0] - 2025-12-12
 
 ### API Update
