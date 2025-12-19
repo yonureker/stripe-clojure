@@ -1,5 +1,5 @@
 (ns stripe-clojure.http.client
-  (:require [clj-http.conn-mgr :as conn-mgr]
+  (:require [hato.client :as hato]
             [stripe-clojure.http.throttle :as throttle]
             [stripe-clojure.http.request :as request]
             [stripe-clojure.config :as config]))
@@ -9,7 +9,7 @@
   "Returns the client configuration with sensitive data (like the API key) masked."
   [client-config]
   (-> client-config
-      (dissoc :connection-manager :throttler)
+      (dissoc :http-client :throttler)
       (assoc :api-key (config/mask-api-key (:api-key client-config)))))
 
 (defn merge-client-config
@@ -24,29 +24,21 @@
                        :timeout
                        :full-response?])))
 
-(defn shutdown-connection-manager
-  "Shuts down the client connection manager if it exists."
-  [client-config]
-  (when-let [cm (:connection-manager client-config)]
-    (try
-      (.shutdown cm)
-      (catch Exception _
-        ;; Silently ignore shutdown errors - connection manager cleanup is non-critical
-        nil)))
+(defn shutdown-http-client
+  "Shuts down the HTTP client if needed."
+  [_client-config]
   nil)
 
 (defn- create-http-client
-  "Creates an HTTP client, optionally with a connection pool."
-  [use-connection-pool? pool-options]
-  (if use-connection-pool?
-    (let [cm (conn-mgr/make-reusable-conn-manager
-              (merge config/default-connection-pool-options pool-options))]
-      {:connection-manager cm})
-    {}))
+  "Creates a Hato HTTP client with HTTP/2 support."
+  [opts]
+  (hato/build-http-client
+   {:version :http-2
+    :connect-timeout (or (:timeout opts) (:timeout config/default-client-config))}))
 
 (defn- prepare-config
   "Merges user-provided options with defaults."
-  [opts connection-manager]
+  [opts http-client]
   (let [selected-opts (select-keys opts [:api-key
                                          :api-version
                                          :stripe-account
@@ -59,11 +51,10 @@
                                          :rate-limits
                                          :throttler
                                          :kebabify-keys?])
-        config    (merge config/default-client-config
-                             selected-opts
-                             {:connection-manager connection-manager
-                              :use-connection-pool? (boolean (:use-connection-pool? opts))
-                              :listeners (atom [])})]
+        config (merge config/default-client-config
+                      selected-opts
+                      {:http-client http-client
+                       :listeners (atom [])})]
     config))
 
 ;; ================= PROTOCOL & RECORD =================
@@ -84,7 +75,7 @@
     (let [effective-config (merge-client-config config opts)]
       (request/make-request method endpoint params opts effective-config)))
   (shutdown [_]
-    (shutdown-connection-manager config)))
+    (shutdown-http-client config)))
 
 (defn- needs-throttling?
   "Determines if throttling is needed based on user-provided rate limits.
@@ -94,8 +85,6 @@
   [rate-limits]
   (and (some? rate-limits)
        (seq rate-limits)
-       ;; Any user-provided rate limits indicate they want throttling
-       ;; since Stripe's server limits are already quite restrictive (25-100 req/s)
        true))
 
 (defn create-instance
@@ -106,24 +95,20 @@
    - :api-version, :stripe-account, :max-network-retries, :timeout,
    - :protocol (default: \"https\"),
    - :host (default: \"api.stripe.com\"), :port (default: 443),
-   - :rate-limits (only creates throttler if limits are restrictive),
-   - :use-connection-pool? (default: false),
-   - :pool-options (if pooling is enabled).
+   - :rate-limits (only creates throttler if limits are restrictive).
    
    Returns a StripeClientInstance record that implements the StripeClient protocol."
   [opts]
   (when-not (:api-key opts)
     (throw (ex-info "API key is required" {:opts opts})))
 
-  (let [;; Only create throttler if user provides restrictive rate limits
-        throttler (when (needs-throttling? (:rate-limits opts))
+  (let [throttler (when (needs-throttling? (:rate-limits opts))
                     (throttle/create-throttler (:rate-limits opts)))
-        opts-with-throttler (if throttler 
+        opts-with-throttler (if throttler
                               (assoc opts :throttler throttler)
                               opts)
-        {:keys [connection-manager]} (create-http-client (:use-connection-pool? opts)
-                                                         (:pool-options opts))
-        config (prepare-config opts-with-throttler connection-manager)]
+        http-client (create-http-client opts)
+        config (prepare-config opts-with-throttler http-client)]
     (->StripeClientInstance config)))
 
 (defn request

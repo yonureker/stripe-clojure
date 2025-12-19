@@ -11,18 +11,30 @@
   (:require [clojure.string :as str]
             [cheshire.core :as json])
   (:import (javax.crypto Mac)
-           (javax.crypto.spec SecretKeySpec)
-           (org.apache.commons.codec.binary Hex)))
+           (javax.crypto.spec SecretKeySpec)))
 
 (def ^:private default-tolerance-in-seconds 300) ; 5 minutes
 
+(defn- bytes->hex
+  "Converts a byte array to a lowercase hex string.
+   
+   Example:
+     (bytes->hex (byte-array [0 15 255]))
+     ;; => \"000fff\""
+  [^bytes b]
+  (apply str (map #(format "%02x" %) b)))
+
 (defn compute-signature
-  "Computes the HMAC SHA-256 signature of the given payload using the provided secret."
+  "Computes the HMAC SHA-256 signature of the given payload using the provided secret.
+   
+   Example:
+     (compute-signature \"1234567890.{\\\"id\\\":\\\"evt_123\\\"}\" \"whsec_test123\")
+     ;; => \"a]b2c3d4e5f6...\" (64-character hex string)"
   [^String payload ^String secret]
   (let [key (SecretKeySpec. (.getBytes secret "UTF-8") "HmacSHA256")
         mac (doto (Mac/getInstance "HmacSHA256")
               (.init key))]
-    (Hex/encodeHexString (.doFinal mac (.getBytes payload "UTF-8")))))
+    (bytes->hex (.doFinal mac (.getBytes payload "UTF-8")))))
 
 (defn- parse-signature
   "Parses the Stripe webhook signature header into a map.

@@ -102,7 +102,8 @@
           "Returned object should be 'payment_intent'")
       (is (contains? response :id) "Expected response to contain the :id key"))))
 
-(deftest list-amount-details-line-items-test
+;; NOTE: This test is skipped because stripe-mock doesn't support this endpoint yet
+(deftest ^:skip-mock list-amount-details-line-items-test
   (testing "list-amount-details-line-items returns line items for a payment intent"
     (let [dummy-id "pi_mock_123"
           response (pi/list-amount-details-line-items stripe-mock-client dummy-id)]
