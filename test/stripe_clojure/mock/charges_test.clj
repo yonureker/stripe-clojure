@@ -90,7 +90,7 @@
       (is (= "charge" (:object response)))
       ;; Verify that the expanded field is returned as a map.
       (is (map? (:balance_transaction response)))
-      (is (= "balance_transaction" (:object (:balance_transaction response))))))
+      (is (= "balance_transaction" (:object (:balance_transaction response)))))))
 
 ;; Dispute Tests
 (deftest retrieve-dispute-test
@@ -134,4 +134,4 @@
           response (charges/update-refund stripe-mock-client "ch_mock" "re_mock" params)]
       (is (map? response))
       (is (= "refund" (:object response)))
-      (is (string? (:id response)))))))
+      (is (string? (:id response))))))
