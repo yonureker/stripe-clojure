@@ -21,15 +21,6 @@
    [:enum :live :test]
    RateLimitCategory])
 
-;; Connection pool schemas
-
-(def ConnectionPoolOptions
-  [:map {:closed true}
-   [:timeout {:optional true} NonNegativeInt]
-   [:threads {:optional true} [:and int? [:>= 1]]]
-   [:default-per-route {:optional true} [:and int? [:>= 1]]]
-   [:insecure? {:optional true} boolean?]])
-
 ;; Stripe client schemas
 
 (def StripeClient
@@ -41,6 +32,4 @@
     [:host {:optional true} string?]
     [:port {:optional true} pos-int?]
     [:rate-limits {:optional true} RateLimits]
-    [:use-connection-pool? {:optional true} boolean?]
-    [:pool-options {:optional true} ConnectionPoolOptions]
     [:kebabify-keys? {:optional true} boolean?]]))

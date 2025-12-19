@@ -1,5 +1,5 @@
 (ns stripe-clojure.http.request
-  (:require [clj-http.client :as http]
+  (:require [hato.client :as hato]
             [stripe-clojure.http.throttle :as throttle]
             [stripe-clojure.http.retry :as retry]
             [stripe-clojure.http.pagination :as pagination]
@@ -10,6 +10,10 @@
             [malli.core :as m]
             [malli.error :as me]))
 
+(def ^:private default-timeout-ms
+  "Default timeout for HTTP requests in milliseconds (80 seconds)."
+  80000)
+
 (defn send-stripe-api-request
   "Sends an HTTP request to the Stripe API."
   [method url options]
@@ -18,15 +22,19 @@
                     {:method method :supported-methods #{:get :post :delete}})))
   (try
     (case method
-      :get    (http/get url options)
-      :post   (http/post url options)
-      :delete (http/delete url options))
+      :get    (hato/get url options)
+      :post   (hato/post url options)
+      :delete (hato/delete url options))
     (catch Exception e
-      (or (ex-data e)                    ;; ex-data might have :status
-          {:status 500                    ;; ensure we have a status
+      (or (ex-data e)
+          {:status 500
            :error e
            :error-type "network-error"
            :message (.getMessage e)}))))
+
+;; -----------------------------------------------------------
+;; Helper functions
+;; -----------------------------------------------------------
 
 (defn- idempotent-method?
   "Checks if the HTTP method is naturally idempotent."
@@ -41,6 +49,42 @@
 (defn generate-idempotency-key []
   (str (java.util.UUID/randomUUID)))
 
+(defn- validate-request-opts!
+  "Validates request options against the schema. Throws if invalid."
+  [opts]
+  (when-let [explanation (m/explain schema/RequestOpts opts)]
+    (let [humanized (me/humanize explanation)]
+      (throw (ex-info (str "Invalid request options: " (pr-str humanized))
+                      {:errors humanized
+                       :provided-options opts})))))
+
+(defn- validate-url!
+  "Validates that the URL has a valid format. Throws if invalid."
+  [full-url base-url endpoint]
+  (when-not (re-matches #"^https?://.*" full-url)
+    (throw (ex-info "Invalid URL format" 
+                    {:url full-url :base-url base-url :endpoint endpoint}))))
+
+(defn- build-request-headers
+  "Builds the headers map for a Stripe API request."
+  [{:keys [api-key api-version stripe-account idempotency-key test-clock custom-headers]}]
+  (cond-> {"authorization" (str "Bearer " api-key)
+           "content-type" "application/x-www-form-urlencoded"
+           "stripe-version" api-version}
+    stripe-account (assoc "stripe-account" stripe-account)
+    idempotency-key (assoc "idempotency-key" idempotency-key)
+    test-clock (assoc "stripe-test-clock" test-clock)
+    (seq custom-headers) (merge custom-headers)))
+
+(defn- build-http-options
+  "Builds the hato options map for a request."
+  [{:keys [headers timeout http-client method params]}]
+  (cond-> {:headers headers
+           :as :json
+           :timeout timeout
+           :http-client http-client}
+    (seq params) (assoc (if (= method :get) :query-params :form-params) params)))
+
 (defn make-request
   "Makes an HTTP request to the Stripe API with retry capability for idempotent requests.
    
@@ -51,17 +95,13 @@
    - opts: A map of additional options
    - config: The effective configuration (from closure)"
   [method url params opts config]
-  ;; Always validate request options - prevents invalid API calls
-  (when (m/explain schema/RequestOpts opts)
-    (let [humanized (me/humanize (m/explain schema/RequestOpts opts))]
-      (throw (ex-info (str "Invalid request options: " (pr-str humanized))
-                              {:errors humanized
-                               :provided-options opts}))))
+  ;; Validate request options upfront
+  (validate-request-opts! opts)
   
   (let [{:keys [api-key
                 api-version
                 stripe-account
-                connection-manager
+                http-client
                 max-network-retries
                 timeout
                 full-response?
@@ -70,39 +110,31 @@
         request-start-time (System/currentTimeMillis)
         base-url (construct-base-url config)
         full-url (str base-url url)
-        _ (when-not (re-matches #"^https?://.*" full-url)
-            (throw (ex-info "Invalid URL format" {:url full-url :base-url base-url :endpoint url})))
-        base-headers {:authorization (str "Bearer " api-key)
-                      :content-type "application/x-www-form-urlencoded"
-                      :stripe-version api-version}
+        _ (validate-url! full-url base-url url)
         ;; Generate idempotency key if needed
         idempotency-key (or (:idempotency-key opts)
                             (when (idempotent-method? method)
                               (generate-idempotency-key)))
         {:keys [expand custom-headers test-clock auto-paginate?]} opts
-        all-headers (cond-> base-headers
-                      stripe-account (assoc :stripe-account stripe-account)
-                      idempotency-key (assoc :idempotency-key idempotency-key)
-                      test-clock (assoc :stripe-test-clock test-clock)
-                      (seq custom-headers) (merge custom-headers))
+        timeout-value (or timeout default-timeout-ms)
+        all-headers (build-request-headers {:api-key api-key
+                                            :api-version api-version
+                                            :stripe-account stripe-account
+                                            :idempotency-key idempotency-key
+                                            :test-clock test-clock
+                                            :custom-headers custom-headers})
         expand-params (util/format-expand expand)
         flattened-params (util/flatten-params params)
         request-params (merge flattened-params expand-params)
-        timeout-value (or timeout 80000)
-        options (cond-> {:headers all-headers
-                         :as :json
-                         :socket-timeout timeout-value
-                         :conn-timeout timeout-value}
-                  connection-manager (assoc :connection-manager connection-manager)
-                  (seq request-params) (assoc (if (= method :get)
-                                                :query-params
-                                                :form-params)
-                                              request-params))
+        options (build-http-options {:headers all-headers
+                                     :timeout timeout-value
+                                     :http-client http-client
+                                     :method method
+                                     :params request-params})
         should-paginate? (and (= method :get)
                               auto-paginate?
                               (pagination/is-paginated-endpoint? full-url))
         request-with-retry (retry/with-retry #(send-stripe-api-request method full-url options) max-network-retries)
-        ;; throttling specific
         effective-throttler (:throttler config)
         base-event-data {:method method
                          :url url
@@ -119,15 +151,14 @@
         (let [raw-result (request-with-retry)
               request-id (get-in raw-result [:headers "request-id"])
               result (response/process-response raw-result full-response? kebabify-keys?)
-              ;; make-request-fn takes params and builds fresh request options
+              ;; make-request-fn for pagination - builds fresh request options per page
               make-request-fn (fn [page-params]
                                 (let [page-request-params (merge (util/flatten-params page-params) expand-params)
-                                      page-options (cond-> {:headers all-headers
-                                                            :as :json
-                                                            :socket-timeout timeout-value
-                                                            :conn-timeout timeout-value}
-                                                     connection-manager (assoc :connection-manager connection-manager)
-                                                     (seq page-request-params) (assoc :query-params page-request-params))
+                                      page-options (build-http-options {:headers all-headers
+                                                                        :timeout timeout-value
+                                                                        :http-client http-client
+                                                                        :method method
+                                                                        :params page-request-params})
                                       page-request-with-retry (retry/with-retry 
                                                                 #(send-stripe-api-request method full-url page-options) 
                                                                 max-network-retries)]
