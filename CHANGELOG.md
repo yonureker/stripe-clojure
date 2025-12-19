@@ -1,6 +1,18 @@
 # Change Log
 
+## [2.1.0] - 2025-12-18
+
+**Stripe API Version: `2025-12-15.clover`**
+
+### Removed (Deprecated)
+- `link_account_sessions` - use `financial_connections/sessions` instead
+- `linked_accounts` - use `financial_connections/accounts` instead
+- `issuing/settlements` - removed from Stripe API
+- `external_accounts` - use methods in `accounts` namespace instead
+
 ## [2.0.0] - 2025-12-18
+
+**Stripe API Version: `2025-11-17.clover`**
 
 ### Breaking Changes
 - Requires Java 11+ (previously Java 8+)
