@@ -26,4 +26,4 @@ settings.xml
 /.idea/
 
 #hidden test files
-/test/stripe_clojure/unit/
+/test/stripe_clojure/unit/spec3*.json
