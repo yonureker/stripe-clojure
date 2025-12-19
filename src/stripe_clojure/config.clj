@@ -47,7 +47,6 @@
    :ephemeral-keys (str "/" stripe-api-namespace "/ephemeral_keys")
    :events (str "/" stripe-api-namespace "/events")
    :exchange-rates (str "/" stripe-api-namespace "/exchange_rates")
-   :external-accounts (str "/" stripe-api-namespace "/external_accounts")
    :files (str "/" stripe-api-namespace "/files")
    :file-links (str "/" stripe-api-namespace "/file_links")
    :financial-connections-accounts (str "/" stripe-api-namespace "/financial_connections/accounts")
@@ -66,11 +65,8 @@
    :issuing-disputes (str "/" stripe-api-namespace "/issuing/disputes")
    :issuing-personalization-designs (str "/" stripe-api-namespace "/issuing/personalization_designs")
    :issuing-physical-bundles (str "/" stripe-api-namespace "/issuing/physical_bundles")
-   :issuing-settlements (str "/" stripe-api-namespace "/issuing/settlements")
    :issuing-tokens (str "/" stripe-api-namespace "/issuing/tokens")
    :issuing-transactions (str "/" stripe-api-namespace "/issuing/transactions")
-   :link-account-sessions (str "/" stripe-api-namespace "/link_account_sessions")
-   :linked-accounts (str "/" stripe-api-namespace "/linked_accounts")
    :mandates (str "/" stripe-api-namespace "/mandates")
    :payment-attempt-records (str "/" stripe-api-namespace "/payment_attempt_records")
    :payment-intents (str "/" stripe-api-namespace "/payment_intents")
@@ -140,7 +136,7 @@
           suffix (subs api-key (- (count api-key) 4))]
       (str prefix "..." suffix))))
 
-(def base-api-version "2025-11-17.clover")
+(def base-api-version "2025-12-15.clover")
 
 (def default-client-config
   {:protocol "https"
