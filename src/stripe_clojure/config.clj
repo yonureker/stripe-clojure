@@ -3,7 +3,7 @@
 
 ;; Default Configuration
 (def api-keys
-  {:test (or (System/getenv "STRIPE_TEST_API_KEY") "test_api_key")})
+  {:test (or (System/getenv "STRIPE_TEST_API_KEY") "sk_test_mock123")})
 
 ;; API Endpoints
 (def stripe-api-namespace "v1")
@@ -151,13 +151,6 @@
    :timeout 80000
    :full-response? false
    :kebabify-keys? false})
-
-;; Connection pool options
-(def default-connection-pool-options
-  {:timeout 5
-   :threads 4
-   :default-per-route 2
-   :insecure? false})
 
 ;; Stripe's actual server-side rate limits (from official docs)
 ;; https://docs.stripe.com/rate-limits
