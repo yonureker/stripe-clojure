@@ -14,7 +14,7 @@
 
 **Stripe API Version: `2025-11-17.clover`**
 
-### Breaking Changes
+### Breaking Changes ⚠️ ⚠️ ⚠️
 - Requires Java 11+ (previously Java 8+)
 - Removed `:use-connection-pool?` and `:pool-options` configuration options (deprecated with warning)
 
