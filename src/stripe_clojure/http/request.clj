@@ -18,7 +18,7 @@
   "Sends an HTTP request to the Stripe API."
   [method url options]
   (when-not (#{:get :post :delete} method)
-    (throw (ex-info "Unsupported HTTP method. Must be one of: :get, :post, :delete" 
+    (throw (ex-info "Unsupported HTTP method. Must be one of: :get, :post, :delete"
                     {:method method :supported-methods #{:get :post :delete}})))
   (try
     (case method
@@ -39,7 +39,7 @@
 (defn- idempotent-method?
   "Checks if the HTTP method is naturally idempotent."
   [method]
-  (#{:get :put :delete} method)) 
+  (#{:get :put :delete} method))
 
 (defn- construct-base-url
   "Constructs the base URL from config"
@@ -62,18 +62,20 @@
   "Validates that the URL has a valid format. Throws if invalid."
   [full-url base-url endpoint]
   (when-not (re-matches #"^https?://.*" full-url)
-    (throw (ex-info "Invalid URL format" 
+    (throw (ex-info "Invalid URL format"
                     {:url full-url :base-url base-url :endpoint endpoint}))))
 
 (defn- build-request-headers
   "Builds the headers map for a Stripe API request."
-  [{:keys [api-key api-version stripe-account idempotency-key test-clock custom-headers]}]
+  [{:keys [api-key api-version stripe-account idempotency-key test-clock
+           stripe-beta custom-headers]}]
   (cond-> {"authorization" (str "Bearer " api-key)
            "content-type" "application/x-www-form-urlencoded"
            "stripe-version" api-version}
     stripe-account (assoc "stripe-account" stripe-account)
     idempotency-key (assoc "idempotency-key" idempotency-key)
     test-clock (assoc "stripe-test-clock" test-clock)
+    stripe-beta (assoc "stripe-beta" stripe-beta)
     (seq custom-headers) (merge custom-headers)))
 
 (defn- build-http-options
@@ -87,7 +89,7 @@
 
 (defn make-request
   "Makes an HTTP request to the Stripe API with retry capability for idempotent requests.
-   
+
    Parameters:
    - method: The HTTP method as a keyword (:get, :post, or :delete)
    - url: The full URL for the API endpoint
@@ -97,7 +99,7 @@
   [method url params opts config]
   ;; Validate request options upfront
   (validate-request-opts! opts)
-  
+
   (let [{:keys [api-key
                 api-version
                 stripe-account
@@ -115,13 +117,14 @@
         idempotency-key (or (:idempotency-key opts)
                             (when (idempotent-method? method)
                               (generate-idempotency-key)))
-        {:keys [expand custom-headers test-clock auto-paginate?]} opts
+        {:keys [expand custom-headers test-clock stripe-beta auto-paginate?]} opts
         timeout-value (or timeout default-timeout-ms)
         all-headers (build-request-headers {:api-key api-key
                                             :api-version api-version
                                             :stripe-account stripe-account
                                             :idempotency-key idempotency-key
                                             :test-clock test-clock
+                                            :stripe-beta stripe-beta
                                             :custom-headers custom-headers})
         expand-params (util/format-expand expand)
         flattened-params (util/flatten-params params)
@@ -159,8 +162,8 @@
                                                                         :http-client http-client
                                                                         :method method
                                                                         :params page-request-params})
-                                      page-request-with-retry (retry/with-retry 
-                                                                #(send-stripe-api-request method full-url page-options) 
+                                      page-request-with-retry (retry/with-retry
+                                                                #(send-stripe-api-request method full-url page-options)
                                                                 max-network-retries)]
                                   (response/process-response (page-request-with-retry) full-response? kebabify-keys?)))
               final-result (if should-paginate?

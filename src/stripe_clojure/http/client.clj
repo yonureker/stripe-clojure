@@ -30,11 +30,12 @@
   nil)
 
 (defn- create-http-client
-  "Creates a Hato HTTP client with HTTP/2 support."
-  [opts]
+  "Creates a Hato HTTP client with HTTP/2 support and optional proxy."
+  [{:keys [timeout proxy] :as opts}]
   (hato/build-http-client
-   {:version :http-2
-    :connect-timeout (or (:timeout opts) (:timeout config/default-client-config))}))
+   (cond-> {:version :http-2
+            :connect-timeout (or timeout (:timeout config/default-client-config))}
+     proxy (assoc :proxy proxy))))
 
 (defn- prepare-config
   "Merges user-provided options with defaults."
@@ -47,6 +48,7 @@
                                          :protocol
                                          :host
                                          :port
+                                         :proxy
                                          :full-response?
                                          :rate-limits
                                          :throttler
@@ -79,7 +81,7 @@
 
 (defn- needs-throttling?
   "Determines if throttling is needed based on user-provided rate limits.
-   
+
    Stripe's actual server-side limits are quite low (25-100 req/s), so any
    user-provided rate limits likely indicate a need for client-side throttling."
   [rate-limits]
@@ -89,14 +91,15 @@
 
 (defn create-instance
   "Creates and returns a new Stripe client instance without using any global state.
-   
+
    Options include:
    - :api-key (required),
    - :api-version, :stripe-account, :max-network-retries, :timeout,
    - :protocol (default: \"https\"),
    - :host (default: \"api.stripe.com\"), :port (default: 443),
+   - :proxy (optional) - proxy configuration {:host :port :user :password},
    - :rate-limits (only creates throttler if limits are restrictive).
-   
+
    Returns a StripeClientInstance record that implements the StripeClient protocol."
   [opts]
   (when-not (:api-key opts)

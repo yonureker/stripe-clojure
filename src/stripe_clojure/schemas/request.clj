@@ -12,4 +12,5 @@
                                [:vector string?]]]
     [:auto-paginate? {:optional true} boolean?]
     [:test-clock {:optional true} string?]
+    [:stripe-beta {:optional true} string?]
     [:custom-headers {:optional true} [:map-of string? string?]]]))
