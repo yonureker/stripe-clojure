@@ -1,5 +1,44 @@
 # Change Log
 
+## [2.2.0] - 2026-02-06
+
+**Stripe API Version: `2026-01-28.clover`**
+
+### New Features
+- V2 API support with automatic version detection (JSON encoding, URL-based pagination, `include` parameter)
+- Version-aware auto-pagination: cursor-based for v1, URL-based for v2
+- Multimethod encoding dispatch by API version (content-type, param encoding, field expansion)
+- Protocol-based pagination with v1 and v2 implementations
+- `raw-request` function for calling arbitrary Stripe endpoints (beta features, undocumented APIs)
+- HTTP proxy support via `:proxy` client configuration option
+
+### Bug Fixes
+- Fixed V2 auto-pagination using `next_page_url` as the actual request URL instead of passing it as a query parameter
+- Fixed auto-pagination fetching the first page twice (now passes pre-fetched result)
+- Fixed idempotency keys being generated for GET/DELETE instead of POST requests
+- Fixed `list-invoice-payments` missing params arity for filtering
+- Fixed webhook `parse-signature` dropping duplicate `v1` signatures during secret rotation
+- Fixed `verify-signature` to check all `v1` signatures (supports secret rotation)
+- Fixed double/triple key transformation on error responses when `kebabify-keys?` is true
+- Fixed potential NPE in `send-stripe-api-request` when exception `ex-data` lacks `:status`
+- Fixed `nil` passed as params in delete request calls across 13 resource files
+- Fixed event handler key transformation using `(comp keyword underscore-to-kebab name)` for proper kebab-case conversion
+- Fixed `mask-api-key` bounds check for short API keys
+- Fixed `format-indexed-params` threading `assoc!` return value through loop binding
+- Fixed `identical?` to `=` for keyword comparison in request processing
+- Fixed network error responses losing diagnostic info (message, type) when flowing through `process-response`
+- Fixed V2 pagination potentially duplicating expand/include params on subsequent pages when `next_page_url` already contains them
+
+### Changes
+- Added `:kebabify-keys?` to `merge-client-config` for per-request override consistency
+- Removed orphaned `:test-clocks` config endpoint (no corresponding resource)
+- Removed unused `[clojure.core :as str]` require from config namespace
+- Removed `attach-response-metadata` (leaky abstraction)
+- Removed `is-paginated-endpoint?` regex
+- DRY refactoring with shared test helpers (`check-endpoint`, `check-functions-exist`, `check-function-arities`, `check-docstrings`, `check-request-calls`)
+- DRY refactoring with shared `format-indexed-params` utility for expand/include formatting
+- Pagination implementation refactored from `defrecord` to `reify`
+
 ## [2.1.0] - 2025-12-18
 
 **Stripe API Version: `2025-12-15.clover`**

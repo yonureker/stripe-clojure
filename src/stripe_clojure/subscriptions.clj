@@ -34,7 +34,7 @@
   ([stripe-client subscription-id]
    (cancel-subscription stripe-client subscription-id {}))
   ([stripe-client subscription-id opts]
-   (request stripe-client :delete (str stripe-subscriptions-endpoint "/" subscription-id) nil opts)))
+   (request stripe-client :delete (str stripe-subscriptions-endpoint "/" subscription-id) {} opts)))
 
 (defn list-subscriptions
   "Lists all subscriptions.
@@ -70,7 +70,7 @@
   ([stripe-client subscription-id]
    (delete-discount stripe-client subscription-id {}))
   ([stripe-client subscription-id opts]
-   (request stripe-client :delete (str stripe-subscriptions-endpoint "/" subscription-id "/discount") nil opts)))
+   (request stripe-client :delete (str stripe-subscriptions-endpoint "/" subscription-id "/discount") {} opts)))
 
 (defn migrate-subscription
   "Migrates a subscription to a new price.

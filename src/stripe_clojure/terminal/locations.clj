@@ -52,5 +52,5 @@
   ([stripe-client location-id opts]
    (request stripe-client :delete
                 (str stripe-terminal-locations-endpoint "/" location-id)
-                nil
+                {}
                 opts))) 

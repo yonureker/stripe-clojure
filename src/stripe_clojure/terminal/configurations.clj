@@ -52,5 +52,5 @@
   ([stripe-client configuration-id opts]
    (request stripe-client :delete
                 (str stripe-terminal-configurations-endpoint "/" configuration-id)
-                nil
+                {}
                 opts))) 

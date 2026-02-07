@@ -14,25 +14,23 @@
                  :parse-error (.getMessage e)}}))
     body))
 
-
 (defn create-error-response
   "Creates a structured error response from the original response.
-   Optionally transforms keys to kebab-case based on the config."
+   When kebabify-keys? is true, the response body and headers are already
+   transformed by process-response before this function is called."
   [response full-response? kebabify-keys?]
   (let [parsed-body (if kebabify-keys?
-                      (util/transform-keys (parse-body (:body response)))
+                      (:body response)
                       (parse-body (:body response)))
         error-map (get parsed-body :error parsed-body)
+        request-id (or (get-in response [:headers "request-id"])
+                       (get-in response [:headers :request-id]))
         simplified-error (merge error-map
                                 {:status (:status response)
-                                 :request-id (get-in response [:headers "request-id"])})]
+                                 :request-id request-id})]
     (if full-response?
-      (if kebabify-keys?
-        (assoc response :body parsed-body)
-        (assoc response :body (parse-body (:body response))))
-      (if kebabify-keys?
-        (util/transform-keys simplified-error)
-        simplified-error))))
+      (assoc response :body parsed-body)
+      simplified-error)))
 
 (defn process-response
   "Process the response based on its status and the full-response flag.

@@ -26,7 +26,7 @@
   ([stripe-client domain-id]
    (delete-apple-pay-domain stripe-client domain-id {}))
   ([stripe-client domain-id opts]
-   (request stripe-client :delete (str stripe-apple-pay-domains-endpoint "/" domain-id) nil opts)))
+   (request stripe-client :delete (str stripe-apple-pay-domains-endpoint "/" domain-id) {} opts)))
 
 (defn list-apple-pay-domains
   "List apple pay domains.
