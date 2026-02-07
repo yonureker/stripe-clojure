@@ -245,6 +245,44 @@
       (is (= "pi_3NXLEpLkdIwHu7ix0JjpJoWq" (get-in event [:data :object :id])))
       (is (= "succeeded" (get-in event [:data :object :status]))))))
 
+;; Tests for multiple v1 signatures (secret rotation)
+(deftest test-webhook-secret-rotation
+  (testing "verifies with first v1 signature (old secret)"
+    (let [payload {:id "evt_rotation" :object "event"}
+          payload-string (json/generate-string payload)
+          old-secret "whsec_old_secret"
+          new-secret "whsec_new_secret"
+          timestamp (quot (System/currentTimeMillis) 1000)
+          signed-payload (str timestamp "." payload-string)
+          old-sig (webhooks/compute-signature signed-payload old-secret)
+          new-sig (webhooks/compute-signature signed-payload new-secret)
+          ;; Header with both old and new v1 signatures
+          header (str "t=" timestamp ",v1=" old-sig ",v1=" new-sig)]
+      ;; Should verify with old secret
+      (is (true? (webhooks/verify-signature payload-string header old-secret)))))
+
+  (testing "verifies with second v1 signature (new secret)"
+    (let [payload {:id "evt_rotation" :object "event"}
+          payload-string (json/generate-string payload)
+          old-secret "whsec_old_secret"
+          new-secret "whsec_new_secret"
+          timestamp (quot (System/currentTimeMillis) 1000)
+          signed-payload (str timestamp "." payload-string)
+          old-sig (webhooks/compute-signature signed-payload old-secret)
+          new-sig (webhooks/compute-signature signed-payload new-secret)
+          header (str "t=" timestamp ",v1=" old-sig ",v1=" new-sig)]
+      ;; Should verify with new secret
+      (is (true? (webhooks/verify-signature payload-string header new-secret)))))
+
+  (testing "fails when neither v1 signature matches"
+    (let [payload {:id "evt_rotation" :object "event"}
+          payload-string (json/generate-string payload)
+          timestamp (quot (System/currentTimeMillis) 1000)
+          header (str "t=" timestamp ",v1=invalid_sig1,v1=invalid_sig2")]
+      (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                            #"Signature mismatch"
+                            (webhooks/verify-signature payload-string header "whsec_wrong"))))))
+
 ;; Helper function to time verification attempts
 (defn time-verification [payload header secret]
   (try
@@ -278,3 +316,46 @@
       ;; This is a heuristic test - in reality, you'd need statistical analysis
       (is (< (Math/abs (- time-valid time-invalid)) 10)
           "Time difference between valid and invalid signature verification should be minimal"))))
+
+;; Tests for parse-signature edge cases
+(deftest test-parse-signature-equals-in-value
+  (testing "parse-signature handles values containing = signs (limit 2 on split)"
+    (let [timestamp (quot (System/currentTimeMillis) 1000)
+          ;; Base64-encoded values often contain = padding
+          sig-with-equals "abc123def456=="
+          header (str "t=" timestamp ",v1=" sig-with-equals)
+          parsed (#'webhooks/parse-signature header)]
+      (is (= [sig-with-equals] (get parsed "v1"))
+          "v1 value with = signs should be preserved intact")
+      (is (= [(str timestamp)] (get parsed "t"))
+          "timestamp should be parsed correctly")))
+
+  (testing "parse-signature handles multiple values with = signs"
+    (let [header "t=123456,v1=abc=def=,v1=ghi=jkl="
+          parsed (#'webhooks/parse-signature header)]
+      (is (= ["abc=def=" "ghi=jkl="] (get parsed "v1"))
+          "both v1 values with = should be collected")
+      (is (= ["123456"] (get parsed "t"))))))
+
+;; Tests for verify-signature guard clauses
+(deftest test-verify-signature-guard-clauses
+  (testing "blank payload throws"
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                          #"Payload is missing or empty"
+                          (webhooks/verify-signature "" "t=123,v1=abc" "whsec_test")))
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                          #"Payload is missing or empty"
+                          (webhooks/verify-signature nil "t=123,v1=abc" "whsec_test"))))
+
+  (testing "blank signature throws"
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                          #"Signature header is missing or empty"
+                          (webhooks/verify-signature "payload" "" "whsec_test")))
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                          #"Signature header is missing or empty"
+                          (webhooks/verify-signature "payload" nil "whsec_test"))))
+
+  (testing "non-numeric timestamp throws"
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                          #"Invalid timestamp format"
+                          (webhooks/verify-signature "payload" "t=notanumber,v1=somesig" "whsec_test")))))

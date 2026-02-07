@@ -15,7 +15,6 @@
 (def ^:private default-timeout-ms 80000)
 (def ^:private ^java.util.regex.Pattern url-pattern (re-pattern "^https?://.*"))
 (def ^:private supported-methods #{:get :post :delete})
-(def ^:private idempotent-methods #{:get :put :delete :head :options})
 
 (defn send-stripe-api-request [method url options]
   (when-not (supported-methods method)
@@ -26,8 +25,13 @@
       :post   (hato/post url options)
       :delete (hato/delete url options))
     (catch Exception e
-      (or (ex-data e)
-          {:status 500 :error e :error-type "network-error" :message (.getMessage e)}))))
+      (let [data (ex-data e)]
+        (if (:status data)
+          data
+          {:status 500
+           :headers {}
+           :body {:error {:message (.getMessage e)
+                          :type "network_error"}}})))))
 
 (defn generate-idempotency-key ^String []
   (str (java.util.UUID/randomUUID)))
@@ -99,7 +103,7 @@
                                 :api-version (:api-version merged)
                                 :stripe-account (:stripe-account merged)
                                 :idempotency-key (or (:idempotency-key opts)
-                                                     (when (idempotent-methods method)
+                                                     (when (= method :post)
                                                        (generate-idempotency-key)))
                                 :test-clock (:test-clock opts)
                                 :stripe-beta (:stripe-beta opts)
@@ -128,12 +132,17 @@
                                       detected-version expand-params full-url max-retries
                                       full-response? kebabify-keys?]}]
   (fn [page-params]
-    (let [page-encoded (encode-request-params {:params page-params
-                                               :expand-params expand-params
+    (let [next-url (:_next-page-url page-params)
+          clean-params (dissoc page-params :_next-page-url)
+          request-url (or next-url full-url)
+          ;; When using next-page-url, don't re-add expand params (already in URL)
+          page-expand (when-not next-url expand-params)
+          page-encoded (encode-request-params {:params clean-params
+                                               :expand-params page-expand
                                                :is-v2 is-v2
                                                :is-get is-get
                                                :detected-version detected-version})
-          page-query (when (and is-v2 (not is-get) (seq expand-params)) expand-params)
+          page-query (when (and is-v2 (not is-get) (seq page-expand)) page-expand)
           page-opts (build-http-options {:headers headers
                                          :timeout timeout
                                          :http-client http-client
@@ -141,7 +150,7 @@
                                          :params page-encoded
                                          :query-params page-query
                                          :is-v2 is-v2})
-          req-fn (retry/with-retry #(send-stripe-api-request method full-url page-opts) max-retries)]
+          req-fn (retry/with-retry #(send-stripe-api-request method request-url page-opts) max-retries)]
       (response/process-response (req-fn) full-response? kebabify-keys?))))
 
 (defn make-request
@@ -178,7 +187,8 @@
                                                       :full-url full-url
                                                       :max-retries max-network-retries
                                                       :full-response? full-response?
-                                                      :kebabify-keys? kebabify-keys?}))
+                                                      :kebabify-keys? kebabify-keys?})
+                               result)
                              result)]
           (when (and listeners (seq @listeners))
             (events/emit-event listeners :response

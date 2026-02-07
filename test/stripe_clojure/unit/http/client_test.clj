@@ -89,7 +89,19 @@
                 :timeout 30000}
           merged (client/merge-client-config base opts)]
       (is (not (contains? merged :some-random-key)))
-      (is (= 30000 (:timeout merged))))))
+      (is (= 30000 (:timeout merged)))))
+
+  (testing "merges kebabify-keys? from request opts"
+    (let [base {:api-key "sk_test_123" :kebabify-keys? false}
+          opts {:kebabify-keys? true}
+          merged (client/merge-client-config base opts)]
+      (is (true? (:kebabify-keys? merged)))))
+
+  (testing "merges full-response? from request opts"
+    (let [base {:api-key "sk_test_123" :full-response? false}
+          opts {:full-response? true}
+          merged (client/merge-client-config base opts)]
+      (is (true? (:full-response? merged))))))
 
 ;; Tests for create-instance
 

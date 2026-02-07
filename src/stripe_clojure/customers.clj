@@ -50,8 +50,8 @@
 (defn search-customers
   "Searches for customers.
    \nStripe API docs: https://stripe.com/docs/api/customers/search"
-  ([stripe-client query]
-   (search-customers stripe-client query {}))
+  ([stripe-client params]
+   (search-customers stripe-client params {}))
   ([stripe-client params opts]
    (request stripe-client :get
                 (str stripe-customers-endpoint "/search")

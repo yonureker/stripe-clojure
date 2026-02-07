@@ -37,6 +37,18 @@
             result (protocol/next-page-params paginator response {})]
         (is (nil? result))))))
 
+(deftest v1-paginator-next-page-params-kebab-test
+  (let [paginator (v1/create-paginator)]
+    (testing "returns starting-after with kebab-case :has-more response"
+      (let [response {:has-more true :data [{:id "obj_1"} {:id "obj_2"}]}
+            result (protocol/next-page-params paginator response {:limit 5})]
+        (is (= {:limit 5 :starting-after "obj_2"} result))))
+
+    (testing "returns nil with kebab-case :has-more false"
+      (let [response {:has-more false :data [{:id "obj_1"}]}
+            result (protocol/next-page-params paginator response {})]
+        (is (nil? result))))))
+
 (deftest v1-paginator-get-items-test
   (let [paginator (v1/create-paginator)]
     (testing "returns data from response"
@@ -72,6 +84,19 @@
 
     (testing "returns nil when no more pages"
       (let [response {:next_page_url nil :data [{:id "evt_1"}]}
+            result (protocol/next-page-params paginator response {})]
+        (is (nil? result))))))
+
+(deftest v2-paginator-next-page-params-kebab-test
+  (let [paginator (v2/create-paginator)]
+    (testing "returns _next-page-url with kebab-case :next-page-url response"
+      (let [next-url "https://api.stripe.com/v2/core/events?page=3"
+            response {:next-page-url next-url :data [{:id "evt_1"}]}
+            result (protocol/next-page-params paginator response {:limit 10})]
+        (is (= {:_next-page-url next-url} result))))
+
+    (testing "returns nil with kebab-case :next-page-url nil"
+      (let [response {:next-page-url nil :data [{:id "evt_1"}]}
             result (protocol/next-page-params paginator response {})]
         (is (nil? result))))))
 

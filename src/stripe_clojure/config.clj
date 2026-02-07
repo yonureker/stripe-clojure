@@ -123,7 +123,6 @@
    :tokens (str "/" stripe-api-namespace "/tokens")
    :topups (str "/" stripe-api-namespace "/topups")
    :transfers (str "/" stripe-api-namespace "/transfers")
-   :test-clocks (str "/" stripe-api-namespace "/test_helpers/test_clocks")
    :webhook-endpoints (str "/" stripe-api-namespace "/webhook_endpoints")})
 
 ;; V2 API Endpoints

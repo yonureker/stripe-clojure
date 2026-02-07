@@ -1,6 +1,7 @@
 (ns stripe-clojure.unit.http.request-test
   (:require [clojure.test :refer [deftest is testing]]
-            [stripe-clojure.http.request :as request]))
+            [stripe-clojure.http.request :as request]
+            [hato.client :as hato]))
 
 ;; Tests for build-headers
 
@@ -183,4 +184,52 @@
   (testing "accepts supported methods"
     (is (contains? #{:get :post :delete} :get))
     (is (contains? #{:get :post :delete} :post))
-    (is (contains? #{:get :post :delete} :delete))))
+    (is (contains? #{:get :post :delete} :delete)))
+
+  (testing "returns response-shaped fallback when exception has no :status in ex-data"
+    (with-redefs [hato.client/get (fn [_ _] (throw (ex-info "connection refused" {:some "data"})))]
+      (let [result (request/send-stripe-api-request :get "http://localhost:12111/v1/test" {})]
+        (is (= 500 (:status result)))
+        (is (= {} (:headers result)))
+        (is (= "connection refused" (get-in result [:body :error :message])))
+        (is (= "network_error" (get-in result [:body :error :type]))))))
+
+  (testing "returns ex-data when exception has :status"
+    (with-redefs [hato.client/get (fn [_ _] (throw (ex-info "rate limited" {:status 429 :body "too many"})))]
+      (let [result (request/send-stripe-api-request :get "http://localhost:12111/v1/test" {})]
+        (is (= 429 (:status result)))
+        (is (= "too many" (:body result)))))))
+
+;; Tests for idempotency key generation
+
+(deftest idempotency-key-generation-test
+  (testing "POST requests get auto-generated idempotency key"
+    (let [context (#'request/prepare-request-context
+                   :post "/v1/customers" {:email "test@example.com"} {}
+                   {:api-key "sk_test_123" :api-version "2026-01-28" :protocol "https"
+                    :host "api.stripe.com" :port 443 :http-client nil})]
+      (is (some? (get-in context [:options :headers "idempotency-key"]))
+          "POST should get auto-generated idempotency key")))
+
+  (testing "GET requests do not get auto-generated idempotency key"
+    (let [context (#'request/prepare-request-context
+                   :get "/v1/customers" {} {}
+                   {:api-key "sk_test_123" :api-version "2026-01-28" :protocol "https"
+                    :host "api.stripe.com" :port 443 :http-client nil})]
+      (is (nil? (get-in context [:options :headers "idempotency-key"]))
+          "GET should not get auto-generated idempotency key")))
+
+  (testing "DELETE requests do not get auto-generated idempotency key"
+    (let [context (#'request/prepare-request-context
+                   :delete "/v1/customers/cus_123" {} {}
+                   {:api-key "sk_test_123" :api-version "2026-01-28" :protocol "https"
+                    :host "api.stripe.com" :port 443 :http-client nil})]
+      (is (nil? (get-in context [:options :headers "idempotency-key"]))
+          "DELETE should not get auto-generated idempotency key")))
+
+  (testing "explicit idempotency-key overrides auto-generation"
+    (let [context (#'request/prepare-request-context
+                   :post "/v1/customers" {} {:idempotency-key "my-custom-key"}
+                   {:api-key "sk_test_123" :api-version "2026-01-28" :protocol "https"
+                    :host "api.stripe.com" :port 443 :http-client nil})]
+      (is (= "my-custom-key" (get-in context [:options :headers "idempotency-key"]))))))

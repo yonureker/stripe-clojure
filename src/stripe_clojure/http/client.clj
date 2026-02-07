@@ -22,7 +22,8 @@
                        :stripe-account
                        :max-network-retries
                        :timeout
-                       :full-response?])))
+                       :full-response?
+                       :kebabify-keys?])))
 
 (defn shutdown-http-client
   "Shuts down the HTTP client if needed."

@@ -64,20 +64,21 @@ V2 endpoints are automatically detected by their `/v2/` path prefix. The library
 ```clojure
 (require '[stripe-clojure.v2.core.accounts :as v2-accounts]
          '[stripe-clojure.v2.core.events :as v2-events]
-         '[stripe-clojure.v2.billing.meter-events :as v2-meter-events])
+         '[stripe-clojure.v2.core.event-destinations :as v2-event-destinations])
 
 ;; Create a V2 account
 (v2-accounts/create-account stripe-client
-  {:legal-entity {:name "Acme Inc."}})
+  {:legal_entity {:name "Acme Inc."}})
 
 ;; List V2 events with field inclusion
 (v2-events/list-events stripe-client {} {:include ["data.payload"]})
 
-;; Send a meter event (high-throughput, up to 1000/sec)
-(v2-meter-events/create-meter-event stripe-client
-  {:event-name "api_requests"
-   :payload {:stripe-customer-id "cus_xxx"
-             :value 1}})
+;; Create a V2 event destination
+(v2-event-destinations/create-event-destination stripe-client
+  {:type "webhook_endpoint"
+   :name "Production Events"
+   :enabled_events ["*"]
+   :webhook_endpoint {:url "https://example.com/stripe/events"}})
 ```
 
 Available V2 resources:
@@ -160,6 +161,23 @@ Many API methods allow you to override options on a per-request basis via the `o
 (customers/list-customers stripe-client {} {:auto-paginate? true})
 ```
 
+## Raw Requests
+
+Use `raw-request` to call any Stripe endpoint directly -- useful for beta features, undocumented endpoints, or when you need to bypass the resource-specific functions:
+
+```clojure
+;; GET request
+(stripe/raw-request stripe-client :get "/v1/customers" {:limit 10})
+
+;; POST request with beta header
+(stripe/raw-request stripe-client :post "/v1/beta/feature"
+  {:param "value"}
+  {:stripe-beta "feature_v1=true"})
+
+;; Works with V2 endpoints too
+(stripe/raw-request stripe-client :get "/v2/core/events" {} {:include ["data.payload"]})
+```
+
 ## Expanding Responses
 
 Stripe's Expand feature retrieves linked objects in a single call, replacing the object ID with all its properties.
@@ -172,7 +190,7 @@ Stripe's Expand feature retrieves linked objects in a single call, replacing the
  :id "pi_1234"
  ...
  :customer "cus_1234" ;; only customer id returned
- :payment-method "pm_1234"}
+ :payment_method "pm_1234"}
 ```
 
 Using expand, retrieve the whole customer object without an additional request:
