@@ -8,15 +8,16 @@
 ;; Use a single recursive helper function that takes the accumulator
 (declare flatten-value)
 
-(defn- get-snake-case 
-  [^String s]
+(defn kebab-to-snake
+  "Converts a string from kebab-case to snake_case."
+  ^String [^String s]
   (str/replace s "-" "_"))
 
-(defn- build-key 
+(defn- build-key
   "Efficiently builds a key string with optional prefix and bracket notation."
   [^String prefix k]
   (let [k-str (if (keyword? k) (name k) (str k))
-        base-name (if (keyword? k) (get-snake-case k-str) k-str)]
+        base-name (if (keyword? k) (kebab-to-snake k-str) k-str)]
     (if (empty? prefix)
       base-name
       ;; Use StringBuilder for efficient string concatenation
@@ -79,54 +80,52 @@
           final-result (flatten-map result "" params)]
       (persistent! final-result))))
 
-(defn format-expand
-  "Converts an expand parameter (either a single string or a sequence of strings) 
-  into the indexed format required by Stripe's API.
+(defn format-indexed-params
+  "Converts a string or sequence of strings into indexed bracket notation.
 
-  Transformations performed:
-  1. Single string is wrapped in a vector first
-  2. Each value is assigned an indexed key: \"expand[0]\", \"expand[1]\", etc.
-  3. Returns an empty map if the input is nil or empty
+  Produces a map of {\"prefix[0]\" val0, \"prefix[1]\" val1, ...} suitable
+  for Stripe API query parameters (expand, include, etc.).
 
-  Examples:
-  
-  Single field:
-  (format-expand \"customer\")
-  => {\"expand[0]\" \"customer\"}
-  
-  Multiple fields:
-  (format-expand [\"customer\", \"invoice.subscription\"])
-  => {\"expand[0]\" \"customer\", \"expand[1]\" \"invoice.subscription\"}
-  
-  Empty input:
-  (format-expand nil)
-  => {}
+  Returns an empty map if the input is nil or empty.
 
   Parameters:
-  - expand: Either a string or a sequence of strings representing the fields to expand.
+  - prefix: The parameter name prefix (e.g., \"expand\", \"include\")
+  - fields: Either a string or a sequence of strings.
 
   Returns:
-  A map with formatted expand parameters suitable for Stripe API requests."
-  ^clojure.lang.IPersistentMap [expand]
-  (if-not (seq expand)
+  A map with indexed bracket keys."
+  ^clojure.lang.IPersistentMap [^String prefix fields]
+  (if-not (seq fields)
     {}
-    (let [values (if (string? expand) [expand] expand)]
+    (let [values (if (string? fields) [fields] fields)]
       (if (counted? values)
         ;; Fast path for vectors and other counted collections
         (let [cnt (count values)
               result (transient {})]
           (loop [idx 0]
             (if (< idx cnt)
-              (let [key (str "expand[" idx "]")
+              (let [key (str prefix "[" idx "]")
                     val (nth values idx)]
                 #_{:clj-kondo/ignore [:unused-value]}
                 (assoc! result key val)
                 (recur (unchecked-inc idx)))
               (persistent! result))))
-        ;; Fallback for non-counted collections - use reduce for simplicity
+        ;; Fallback for non-counted collections
         (into {} (map-indexed (fn [idx val]
-                                [(str "expand[" idx "]") val])
+                                [(str prefix "[" idx "]") val])
                               values))))))
+
+(defn format-expand
+  "Converts an expand parameter into the indexed format required by Stripe's v1 API.
+
+  Examples:
+  (format-expand \"customer\")
+  => {\"expand[0]\" \"customer\"}
+
+  (format-expand [\"customer\", \"invoice.subscription\"])
+  => {\"expand[0]\" \"customer\", \"expand[1]\" \"invoice.subscription\"}"
+  ^clojure.lang.IPersistentMap [expand]
+  (format-indexed-params "expand" expand))
 
 (defn underscore-to-kebab
   "Converts a string from underscore_case to kebab-case.

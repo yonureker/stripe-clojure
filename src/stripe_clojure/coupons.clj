@@ -34,7 +34,7 @@
   ([stripe-client coupon-id]
    (delete-coupon stripe-client coupon-id {}))
   ([stripe-client coupon-id opts]
-   (request stripe-client :delete (str stripe-coupons-endpoint "/" coupon-id) nil opts)))
+   (request stripe-client :delete (str stripe-coupons-endpoint "/" coupon-id) {} opts)))
 
 (defn list-coupons
   "Returns a list of your coupons.

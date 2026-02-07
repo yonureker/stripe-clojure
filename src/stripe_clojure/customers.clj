@@ -35,7 +35,7 @@
   ([stripe-client customer-id]
    (delete-customer stripe-client customer-id {}))
   ([stripe-client customer-id opts]
-   (request stripe-client :delete (str stripe-customers-endpoint "/" customer-id) nil opts)))
+   (request stripe-client :delete (str stripe-customers-endpoint "/" customer-id) {} opts)))
 
 (defn list-customers
   "Lists all customers.

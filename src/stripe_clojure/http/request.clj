@@ -2,24 +2,24 @@
   (:require [hato.client :as hato]
             [stripe-clojure.http.throttle :as throttle]
             [stripe-clojure.http.retry :as retry]
-            [stripe-clojure.http.pagination :as pagination]
+            [stripe-clojure.http.pagination.core :as pagination]
             [stripe-clojure.http.events :as events]
             [stripe-clojure.http.response :as response]
             [stripe-clojure.http.util :as util]
+            [stripe-clojure.http.api-version :as api-version]
+            [stripe-clojure.http.encoding :as encoding]
             [stripe-clojure.schemas.request :as schema]
             [malli.core :as m]
             [malli.error :as me]))
 
-(def ^:private default-timeout-ms
-  "Default timeout for HTTP requests in milliseconds (80 seconds)."
-  80000)
+(def ^:private default-timeout-ms 80000)
+(def ^:private ^java.util.regex.Pattern url-pattern (re-pattern "^https?://.*"))
+(def ^:private supported-methods #{:get :post :delete})
+(def ^:private idempotent-methods #{:get :put :delete :head :options})
 
-(defn send-stripe-api-request
-  "Sends an HTTP request to the Stripe API."
-  [method url options]
-  (when-not (#{:get :post :delete} method)
-    (throw (ex-info "Unsupported HTTP method. Must be one of: :get, :post, :delete"
-                    {:method method :supported-methods #{:get :post :delete}})))
+(defn send-stripe-api-request [method url options]
+  (when-not (supported-methods method)
+    (throw (ex-info "Unsupported HTTP method" {:method method})))
   (try
     (case method
       :get    (hato/get url options)
@@ -27,50 +27,29 @@
       :delete (hato/delete url options))
     (catch Exception e
       (or (ex-data e)
-          {:status 500
-           :error e
-           :error-type "network-error"
-           :message (.getMessage e)}))))
+          {:status 500 :error e :error-type "network-error" :message (.getMessage e)}))))
 
-;; -----------------------------------------------------------
-;; Helper functions
-;; -----------------------------------------------------------
-
-(defn- idempotent-method?
-  "Checks if the HTTP method is naturally idempotent."
-  [method]
-  (#{:get :put :delete} method))
-
-(defn- construct-base-url
-  "Constructs the base URL from config"
-  [{:keys [protocol host port]}]
-  (str protocol "://" host (when (and port (not= port 443)) (str ":" port))))
-
-(defn generate-idempotency-key []
+(defn generate-idempotency-key ^String []
   (str (java.util.UUID/randomUUID)))
 
-(defn- validate-request-opts!
-  "Validates request options against the schema. Throws if invalid."
-  [opts]
+(defn- validate-request-opts! [opts]
   (when-let [explanation (m/explain schema/RequestOpts opts)]
-    (let [humanized (me/humanize explanation)]
-      (throw (ex-info (str "Invalid request options: " (pr-str humanized))
-                      {:errors humanized
-                       :provided-options opts})))))
+    (throw (ex-info (str "Invalid request options: " (pr-str (me/humanize explanation)))
+                    {:errors (me/humanize explanation) :provided-options opts}))))
 
-(defn- validate-url!
-  "Validates that the URL has a valid format. Throws if invalid."
-  [full-url base-url endpoint]
-  (when-not (re-matches #"^https?://.*" full-url)
-    (throw (ex-info "Invalid URL format"
-                    {:url full-url :base-url base-url :endpoint endpoint}))))
+(defn- validate-url! [^String full-url base-url endpoint]
+  (when-not (re-matches url-pattern full-url)
+    (throw (ex-info "Invalid URL format" {:url full-url :base-url base-url :endpoint endpoint}))))
 
-(defn- build-request-headers
-  "Builds the headers map for a Stripe API request."
-  [{:keys [api-key api-version stripe-account idempotency-key test-clock
-           stripe-beta custom-headers]}]
+(defn- construct-base-url ^String [{:keys [protocol host port]}]
+  (if (and port (not= port 443))
+    (str protocol "://" host ":" port)
+    (str protocol "://" host)))
+
+(defn- build-headers [{:keys [api-key api-version stripe-account idempotency-key
+                               test-clock stripe-beta custom-headers content-type]}]
   (cond-> {"authorization" (str "Bearer " api-key)
-           "content-type" "application/x-www-form-urlencoded"
+           "content-type" content-type
            "stripe-version" api-version}
     stripe-account (assoc "stripe-account" stripe-account)
     idempotency-key (assoc "idempotency-key" idempotency-key)
@@ -78,103 +57,136 @@
     stripe-beta (assoc "stripe-beta" stripe-beta)
     (seq custom-headers) (merge custom-headers)))
 
-(defn- build-http-options
-  "Builds the hato options map for a request."
-  [{:keys [headers timeout http-client method params]}]
-  (cond-> {:headers headers
-           :as :json
-           :timeout timeout
-           :http-client http-client}
-    (seq params) (assoc (if (= method :get) :query-params :form-params) params)))
+(defn- build-http-options [{:keys [headers timeout http-client method params query-params is-v2 multipart]}]
+  (let [is-get (identical? method :get)
+        base {:headers headers :as :json :timeout timeout :http-client http-client}]
+    (if multipart
+      (-> base
+          (assoc :multipart multipart)
+          (update :headers dissoc "content-type"))
+      (if is-v2
+        (cond-> base
+          (and (seq params) is-get) (assoc :query-params params)
+          (and (seq params) (not is-get)) (assoc :body params)
+          (and (seq query-params) (not is-get)) (assoc :query-params query-params))
+        (cond-> base
+          (seq params) (assoc (if is-get :query-params :form-params) params))))))
+
+(defn- encode-request-params [{:keys [params expand-params is-v2 is-get detected-version]}]
+  (if (and is-v2 (not is-get))
+    (encoding/encode-params detected-version params)
+    (let [flattened (util/flatten-params params)]
+      (if (seq expand-params) (merge flattened expand-params) flattened))))
+
+(defn- prepare-request-context [method url params opts config]
+  (let [merged (merge config opts)
+        base-url (or (:base-url opts) (:base-url config) (construct-base-url config))
+        full-url (str base-url url)
+        multipart (:multipart opts)
+        _ (validate-url! full-url base-url url)
+        detected-version (api-version/detect-version url)
+        is-v2 (identical? detected-version api-version/V2)
+        is-get (identical? method :get)
+        expansion-fields (encoding/get-expansion-fields detected-version opts)
+        expand-params (encoding/format-expansion detected-version expansion-fields)
+        encoded-params (encode-request-params {:params params
+                                               :expand-params expand-params
+                                               :is-v2 is-v2
+                                               :is-get is-get
+                                               :detected-version detected-version})
+        v2-post-query-params (when (and is-v2 (not is-get) (seq expand-params)) expand-params)
+        headers (build-headers {:api-key (:api-key merged)
+                                :api-version (:api-version merged)
+                                :stripe-account (:stripe-account merged)
+                                :idempotency-key (or (:idempotency-key opts)
+                                                     (when (idempotent-methods method)
+                                                       (generate-idempotency-key)))
+                                :test-clock (:test-clock opts)
+                                :stripe-beta (:stripe-beta opts)
+                                :custom-headers (:custom-headers opts)
+                                :content-type (encoding/content-type detected-version)})
+        timeout (or (:timeout merged) default-timeout-ms)
+        options (build-http-options {:headers headers
+                                     :timeout timeout
+                                     :http-client (:http-client merged)
+                                     :method method
+                                     :params encoded-params
+                                     :query-params v2-post-query-params
+                                     :is-v2 is-v2
+                                     :multipart multipart})]
+    {:full-url full-url
+     :options options
+     :headers headers
+     :timeout timeout
+     :is-v2 is-v2
+     :is-get is-get
+     :detected-version detected-version
+     :expand-params expand-params
+     :merged merged}))
+
+(defn- make-page-request-fn [{:keys [headers timeout http-client method is-v2 is-get
+                                      detected-version expand-params full-url max-retries
+                                      full-response? kebabify-keys?]}]
+  (fn [page-params]
+    (let [page-encoded (encode-request-params {:params page-params
+                                               :expand-params expand-params
+                                               :is-v2 is-v2
+                                               :is-get is-get
+                                               :detected-version detected-version})
+          page-query (when (and is-v2 (not is-get) (seq expand-params)) expand-params)
+          page-opts (build-http-options {:headers headers
+                                         :timeout timeout
+                                         :http-client http-client
+                                         :method method
+                                         :params page-encoded
+                                         :query-params page-query
+                                         :is-v2 is-v2})
+          req-fn (retry/with-retry #(send-stripe-api-request method full-url page-opts) max-retries)]
+      (response/process-response (req-fn) full-response? kebabify-keys?))))
 
 (defn make-request
-  "Makes an HTTP request to the Stripe API with retry capability for idempotent requests.
-
-   Parameters:
-   - method: The HTTP method as a keyword (:get, :post, or :delete)
-   - url: The full URL for the API endpoint
-   - params: A map of parameters to send with the request
-   - opts: A map of additional options
-   - config: The effective configuration (from closure)"
+  "Makes an HTTP request to the Stripe API."
   [method url params opts config]
-  ;; Validate request options upfront
   (validate-request-opts! opts)
+  (let [{:keys [full-url options headers timeout is-v2 is-get
+                detected-version expand-params merged]} (prepare-request-context method url params opts config)
+        {:keys [max-network-retries full-response? listeners kebabify-keys? throttler http-client]} merged
+        request-fn (retry/with-retry #(send-stripe-api-request method full-url options) max-network-retries)
+        should-paginate? (and is-get (:auto-paginate? opts) (pagination/is-paginated-endpoint? full-url))
+        start-time (System/currentTimeMillis)]
 
-  (let [{:keys [api-key
-                api-version
-                stripe-account
-                http-client
-                max-network-retries
-                timeout
-                full-response?
-                listeners
-                kebabify-keys?]} (merge config opts)
-        request-start-time (System/currentTimeMillis)
-        base-url (construct-base-url config)
-        full-url (str base-url url)
-        _ (validate-url! full-url base-url url)
-        ;; Generate idempotency key if needed
-        idempotency-key (or (:idempotency-key opts)
-                            (when (idempotent-method? method)
-                              (generate-idempotency-key)))
-        {:keys [expand custom-headers test-clock stripe-beta auto-paginate?]} opts
-        timeout-value (or timeout default-timeout-ms)
-        all-headers (build-request-headers {:api-key api-key
-                                            :api-version api-version
-                                            :stripe-account stripe-account
-                                            :idempotency-key idempotency-key
-                                            :test-clock test-clock
-                                            :stripe-beta stripe-beta
-                                            :custom-headers custom-headers})
-        expand-params (util/format-expand expand)
-        flattened-params (util/flatten-params params)
-        request-params (merge flattened-params expand-params)
-        options (build-http-options {:headers all-headers
-                                     :timeout timeout-value
-                                     :http-client http-client
-                                     :method method
-                                     :params request-params})
-        should-paginate? (and (= method :get)
-                              auto-paginate?
-                              (pagination/is-paginated-endpoint? full-url))
-        request-with-retry (retry/with-retry #(send-stripe-api-request method full-url options) max-network-retries)
-        effective-throttler (:throttler config)
-        base-event-data {:method method
-                         :url url
-                         :api-version api-version
-                         :request-start-time request-start-time
-                         :account stripe-account
-                         :idempotency-key idempotency-key}]
+    (when (and listeners (seq @listeners))
+      (events/emit-event listeners :request
+                         {:method method :url url :api-version (:api-version merged)
+                          :request-start-time start-time :account (:stripe-account merged)}
+                         nil kebabify-keys?))
 
-    ;; Request event
-    (events/emit-event listeners :request base-event-data nil kebabify-keys?)
-
-    (throttle/with-throttling effective-throttler method full-url api-key
+    (throttle/with-throttling throttler method full-url (:api-key merged)
       (fn []
-        (let [raw-result (request-with-retry)
-              request-id (get-in raw-result [:headers "request-id"])
+        (let [raw-result (request-fn)
               result (response/process-response raw-result full-response? kebabify-keys?)
-              ;; make-request-fn for pagination - builds fresh request options per page
-              make-request-fn (fn [page-params]
-                                (let [page-request-params (merge (util/flatten-params page-params) expand-params)
-                                      page-options (build-http-options {:headers all-headers
-                                                                        :timeout timeout-value
-                                                                        :http-client http-client
-                                                                        :method method
-                                                                        :params page-request-params})
-                                      page-request-with-retry (retry/with-retry
-                                                                #(send-stripe-api-request method full-url page-options)
-                                                                max-network-retries)]
-                                  (response/process-response (page-request-with-retry) full-response? kebabify-keys?)))
               final-result (if should-paginate?
-                             (pagination/paginate method full-url params opts make-request-fn)
-                             result)
-              request-end-time (System/currentTimeMillis)]
-          ;; Response event
-          (events/emit-event listeners :response base-event-data
-                             {:request-end-time request-end-time
-                              :elapsed (- request-end-time request-start-time)
-                              :status (:status raw-result)
-                              :request-id request-id}
-                             kebabify-keys?)
+                             (pagination/paginate method full-url params opts
+                               (make-page-request-fn {:headers headers
+                                                      :timeout timeout
+                                                      :http-client http-client
+                                                      :method method
+                                                      :is-v2 is-v2
+                                                      :is-get is-get
+                                                      :detected-version detected-version
+                                                      :expand-params expand-params
+                                                      :full-url full-url
+                                                      :max-retries max-network-retries
+                                                      :full-response? full-response?
+                                                      :kebabify-keys? kebabify-keys?}))
+                             result)]
+          (when (and listeners (seq @listeners))
+            (events/emit-event listeners :response
+                               {:method method :url url :api-version (:api-version merged)
+                                :request-start-time start-time :account (:stripe-account merged)}
+                               {:request-end-time (System/currentTimeMillis)
+                                :elapsed (- (System/currentTimeMillis) start-time)
+                                :status (:status raw-result)
+                                :request-id (get-in raw-result [:headers "request-id"])}
+                               kebabify-keys?))
           final-result)))))
