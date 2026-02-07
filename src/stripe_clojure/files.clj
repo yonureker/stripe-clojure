@@ -5,14 +5,17 @@
             [stripe-clojure.config :as config]))
 
 (def stripe-files-endpoint (:files config/stripe-endpoints))
-;; TBD endpoints and base urls are different
 
-(defn- get-file-type [file-name]
-  (case (str/lower-case (last (str/split file-name #"\.")))
-    "pdf" "application/pdf"
-    ("jpg" "jpeg") "image/jpeg"
-    "png" "image/png"
-    "application/octet-stream"))
+(def ^:private extension->mime-type
+  {"pdf"  "application/pdf"
+   "jpg"  "image/jpeg"
+   "jpeg" "image/jpeg"
+   "png"  "image/png"
+   "csv"  "text/csv"})
+
+(defn- get-mime-type [file-name]
+  (let [ext (-> file-name (str/split #"\.") last str/lower-case)]
+    (get extension->mime-type ext "application/octet-stream")))
 
 (defn create-file
   "Creates a new file upload.
@@ -22,7 +25,7 @@
     purpose: Purpose of the file (e.g., 'dispute_evidence', 'identity_document')
     opts: Additional options (e.g., :stripe-account for Connect)
 
-  Returns: 
+  Returns:
     A File object if successful, an error object otherwise.
 
   Docs: https://stripe.com/docs/api/files/create"
@@ -30,14 +33,14 @@
    (create-file stripe-client file-path purpose {}))
   ([stripe-client file-path purpose opts]
    (let [file (io/file file-path)
-         file-type (get-file-type (.getName file))
-         multipart-params [{:name "purpose" :content purpose}
-                          {:name "file"
-                           :content file
-                           :mime-type file-type}]]
+         mime-type (get-mime-type (.getName file))
+         multipart [{:name "purpose" :content purpose}
+                    {:name "file" :content file :content-type mime-type}]]
      (request stripe-client :post stripe-files-endpoint
-              {:multipart multipart-params}
-              (assoc opts :content-type :multipart)))))
+              {}
+              (assoc opts
+                     :multipart multipart
+                     :base-url "https://files.stripe.com")))))
 
 (defn retrieve-file
   "Retrieves the details of an existing file object.

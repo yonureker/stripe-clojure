@@ -34,7 +34,7 @@
   ([stripe-client invoice-item-id]
    (delete-invoice-item stripe-client invoice-item-id {}))
   ([stripe-client invoice-item-id opts]
-   (request stripe-client :delete (str stripe-invoice-items-endpoint "/" invoice-item-id) nil opts)))
+   (request stripe-client :delete (str stripe-invoice-items-endpoint "/" invoice-item-id) {} opts)))
 
 (defn list-invoice-items
   "Lists all invoice items.

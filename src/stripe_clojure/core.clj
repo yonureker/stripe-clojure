@@ -67,3 +67,25 @@
   "Remove an event listener from the Stripe client."
   [stripe-client event-type handler]
   (events/remove-listener stripe-client event-type handler))
+
+(defn raw-request
+  "Makes a raw request to an arbitrary Stripe API endpoint.
+   Use for beta features, undocumented endpoints, or when you need
+   to bypass the resource-specific functions.
+
+   Arguments:
+     stripe-client - initialized Stripe client
+     method        - HTTP method keyword (:get, :post, :delete)
+     endpoint      - API path (e.g., \"/v1/some_beta_feature\")
+     params        - request parameters map (optional, default {})
+     opts          - request options map (optional, default {})
+
+   Example:
+     (raw-request client :get \"/v1/customers\" {:limit 10})
+     (raw-request client :post \"/v1/beta/feature\" {:param \"value\"} {:stripe-beta \"feature_v1=true\"})"
+  ([stripe-client method endpoint]
+   (raw-request stripe-client method endpoint {} {}))
+  ([stripe-client method endpoint params]
+   (raw-request stripe-client method endpoint params {}))
+  ([stripe-client method endpoint params opts]
+   (client/execute-request stripe-client method endpoint params opts)))

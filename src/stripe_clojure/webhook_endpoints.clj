@@ -52,5 +52,5 @@
   ([stripe-client webhook-endpoint-id opts]
    (request stripe-client :delete
                 (str stripe-webhook-endpoints-endpoint "/" webhook-endpoint-id)
-                nil
+                {}
                 opts)))

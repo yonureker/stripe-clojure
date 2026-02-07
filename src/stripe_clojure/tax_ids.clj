@@ -41,5 +41,5 @@
   ([stripe-client tax-id opts]
    (request stripe-client :delete
             (str stripe-tax-ids-endpoint "/" tax-id)
-            nil
+            {}
             opts)))

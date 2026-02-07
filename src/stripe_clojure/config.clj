@@ -1,5 +1,4 @@
-(ns stripe-clojure.config
-  (:require [clojure.core :as str]))
+(ns stripe-clojure.config)
 
 ;; Default Configuration
 (def api-keys
@@ -124,19 +123,39 @@
    :tokens (str "/" stripe-api-namespace "/tokens")
    :topups (str "/" stripe-api-namespace "/topups")
    :transfers (str "/" stripe-api-namespace "/transfers")
-   :test-clocks (str "/" stripe-api-namespace "/test_helpers/test_clocks")
    :webhook-endpoints (str "/" stripe-api-namespace "/webhook_endpoints")})
+
+;; V2 API Endpoints
+(def stripe-v2-api-namespace "v2")
+
+(def stripe-v2-endpoints
+  "Stripe API v2 endpoints.
+
+   V2 API differences from v1:
+   - Request encoding: JSON instead of form-urlencoded
+   - Pagination: URL-based instead of cursor-based
+   - Field expansion: 'include' parameter instead of 'expand'
+   - Idempotency: 30-day window instead of 24-hour"
+  {:v2-core-accounts (str "/" stripe-v2-api-namespace "/core/accounts")
+   :v2-core-events (str "/" stripe-v2-api-namespace "/core/events")
+   :v2-core-event-destinations (str "/" stripe-v2-api-namespace "/core/event_destinations")
+   :v2-billing-meter-event-session (str "/" stripe-v2-api-namespace "/billing/meter_event_session")
+   :v2-billing-meter-event-stream (str "/" stripe-v2-api-namespace "/billing/meter_event_stream")
+   :v2-billing-meter-event-adjustments (str "/" stripe-v2-api-namespace "/billing/meter_event_adjustments")
+   :v2-billing-meter-events (str "/" stripe-v2-api-namespace "/billing/meter_events")})
 
 (defn mask-api-key
   "Masks the middle portion of an API key, showing only the first 7 and last 4 characters.
    Example: 'sk_test_asdasdasadsad9Rglkf' -> 'sk_test...glkf'"
   [api-key]
   (when api-key
-    (let [prefix (subs api-key 0 7)
-          suffix (subs api-key (- (count api-key) 4))]
-      (str prefix "..." suffix))))
+    (if (< (count api-key) 11)
+      (str (subs api-key 0 (min 4 (count api-key))) "...")
+      (let [prefix (subs api-key 0 7)
+            suffix (subs api-key (- (count api-key) 4))]
+        (str prefix "..." suffix)))))
 
-(def base-api-version "2025-12-15.clover")
+(def base-api-version "2026-01-28.clover")
 
 (def default-client-config
   {:protocol "https"

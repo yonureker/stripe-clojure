@@ -44,7 +44,7 @@
   ([stripe-client product-id]
    (delete-product stripe-client product-id {}))
   ([stripe-client product-id opts]
-   (request stripe-client :delete (str stripe-products-endpoint "/" product-id) nil opts)))
+   (request stripe-client :delete (str stripe-products-endpoint "/" product-id) {} opts)))
 
 (defn search-products
   "Searches for products.
@@ -102,5 +102,5 @@
   ([stripe-client product-id feature-id opts]
    (request stripe-client :delete
                 (str stripe-products-endpoint "/" product-id "/features/" feature-id)
-                nil
+                {}
                 opts)))

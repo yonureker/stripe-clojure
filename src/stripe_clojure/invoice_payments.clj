@@ -16,6 +16,8 @@
   "List all invoice payments.
    \nStripe API docs: https://docs.stripe.com/api/invoice-payment/list"
   ([stripe-client]
-   (list-invoice-payments stripe-client {}))
-  ([stripe-client opts]
-   (request stripe-client :get stripe-invoice-payments-endpoint {} opts)))
+   (list-invoice-payments stripe-client {} {}))
+  ([stripe-client params]
+   (list-invoice-payments stripe-client params {}))
+  ([stripe-client params opts]
+   (request stripe-client :get stripe-invoice-payments-endpoint params opts)))

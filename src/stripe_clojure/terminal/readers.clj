@@ -52,7 +52,7 @@
   ([stripe-client reader-id opts]
    (request stripe-client :delete
                 (str stripe-terminal-readers-endpoint "/" reader-id)
-                nil
+                {}
                 opts)))
 
 (defn cancel-action

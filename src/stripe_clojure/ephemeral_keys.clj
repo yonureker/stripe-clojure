@@ -19,5 +19,5 @@
   ([stripe-client key-id opts]
    (request stripe-client :delete
             (str stripe-ephemeral-keys-endpoint "/" key-id)
-            nil
+            {}
             opts))) 

@@ -2,6 +2,16 @@
   (:require [stripe-clojure.schemas.common :refer [SharedOptions NonNegativeInt]]
             [malli.util :as mu]))
 
+;; Proxy configuration schema
+
+(def ProxyConfig
+  "Schema for HTTP proxy configuration."
+  [:map {:closed true}
+   [:host string?]
+   [:port pos-int?]
+   [:user {:optional true} string?]
+   [:password {:optional true} string?]])
+
 ;; Rate limits schemas
 
 (def RateLimitItem
@@ -31,5 +41,6 @@
     [:protocol {:optional true} [:enum "http" "https"]]
     [:host {:optional true} string?]
     [:port {:optional true} pos-int?]
+    [:proxy {:optional true} ProxyConfig]
     [:rate-limits {:optional true} RateLimits]
     [:kebabify-keys? {:optional true} boolean?]]))

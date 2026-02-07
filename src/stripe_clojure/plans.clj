@@ -44,4 +44,4 @@
   ([stripe-client plan-id]
    (delete-plan stripe-client plan-id {}))
   ([stripe-client plan-id opts]
-   (request stripe-client :delete (str stripe-plans-endpoint "/" plan-id) nil opts)))
+   (request stripe-client :delete (str stripe-plans-endpoint "/" plan-id) {} opts)))

@@ -37,15 +37,16 @@
     (bytes->hex (.doFinal mac (.getBytes payload "UTF-8")))))
 
 (defn- parse-signature
-  "Parses the Stripe webhook signature header into a map.
-   Expected format is \"t=<timestamp>,v1=<signature>\".
+  "Parses the Stripe webhook signature header into a map of key to vector of values.
+   Expected format is \"t=<timestamp>,v1=<signature>[,v1=<signature>]\".
+   Supports multiple v1 signatures for secret rotation.
    Throws an ex-info exception if the format is invalid."
   [signature]
   (let [pairs (str/split signature #",")]
     (reduce (fn [acc pair-string]
-              (let [parts (str/split pair-string #"=")]
+              (let [parts (str/split pair-string #"=" 2)]
                 (if (= (count parts) 2)
-                  (assoc acc (first parts) (second parts))
+                  (update acc (first parts) (fnil conj []) (second parts))
                   (throw (ex-info "Invalid signature format" {:type :invalid-signature-format})))))
             {}
             pairs)))
@@ -76,10 +77,10 @@
   (when (str/blank? webhook-secret)
     (throw (ex-info "Webhook secret is missing or empty" {:type :missing-webhook-secret})))
   (let [signature-parts (parse-signature signature)]
-    (when-not (and (get signature-parts "t") (get signature-parts "v1"))
+    (when-not (and (seq (get signature-parts "t")) (seq (get signature-parts "v1")))
       (throw (ex-info "Invalid signature format" {:type :invalid-signature-format})))
     (let [timestamp (try
-                      (Long/parseLong (get signature-parts "t"))
+                      (Long/parseLong (first (get signature-parts "t")))
                       (catch NumberFormatException _
                         (throw (ex-info "Invalid timestamp format" {:type :invalid-timestamp-format}))))
           current-timestamp (long (/ (System/currentTimeMillis) 1000))
@@ -93,7 +94,7 @@
                          :current-timestamp current-timestamp})))
       (let [signed-payload (str timestamp "." payload)
             computed-signature (compute-signature signed-payload webhook-secret)]
-        (if (constant-time-equals? (get signature-parts "v1") computed-signature)
+        (if (some #(constant-time-equals? % computed-signature) (get signature-parts "v1"))
           true
           (throw (ex-info "Signature mismatch" {:type :invalid-signature})))))))
 

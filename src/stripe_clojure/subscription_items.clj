@@ -52,5 +52,5 @@
   ([stripe-client subscription-item-id opts]
    (request stripe-client :delete
             (str stripe-subscription-items-endpoint "/" subscription-item-id)
-            nil
+            {}
             opts)))
