@@ -58,7 +58,7 @@
     (seq custom-headers) (merge custom-headers)))
 
 (defn- build-http-options [{:keys [headers timeout http-client method params query-params is-v2 multipart]}]
-  (let [is-get (identical? method :get)
+  (let [is-get (= method :get)
         base {:headers headers :as :json :timeout timeout :http-client http-client}]
     (if multipart
       (-> base
@@ -85,8 +85,8 @@
         multipart (:multipart opts)
         _ (validate-url! full-url base-url url)
         detected-version (api-version/detect-version url)
-        is-v2 (identical? detected-version api-version/V2)
-        is-get (identical? method :get)
+        is-v2 (= detected-version api-version/V2)
+        is-get (= method :get)
         expansion-fields (encoding/get-expansion-fields detected-version opts)
         expand-params (encoding/format-expansion detected-version expansion-fields)
         encoded-params (encode-request-params {:params params
@@ -152,7 +152,7 @@
                 detected-version expand-params merged]} (prepare-request-context method url params opts config)
         {:keys [max-network-retries full-response? listeners kebabify-keys? throttler http-client]} merged
         request-fn (retry/with-retry #(send-stripe-api-request method full-url options) max-network-retries)
-        should-paginate? (and is-get (:auto-paginate? opts) (pagination/is-paginated-endpoint? full-url))
+        should-paginate? (and is-get (:auto-paginate? opts))
         start-time (System/currentTimeMillis)]
 
     (when (and listeners (seq @listeners))

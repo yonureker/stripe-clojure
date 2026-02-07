@@ -39,5 +39,5 @@
   ([stripe-client item-id opts]
    (request stripe-client :delete
                 (str stripe-radar-value-list-items-endpoint "/" item-id)
-                nil
+                {}
                 opts))) 

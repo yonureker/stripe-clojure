@@ -37,7 +37,7 @@
   ([stripe-client account-id opts]
    (request stripe-client :delete 
                 (str stripe-accounts-endpoint "/" account-id)
-                nil 
+                {}
                 opts)))
 
 (defn list-accounts
@@ -137,7 +137,7 @@
   ([stripe-client account-id external-account-id opts]
    (request stripe-client :delete 
                 (str stripe-accounts-endpoint "/" account-id "/external_accounts/" external-account-id)
-                nil
+                {}
                 opts)))
 
 (defn list-external-accounts
@@ -195,7 +195,7 @@
   ([stripe-client account-id bank-account-id opts]
    (request stripe-client :delete 
                 (str stripe-accounts-endpoint "/" account-id "/bank_accounts/" bank-account-id)
-                nil
+                {}
                 opts)))
 
 (defn list-bank-accounts
@@ -278,7 +278,7 @@
   ([stripe-client account-id person-id opts]
    (request stripe-client :delete 
                 (str stripe-accounts-endpoint "/" account-id "/persons/" person-id)
-                nil
+                {}
                 opts)))
 
 (defn list-persons
@@ -336,7 +336,7 @@
   ([stripe-client account-id person-id opts]
    (request stripe-client :delete 
                 (str stripe-accounts-endpoint "/" account-id "/people/" person-id)
-                nil
+                {}
                 opts)))
 
 (defn list-people

@@ -25,6 +25,11 @@
   (testing "contains ellipsis separator"
     (is (str/includes? (config/mask-api-key "sk_test_abcdefghijklmnop") "...")))
 
+  (testing "handles short keys without crashing"
+    (is (string? (config/mask-api-key "sk_t")))
+    (is (string? (config/mask-api-key "sk")))
+    (is (string? (config/mask-api-key "a"))))
+
   (testing "returns nil for nil input"
     (is (nil? (config/mask-api-key nil)))))
 

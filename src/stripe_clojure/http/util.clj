@@ -100,15 +100,13 @@
     (let [values (if (string? fields) [fields] fields)]
       (if (counted? values)
         ;; Fast path for vectors and other counted collections
-        (let [cnt (count values)
-              result (transient {})]
-          (loop [idx 0]
+        (let [cnt (count values)]
+          (loop [idx 0
+                 result (transient {})]
             (if (< idx cnt)
               (let [key (str prefix "[" idx "]")
                     val (nth values idx)]
-                #_{:clj-kondo/ignore [:unused-value]}
-                (assoc! result key val)
-                (recur (unchecked-inc idx)))
+                (recur (unchecked-inc idx) (assoc! result key val)))
               (persistent! result))))
         ;; Fallback for non-counted collections
         (into {} (map-indexed (fn [idx val]

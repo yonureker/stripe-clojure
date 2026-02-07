@@ -14,30 +14,6 @@
                  :parse-error (.getMessage e)}}))
     body))
 
-(defn attach-response-metadata
-  "Attaches request metadata to result if result supports metadata.
-
-  Metadata includes:
-    :request-id     - Stripe's request ID for debugging/support
-    :status         - HTTP status code
-    :stripe-account - Connected account ID (if present)
-
-  Parameters:
-    result   - The processed response body
-    response - The raw HTTP response map
-
-  Returns:
-    The result with metadata attached, or the original result if
-    metadata cannot be attached (e.g., for primitives or nil)."
-  [result response]
-  (if (instance? clojure.lang.IObj result)
-    (with-meta result
-      {:request-id (get-in response [:headers "request-id"])
-       :status (:status response)
-       :stripe-account (get-in response [:headers "stripe-account"])})
-    result))
-
-
 (defn create-error-response
   "Creates a structured error response from the original response.
    Optionally transforms keys to kebab-case based on the config."
@@ -52,24 +28,22 @@
     (if full-response?
       (if kebabify-keys?
         (assoc response :body parsed-body)
-        (assoc response :body (parse-body (:body response))))
+        (assoc response :body parsed-body))
       (if kebabify-keys?
         (util/transform-keys simplified-error)
         simplified-error))))
 
 (defn process-response
   "Process the response based on its status and the full-response flag.
-   Optionally transforms keys to kebab-case based on the config.
-   Attaches metadata with request-id and status to map results."
+   Optionally transforms keys to kebab-case based on the config."
   [response full-response? kebabify-keys?]
   (let [transformed-response
         (cond-> response
           kebabify-keys?
           (-> (update :headers #(util/transform-keys (into {} %)))
-              (update :body #(-> % parse-body util/transform-keys))))
-        result (if (>= (:status transformed-response) 400)
-                 (create-error-response transformed-response full-response? kebabify-keys?)
-                 (if full-response?
-                   transformed-response
-                   (:body transformed-response)))]
-    (attach-response-metadata result response)))
+              (update :body #(-> % parse-body util/transform-keys))))]
+    (if (>= (:status transformed-response) 400)
+      (create-error-response transformed-response full-response? kebabify-keys?)
+      (if full-response?
+        transformed-response
+        (:body transformed-response)))))

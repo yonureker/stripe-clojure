@@ -17,13 +17,6 @@
     (v2/create-paginator)
     (v1/create-paginator)))
 
-(defn is-paginated-endpoint?
-  "Determines if the given URL represents a paginated endpoint."
-  [url]
-  (or (re-matches #".*/search/?$" url)
-      (re-matches #".*/v1/[\w-]+/?$" url)
-      (re-matches #".*/v2/[\w-]+/[\w-]+/?$" url)))
-
 (defn paginate
   "Handles pagination for Stripe API requests.
 

@@ -12,12 +12,12 @@
                            :request-end-time 1234567900
                            :elapsed 10}
           result (events/build-event-data base-event additional-event true)]
-      (is (= "POST" (get result ":method")))
-      (is (= "/v1/customers" (get result ":path")))
-      (is (= "2024-12-18" (get result ":api-version")))
-      (is (= 1234567890 (get result ":request-start-time")))
-      (is (= 200 (get result ":status")))
-      (is (= 10 (get result ":elapsed")))))
+      (is (= "POST" (:method result)))
+      (is (= "/v1/customers" (:path result)))
+      (is (= "2024-12-18" (:api-version result)))
+      (is (= 1234567890 (:request-start-time result)))
+      (is (= 200 (:status result)))
+      (is (= 10 (:elapsed result)))))
 
   (testing "Event data building without kebab-case transformation"
     (let [base-event {:method :get 

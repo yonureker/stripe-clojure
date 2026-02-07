@@ -210,7 +210,7 @@
   ([stripe-client customer-id source-id opts]
    (request stripe-client :delete
                 (str stripe-customers-endpoint "/" customer-id "/sources/" source-id)
-                nil
+                {}
                 opts)))
 
 ;; Tax IDs
@@ -283,7 +283,7 @@
   ([stripe-client customer-id opts]
    (request stripe-client :delete
                 (str stripe-customers-endpoint "/" customer-id "/discount")
-                nil
+                {}
                 opts)))
 
 (defn delete-tax-id
@@ -294,7 +294,7 @@
   ([stripe-client customer-id tax-id opts]
    (request stripe-client :delete
                 (str stripe-customers-endpoint "/" customer-id "/tax_ids/" tax-id)
-                nil
+                {}
                 opts)))
 
 (defn retrieve-payment-method
@@ -373,7 +373,7 @@
   ([stripe-client customer-id bank-account-id opts]
    (request stripe-client :delete
                 (str stripe-customers-endpoint "/" customer-id "/bank_accounts/" bank-account-id)
-                nil
+                {}
                 opts)))
 
 (defn list-bank-accounts
@@ -431,5 +431,5 @@
   ([stripe-client customer-id card-id opts]
    (request stripe-client :delete
                 (str stripe-customers-endpoint "/" customer-id "/cards/" card-id)
-                nil
+                {}
                 opts)))

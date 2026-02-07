@@ -18,29 +18,6 @@
     (let [paginator (pagination/get-paginator :unknown)]
       (is (some? paginator)))))
 
-(deftest is-paginated-endpoint-test
-  (testing "recognizes V1 list endpoints"
-    (is (pagination/is-paginated-endpoint? "https://api.stripe.com/v1/customers"))
-    (is (pagination/is-paginated-endpoint? "https://api.stripe.com/v1/charges"))
-    (is (pagination/is-paginated-endpoint? "https://api.stripe.com/v1/invoices"))
-    (is (pagination/is-paginated-endpoint? "https://api.stripe.com/v1/subscriptions")))
-
-  (testing "recognizes V1 list endpoints with trailing slash"
-    (is (pagination/is-paginated-endpoint? "https://api.stripe.com/v1/customers/")))
-
-  (testing "recognizes search endpoints"
-    (is (pagination/is-paginated-endpoint? "https://api.stripe.com/v1/customers/search"))
-    (is (pagination/is-paginated-endpoint? "https://api.stripe.com/v1/charges/search"))
-    (is (pagination/is-paginated-endpoint? "https://api.stripe.com/v1/invoices/search")))
-
-  (testing "recognizes V2 list endpoints"
-    (is (pagination/is-paginated-endpoint? "https://api.stripe.com/v2/core/events"))
-    (is (pagination/is-paginated-endpoint? "https://api.stripe.com/v2/core/accounts")))
-
-  (testing "does not recognize nested resource endpoints"
-    (is (not (pagination/is-paginated-endpoint? "https://api.stripe.com/v1/customers/cus_123")))
-    (is (not (pagination/is-paginated-endpoint? "https://api.stripe.com/v1/customers/cus_123/sources")))))
-
 (deftest paginate-test
   (testing "calls make-request-fn when auto-paginate is false"
     (let [call-count (atom 0)

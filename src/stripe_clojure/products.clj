@@ -102,5 +102,5 @@
   ([stripe-client product-id feature-id opts]
    (request stripe-client :delete
                 (str stripe-products-endpoint "/" product-id "/features/" feature-id)
-                nil
+                {}
                 opts)))

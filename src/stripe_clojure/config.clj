@@ -1,5 +1,4 @@
-(ns stripe-clojure.config
-  (:require [clojure.core :as str]))
+(ns stripe-clojure.config)
 
 ;; Default Configuration
 (def api-keys
@@ -138,11 +137,9 @@
    - Pagination: URL-based instead of cursor-based
    - Field expansion: 'include' parameter instead of 'expand'
    - Idempotency: 30-day window instead of 24-hour"
-  {;; Core
-   :v2-core-accounts (str "/" stripe-v2-api-namespace "/core/accounts")
+  {:v2-core-accounts (str "/" stripe-v2-api-namespace "/core/accounts")
    :v2-core-events (str "/" stripe-v2-api-namespace "/core/events")
    :v2-core-event-destinations (str "/" stripe-v2-api-namespace "/core/event_destinations")
-   ;; Billing
    :v2-billing-meter-event-session (str "/" stripe-v2-api-namespace "/billing/meter_event_session")
    :v2-billing-meter-event-stream (str "/" stripe-v2-api-namespace "/billing/meter_event_stream")
    :v2-billing-meter-event-adjustments (str "/" stripe-v2-api-namespace "/billing/meter_event_adjustments")
@@ -153,9 +150,11 @@
    Example: 'sk_test_asdasdasadsad9Rglkf' -> 'sk_test...glkf'"
   [api-key]
   (when api-key
-    (let [prefix (subs api-key 0 7)
-          suffix (subs api-key (- (count api-key) 4))]
-      (str prefix "..." suffix))))
+    (if (< (count api-key) 11)
+      (str (subs api-key 0 (min 4 (count api-key))) "...")
+      (let [prefix (subs api-key 0 7)
+            suffix (subs api-key (- (count api-key) 4))]
+        (str prefix "..." suffix)))))
 
 (def base-api-version "2026-01-28.clover")
 

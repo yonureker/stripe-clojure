@@ -21,7 +21,7 @@
                           :request-id         (assoc m :request_id v)
                           (assoc m k v)))
                       {}))
-      (#(if kebabify-keys? (update-keys % util/underscore-to-kebab) %))))
+      (#(if kebabify-keys? (update-keys % (comp keyword util/underscore-to-kebab name)) %))))
 
 (def valid-event-types
   "Set of supported event types."
