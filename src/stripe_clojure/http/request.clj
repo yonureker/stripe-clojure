@@ -36,10 +36,13 @@
 (defn generate-idempotency-key ^String []
   (str (java.util.UUID/randomUUID)))
 
+(def ^:private valid-request-opts? (m/validator schema/RequestOpts))
+
 (defn- validate-request-opts! [opts]
-  (when-let [explanation (m/explain schema/RequestOpts opts)]
-    (throw (ex-info (str "Invalid request options: " (pr-str (me/humanize explanation)))
-                    {:errors (me/humanize explanation) :provided-options opts}))))
+  (when-not (valid-request-opts? opts)
+    (let [humanized (me/humanize (m/explain schema/RequestOpts opts))]
+      (throw (ex-info (str "Invalid request options: " (pr-str humanized))
+                      {:errors humanized :provided-options opts})))))
 
 (defn- validate-url! [^String full-url base-url endpoint]
   (when-not (re-matches url-pattern full-url)
@@ -192,12 +195,13 @@
                                result)
                              result)]
           (when (and listeners (seq @listeners))
-            (events/emit-event listeners :response
-                               {:method method :url url :api-version (:api-version merged)
-                                :request-start-time start-time :account (:stripe-account merged)}
-                               {:request-end-time (System/currentTimeMillis)
-                                :elapsed (- (System/currentTimeMillis) start-time)
-                                :status (:status raw-result)
-                                :request-id (get-in raw-result [:headers "request-id"])}
-                               kebabify-keys?))
+            (let [end-time (System/currentTimeMillis)]
+              (events/emit-event listeners :response
+                                 {:method method :url url :api-version (:api-version merged)
+                                  :request-start-time start-time :account (:stripe-account merged)}
+                                 {:request-end-time end-time
+                                  :elapsed (- end-time start-time)
+                                  :status (:status raw-result)
+                                  :request-id (get-in raw-result [:headers "request-id"])}
+                                 kebabify-keys?)))
           final-result)))))
