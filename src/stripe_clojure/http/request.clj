@@ -36,10 +36,13 @@
 (defn generate-idempotency-key ^String []
   (str (java.util.UUID/randomUUID)))
 
+(def ^:private valid-request-opts? (m/validator schema/RequestOpts))
+
 (defn- validate-request-opts! [opts]
-  (when-let [explanation (m/explain schema/RequestOpts opts)]
-    (throw (ex-info (str "Invalid request options: " (pr-str (me/humanize explanation)))
-                    {:errors (me/humanize explanation) :provided-options opts}))))
+  (when-not (valid-request-opts? opts)
+    (let [humanized (me/humanize (m/explain schema/RequestOpts opts))]
+      (throw (ex-info (str "Invalid request options: " (pr-str humanized))
+                      {:errors humanized :provided-options opts})))))
 
 (defn- validate-url! [^String full-url base-url endpoint]
   (when-not (re-matches url-pattern full-url)
@@ -156,8 +159,9 @@
 (defn make-request
   "Makes an HTTP request to the Stripe API."
   [method url params opts config]
-  (validate-request-opts! opts)
-  (let [{:keys [full-url options headers timeout is-v2 is-get
+  (let [opts (or opts {})
+        _ (validate-request-opts! opts)
+        {:keys [full-url options headers timeout is-v2 is-get
                 detected-version expand-params merged]} (prepare-request-context method url params opts config)
         {:keys [max-network-retries full-response? listeners kebabify-keys? throttler http-client]} merged
         request-fn (retry/with-retry #(send-stripe-api-request method full-url options) max-network-retries)
@@ -191,12 +195,13 @@
                                result)
                              result)]
           (when (and listeners (seq @listeners))
-            (events/emit-event listeners :response
-                               {:method method :url url :api-version (:api-version merged)
-                                :request-start-time start-time :account (:stripe-account merged)}
-                               {:request-end-time (System/currentTimeMillis)
-                                :elapsed (- (System/currentTimeMillis) start-time)
-                                :status (:status raw-result)
-                                :request-id (get-in raw-result [:headers "request-id"])}
-                               kebabify-keys?))
+            (let [end-time (System/currentTimeMillis)]
+              (events/emit-event listeners :response
+                                 {:method method :url url :api-version (:api-version merged)
+                                  :request-start-time start-time :account (:stripe-account merged)}
+                                 {:request-end-time end-time
+                                  :elapsed (- end-time start-time)
+                                  :status (:status raw-result)
+                                  :request-id (get-in raw-result [:headers "request-id"])}
+                                 kebabify-keys?)))
           final-result)))))

@@ -64,6 +64,7 @@
    :issuing-disputes (str "/" stripe-api-namespace "/issuing/disputes")
    :issuing-personalization-designs (str "/" stripe-api-namespace "/issuing/personalization_designs")
    :issuing-physical-bundles (str "/" stripe-api-namespace "/issuing/physical_bundles")
+   :issuing-settlements (str "/" stripe-api-namespace "/issuing/settlements")
    :issuing-tokens (str "/" stripe-api-namespace "/issuing/tokens")
    :issuing-transactions (str "/" stripe-api-namespace "/issuing/transactions")
    :mandates (str "/" stripe-api-namespace "/mandates")
@@ -81,6 +82,7 @@
    :products (str "/" stripe-api-namespace "/products")
    :quotes (str "/" stripe-api-namespace "/quotes")
    :radar-early-fraud-warnings (str "/" stripe-api-namespace "/radar/early_fraud_warnings")
+   :radar-payment-evaluations (str "/" stripe-api-namespace "/radar/payment_evaluations")
    :radar-value-list-items (str "/" stripe-api-namespace "/radar/value_list_items")
    :radar-value-lists (str "/" stripe-api-namespace "/radar/value_lists")
    :refunds (str "/" stripe-api-namespace "/refunds")
@@ -90,6 +92,7 @@
    :setup-attempts (str "/" stripe-api-namespace "/setup_attempts")
    :setup-intents (str "/" stripe-api-namespace "/setup_intents")
    :shipping-rates (str "/" stripe-api-namespace "/shipping_rates")
+   :sigma-saved-queries (str "/" stripe-api-namespace "/sigma/saved_queries")
    :sigma-scheduled-query-runs (str "/" stripe-api-namespace "/sigma/scheduled_query_runs")
    :sources (str "/" stripe-api-namespace "/sources")
    :subscriptions (str "/" stripe-api-namespace "/subscriptions")
@@ -108,6 +111,7 @@
    :terminal-locations (str "/" stripe-api-namespace "/terminal/locations")
    :terminal-onboarding-links (str "/" stripe-api-namespace "/terminal/onboarding_links")
    :terminal-readers (str "/" stripe-api-namespace "/terminal/readers")
+   :terminal-refunds (str "/" stripe-api-namespace "/terminal/refunds")
    :test-helpers-customers (str "/" stripe-api-namespace "/test_helpers/customers")
    :test-helpers-confirmation-tokens (str "/" stripe-api-namespace "/test_helpers/confirmation_tokens")
    :treasury-credit-reversals (str "/" stripe-api-namespace "/treasury/credit_reversals")
@@ -136,7 +140,9 @@
    - Pagination: URL-based instead of cursor-based
    - Field expansion: 'include' parameter instead of 'expand'
    - Idempotency: 30-day window instead of 24-hour"
-  {:v2-core-accounts (str "/" stripe-v2-api-namespace "/core/accounts")
+  {:v2-core-account-links (str "/" stripe-v2-api-namespace "/core/account_links")
+   :v2-core-account-tokens (str "/" stripe-v2-api-namespace "/core/account_tokens")
+   :v2-core-accounts (str "/" stripe-v2-api-namespace "/core/accounts")
    :v2-core-events (str "/" stripe-v2-api-namespace "/core/events")
    :v2-core-event-destinations (str "/" stripe-v2-api-namespace "/core/event_destinations")
    :v2-billing-meter-event-session (str "/" stripe-v2-api-namespace "/billing/meter_event_session")
@@ -155,7 +161,7 @@
             suffix (subs api-key (- (count api-key) 4))]
         (str prefix "..." suffix)))))
 
-(def base-api-version "2026-01-28.clover")
+(def base-api-version "2026-04-22.dahlia")
 
 (def default-client-config
   {:protocol "https"
