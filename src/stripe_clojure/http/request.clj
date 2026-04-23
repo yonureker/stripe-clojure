@@ -156,8 +156,9 @@
 (defn make-request
   "Makes an HTTP request to the Stripe API."
   [method url params opts config]
-  (validate-request-opts! opts)
-  (let [{:keys [full-url options headers timeout is-v2 is-get
+  (let [opts (or opts {})
+        _ (validate-request-opts! opts)
+        {:keys [full-url options headers timeout is-v2 is-get
                 detected-version expand-params merged]} (prepare-request-context method url params opts config)
         {:keys [max-network-retries full-response? listeners kebabify-keys? throttler http-client]} merged
         request-fn (retry/with-retry #(send-stripe-api-request method full-url options) max-network-retries)
