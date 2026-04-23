@@ -25,12 +25,12 @@ Clojure SDK for the [Stripe API](https://stripe.com/docs/api). Listed by Stripe 
 
 Add to your `deps.edn`:
 ```clojure
-{:deps {io.github.yonureker/stripe-clojure {:mvn/version "2.2.0"}}}
+{:deps {io.github.yonureker/stripe-clojure {:mvn/version "2.3.0"}}}
 ```
 
 Or in `project.clj`:
 ```clojure
-[io.github.yonureker/stripe-clojure "2.2.0"]
+[io.github.yonureker/stripe-clojure "2.3.0"]
 ```
 
 > **Note:** Version 2.x requires Java 11+. For Java 8 support, use version 1.1.0.

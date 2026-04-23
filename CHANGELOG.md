@@ -1,5 +1,28 @@
 # Change Log
 
+## [2.3.0] - 2026-04-23
+
+**Stripe API Version: `2026-04-22.dahlia`**
+
+### New Endpoints
+- v1: `issuing/settlements` (retrieve, update)
+- v1: `radar/payment_evaluations` (create)
+- v1: `sigma/saved_queries` (update)
+- v1: `terminal/refunds` (create)
+- v2: `core/account_links` (create)
+- v2: `core/account_tokens` (create, retrieve)
+
+### Bug Fixes
+- Fixed nil opts passed to `make-request` causing schema validation error
+- Fixed `me/humanize` called twice on validation failure path
+- Fixed inconsistent `System/currentTimeMillis` reads in response event timing
+
+### Performance
+- Compiled Malli validator at load time for per-request schema validation
+
+### Changes
+- Bumped Stripe API version from `2026-01-28.clover` to `2026-04-22.dahlia`
+
 ## [2.2.0] - 2026-02-06
 
 **Stripe API Version: `2026-01-28.clover`**
