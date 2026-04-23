@@ -6,7 +6,7 @@
 
 Clojure SDK for the [Stripe API](https://stripe.com/docs/api). Listed by Stripe as a [community-supported SDK](https://docs.stripe.com/sdks/community).
 
-**Stripe API Version: `2026-01-28.clover`**
+**Stripe API Version: `2026-04-22.dahlia`**
 
 ## Features
 
@@ -93,7 +93,7 @@ Create isolated client instances with custom configurations:
 (def production-client
   (stripe/init-stripe
     {:api-key "sk_live_..."
-     :api-version "2026-01-28.clover"
+     :api-version "2026-04-22.dahlia"
      :max-network-retries 3
      :timeout 30000
      :rate-limits {:live {:default {:read 50 :write 25}}}}))
@@ -117,7 +117,7 @@ Create isolated client instances with custom configurations:
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `:api-key` | **Required** | Your Stripe secret API key |
-| `:api-version` | `"2026-01-28.clover"` | Stripe API version to use |
+| `:api-version` | `"2026-04-22.dahlia"` | Stripe API version to use |
 | `:stripe-account` | `nil` | Connect account ID for platform requests |
 | `:max-network-retries` | `1` | Number of automatic retries for failed requests |
 | `:timeout` | `80000` | Request timeout in milliseconds |
@@ -293,7 +293,7 @@ The client emits `request` and `response` events for logging, debugging, or modi
 
 `request` object:
 ```clojure
-{:api_version "2026-01-28.clover"
+{:api_version "2026-04-22.dahlia"
  :account "acct_TEST"              ;; Only present if provided
  :idempotency_key "abc123"         ;; Only present if provided
  :method "POST"
@@ -304,7 +304,7 @@ The client emits `request` and `response` events for logging, debugging, or modi
 
 `response` object:
 ```clojure
-{:api_version "2026-01-28.clover"
+{:api_version "2026-04-22.dahlia"
  :account "acct_TEST"              ;; Only present if provided
  :idempotency_key "abc123"         ;; Only present if provided
  :method "POST"
@@ -384,7 +384,7 @@ By default, the library returns just the response body. Enable `:full-response?`
 
 ;; Full response structure
 {:status 200
- :headers {"request-id" "req_abc123" "stripe-version" "2026-01-28.clover" ...}
+ :headers {"request-id" "req_abc123" "stripe-version" "2026-04-22.dahlia" ...}
  :body {:id "cus_123" :name "Jane Doe" ...}}
 ```
 
