@@ -63,6 +63,7 @@
 ;; ================= PROTOCOL & RECORD =================
 (defprotocol StripeClient
   "Defines the operations for Stripe API client instances."
+  :extend-via-metadata true
   (get-client-config [this]
     "Returns the Stripe configuration with sensitive data masked.")
   (execute-request [this method endpoint params opts]

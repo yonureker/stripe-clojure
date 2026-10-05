@@ -119,7 +119,20 @@
     (let [instance (client/create-instance {:api-key "sk_test_valid"
                                             :proxy {:host "proxy.example.com"
                                                     :port 8080}})]
-      (is (some? instance)))))
+      (is (some? instance))))
+
+  (testing "mock clients can be implemented via metadata"
+    (let [client (with-meta {:mock true}
+                   {'stripe-clojure.http.client/execute-request (fn [_this method endpoint params opts]
+                                                                  {:method method
+                                                                   :endpoint endpoint
+                                                                   :params params
+                                                                   :opts opts})})]
+      (is (= {:method :get
+              :endpoint "/payouts"
+              :params {:foo "bar"}
+              :opts {:timeout 5}}
+             (client/execute-request client :get "/payouts" {:foo "bar"} {:timeout 5}))))))
 
 ;; Tests for StripeClient protocol
 
