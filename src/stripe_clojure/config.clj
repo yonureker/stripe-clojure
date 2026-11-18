@@ -103,6 +103,7 @@
    :subscription-schedules (str "/" stripe-api-namespace "/subscription_schedules")
    :tax-associations (str "/" stripe-api-namespace "/tax/associations")
    :tax-calculations (str "/" stripe-api-namespace "/tax/calculations")
+   :tax-locations (str "/" stripe-api-namespace "/tax/locations")
    :tax-registrations (str "/" stripe-api-namespace "/tax/registrations")
    :tax-settings (str "/" stripe-api-namespace "/tax/settings")
    :tax-transactions (str "/" stripe-api-namespace "/tax/transactions")
