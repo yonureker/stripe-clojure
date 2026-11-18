@@ -150,6 +150,8 @@
    :v2-core-accounts (str "/" stripe-v2-api-namespace "/core/accounts")
    :v2-core-events (str "/" stripe-v2-api-namespace "/core/events")
    :v2-core-event-destinations (str "/" stripe-v2-api-namespace "/core/event_destinations")
+   :v2-core-vault-gb-bank-accounts (str "/" stripe-v2-api-namespace "/core/vault/gb_bank_accounts")
+   :v2-core-vault-us-bank-accounts (str "/" stripe-v2-api-namespace "/core/vault/us_bank_accounts")
    :v2-billing-meter-event-session (str "/" stripe-v2-api-namespace "/billing/meter_event_session")
    :v2-billing-meter-event-stream (str "/" stripe-v2-api-namespace "/billing/meter_event_stream")
    :v2-billing-meter-event-adjustments (str "/" stripe-v2-api-namespace "/billing/meter_event_adjustments")
