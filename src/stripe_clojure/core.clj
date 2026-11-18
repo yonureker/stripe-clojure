@@ -29,16 +29,16 @@
    - :host : Host to connect to (default: api.stripe.com)
    - :port : Port to connect to (default: 443)
    - :rate-limits : Custom rate limits to use
-   - :mock : Use the local stripe-mock server defaults; other options still apply
+   - :mock : When true, use the local stripe-mock server defaults; other options still apply
    
    Deprecated options (ignored with warning):
    - :use-connection-pool? : No longer needed, HTTP/2 handles connection management
    - :pool-options : No longer needed, HTTP/2 handles connection management"
   [opts]
   (warn-deprecated-options opts)
-  (let [clean-opts (dissoc opts :use-connection-pool? :pool-options)
-        client-opts (if (contains? clean-opts :mock)
-                      (merge config/mock-mode (dissoc clean-opts :mock))
+  (let [clean-opts (dissoc opts :use-connection-pool? :pool-options :mock)
+        client-opts (if (:mock opts)
+                      (merge config/mock-mode clean-opts)
                       clean-opts)]
     (when-not (contains? client-opts :api-key)
       (throw (ex-info "API key required for initialization" {:opts opts})))

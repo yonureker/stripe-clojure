@@ -43,7 +43,15 @@
 
   (testing "invalid options are rejected in mock mode too"
     (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Validation failed"
-                          (core/init-stripe {:mock true :timeout -1})))))
+                          (core/init-stripe {:mock true :timeout -1}))))
+
+  (testing "a false :mock leaves the client pointed at Stripe"
+    (let [config (core/get-config (core/init-stripe {:mock false :api-key "sk_test_valid"}))]
+      (is (= "https" (:protocol config)))
+      (is (= "api.stripe.com" (:host config)))
+      (is (= 443 (:port config))))
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo #"API key required"
+                          (core/init-stripe {:mock false})))))
 
 (deftest init-stripe-additional-params-test
   (testing "Initialization returns a config with additional parameters correctly set"
