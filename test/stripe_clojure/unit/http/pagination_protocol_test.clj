@@ -55,6 +55,11 @@
             result (protocol/next-page-params paginator response {:query "q" :page "tok_2"})]
         (is (= {:query "q" :page "tok_3"} result))))
 
+    (testing "a string \"page\" key from the caller is replaced"
+      (let [response {:has_more true :next_page "tok_3" :data [{:id "cus_2"}]}
+            result (protocol/next-page-params paginator response {"query" "q" "page" "tok_2"})]
+        (is (= {"query" "q" :page "tok_3"} result))))
+
     (testing "returns nil when the search has no more pages"
       (let [response {:has_more false :next_page nil :data [{:id "cus_1"}]}]
         (is (nil? (protocol/next-page-params paginator response {:query "q"})))))))
@@ -73,6 +78,27 @@
     (testing "a kebab-case :starting-after from the caller is replaced"
       (is (= {:limit 1 :starting-after "obj_2"}
              (protocol/next-page-params paginator response {:limit 1 :starting-after "obj_1"}))))))
+
+(deftest v1-paginator-sorted-map-params-test
+  (let [paginator (v1/create-paginator)
+        response {:has_more true :data [{:id "obj_2"}]}]
+    (testing "sorted-map params with keyword keys"
+      (is (= {:limit 1 :starting-after "obj_2"}
+             (protocol/next-page-params paginator response (sorted-map :limit 1))))
+      (is (= {:limit 1 :starting-after "obj_2"}
+             (protocol/next-page-params paginator response
+                                        (sorted-map :limit 1 :starting_after "obj_1")))))
+
+    (testing "sorted-map params with string keys"
+      (is (= {"limit" 1 :starting-after "obj_2"}
+             (protocol/next-page-params paginator response
+                                        (sorted-map "limit" 1 "starting_after" "obj_1")))))
+
+    (testing "sorted-map params on a search"
+      (is (= {"query" "q" :page "tok_2"}
+             (protocol/next-page-params paginator
+                                        {:has_more true :next_page "tok_2" :data [{:id "cus_1"}]}
+                                        (sorted-map "query" "q")))))))
 
 (deftest v1-paginator-next-page-params-kebab-test
   (let [paginator (v1/create-paginator)]

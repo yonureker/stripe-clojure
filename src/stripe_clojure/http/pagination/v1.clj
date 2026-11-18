@@ -8,7 +8,8 @@
 
    Search endpoints return a next_page token instead, which is sent back as
    the page parameter."
-  (:require [stripe-clojure.http.pagination.protocol :as protocol]))
+  (:require [clojure.string :as str]
+            [stripe-clojure.http.pagination.protocol :as protocol]))
 
 (defn- response-has-more?
   "Check if response has more pages. Handles both snake_case and kebab-case keys."
@@ -22,13 +23,21 @@
   (or (:next_page response)
       (:next-page response)))
 
-(defn- with-cursor
-  "Points params at the page after `last-id`, replacing any cursor the caller
-   passed for the first page."
-  [params last-id]
-  (-> params
-      (dissoc :starting_after "starting_after")
-      (assoc :starting-after last-id)))
+(defn- param-name
+  "The name a param key is sent under. Keyword keys are sent in snake_case."
+  [k]
+  (if (keyword? k)
+    (str/replace (name k) "-" "_")
+    (str k)))
+
+(defn- set-param
+  "Sets a page param on a plain copy of params, replacing the value the caller
+   passed for the first page however its key is spelled (:starting_after,
+   :starting-after or \"starting_after\"). The copy keeps sorted maps working."
+  [params k value]
+  (let [sent-as (param-name k)]
+    (-> (into {} (remove #(= sent-as (param-name (key %)))) params)
+        (assoc k value))))
 
 (defn create-paginator
   "Creates a new V1 paginator."
@@ -41,9 +50,9 @@
     (next-page-params [_ response current-params]
       (when (response-has-more? response)
         (if-let [token (next-page-token response)]
-          (assoc current-params :page token)
+          (set-param current-params :page token)
           (when-let [last-id (-> response :data last :id)]
-            (with-cursor current-params last-id)))))
+            (set-param current-params :starting-after last-id)))))
 
     (get-items [_ response]
       (:data response))))

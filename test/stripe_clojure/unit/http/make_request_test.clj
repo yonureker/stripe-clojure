@@ -95,7 +95,17 @@
             #(request/make-request :get "/v1/customers" params {:auto-paginate? true} config))]
       (is (= ["cus_1" "cus_2"] (map :id result)))
       (is (= "cus_0" (get-in (first sent) [:options :query-params "starting_after"])))
-      (is (= "cus_1" (get-in (second sent) [:options :query-params "starting_after"]))))))
+      (is (= "cus_1" (get-in (second sent) [:options :query-params "starting_after"])))))
+
+  (testing "sorted-map params paginate like any other map"
+    (let [{:keys [result sent]}
+          (with-stubbed-responses
+            [(ok {:data [{:id "cus_1"}] :has_more true})
+             (ok {:data [{:id "cus_2"}] :has_more false})]
+            #(request/make-request :get "/v1/customers" (sorted-map :limit 1 :starting_after "cus_0")
+                                   {:auto-paginate? true} config))]
+      (is (= ["cus_1" "cus_2"] (map :id result)))
+      (is (= {"limit" 1 "starting_after" "cus_1"} (-> sent second :options :query-params))))))
 
 (deftest auto-pagination-full-response-test
   (testing "auto-pagination yields items even when full-response? is set"
