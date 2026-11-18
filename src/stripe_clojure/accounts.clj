@@ -223,8 +223,11 @@
             opts)))
 
 (defn verify-bank-account
-  "Verifies a bank account.
-   \nStripe API docs: https://stripe.com/docs/api/external_account_bank_accounts/verify"
+  "Deprecated: Stripe has no endpoint for verifying an account's bank account,
+   so this call always returns a 404 error. Microdeposit verification exists
+   only for customer bank accounts (see customers/verify-bank-account).
+   This function will be removed in 3.0."
+  {:deprecated "2.4.0"}
   ([stripe-client account-id bank-account-id params]
    (verify-bank-account stripe-client account-id bank-account-id params {}))
   ([stripe-client account-id bank-account-id params opts]
@@ -305,60 +308,47 @@
             params
             opts)))
 
-;; People (different from persons)
+;; People
+;; Stripe does not serve the /people paths, so these delegate to the persons
+;; functions above. They will be removed in 3.0.
 (defn create-people
-  "Creates a person for an account.
-   \nStripe API docs: https://stripe.com/docs/api/persons/create"
+  "Deprecated: use create-person."
+  {:deprecated "2.4.0"}
   ([stripe-client account-id person-payload]
-   (create-people stripe-client account-id person-payload {}))
+   (create-person stripe-client account-id person-payload))
   ([stripe-client account-id person-payload opts]
-   (request stripe-client :post
-            (str stripe-accounts-endpoint "/" account-id "/people")
-            person-payload
-            opts)))
+   (create-person stripe-client account-id person-payload opts)))
 
 (defn retrieve-people
-  "Retrieves an existing person.
-   \nStripe API docs: https://stripe.com/docs/api/persons/retrieve"
+  "Deprecated: use retrieve-person."
+  {:deprecated "2.4.0"}
   ([stripe-client account-id person-id]
-   (retrieve-people stripe-client account-id person-id {}))
+   (retrieve-person stripe-client account-id person-id))
   ([stripe-client account-id person-id opts]
-   (request stripe-client :get
-            (str stripe-accounts-endpoint "/" account-id "/people/" person-id)
-            {}
-            opts)))
+   (retrieve-person stripe-client account-id person-id opts)))
 
 (defn update-people
-  "Updates an existing person.
-   \nStripe API docs: https://stripe.com/docs/api/persons/update"
+  "Deprecated: use update-person."
+  {:deprecated "2.4.0"}
   ([stripe-client account-id person-id person-payload]
-   (update-people stripe-client account-id person-id person-payload {}))
+   (update-person stripe-client account-id person-id person-payload))
   ([stripe-client account-id person-id person-payload opts]
-   (request stripe-client :post
-            (str stripe-accounts-endpoint "/" account-id "/people/" person-id)
-            person-payload
-            opts)))
+   (update-person stripe-client account-id person-id person-payload opts)))
 
 (defn delete-people
-  "Deletes an existing person.
-   \nStripe API docs: https://stripe.com/docs/api/persons/delete"
+  "Deprecated: use delete-person."
+  {:deprecated "2.4.0"}
   ([stripe-client account-id person-id]
-   (delete-people stripe-client account-id person-id {}))
+   (delete-person stripe-client account-id person-id))
   ([stripe-client account-id person-id opts]
-   (request stripe-client :delete
-            (str stripe-accounts-endpoint "/" account-id "/people/" person-id)
-            {}
-            opts)))
+   (delete-person stripe-client account-id person-id opts)))
 
 (defn list-people
-  "Lists all people.
-   \nStripe API docs: https://stripe.com/docs/api/persons/list"
+  "Deprecated: use list-persons."
+  {:deprecated "2.4.0"}
   ([stripe-client account-id]
-   (list-people stripe-client account-id {}))
+   (list-persons stripe-client account-id))
   ([stripe-client account-id params]
-   (list-people stripe-client account-id params {}))
+   (list-persons stripe-client account-id params))
   ([stripe-client account-id params opts]
-   (request stripe-client :get
-            (str stripe-accounts-endpoint "/" account-id "/people")
-            params
-            opts)))
+   (list-persons stripe-client account-id params opts)))

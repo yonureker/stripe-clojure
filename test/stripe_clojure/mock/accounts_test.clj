@@ -231,7 +231,7 @@
       (is (string? (:id response)))
       (is (true? (:deleted response))))))
 
-;; NOTE: These tests are skipped because stripe-mock doesn't support these endpoints yet
+;; NOTE: Skipped because the pinned stripe-mock spec does not include this endpoint
 (deftest ^:skip-mock list-bank-accounts-test
   (testing "List bank accounts"
     (let [response (accounts/list-bank-accounts stripe-mock-client "acct_mock")]
@@ -240,48 +240,32 @@
       (is (vector? (:data response)))
       (is (boolean? (:has_more response))))))
 
-(deftest ^:skip-mock verify-bank-account-test
-  (testing "Verify bank account"
-    (let [params {:amounts [32 45]}
-          response (accounts/verify-bank-account stripe-mock-client "acct_mock" "ba_mock" params)]
-      (is (map? response))
-      (is (= "bank_account" (:object response)))
-      (is (string? (:id response))))))
-
-;; People Tests  
-(deftest create-people-test
+;; The deprecated people functions delegate to the persons endpoints.
+#_{:clj-kondo/ignore [:deprecated-var]}
+(deftest people-functions-test
   (testing "Create people"
-    (let [params {:first_name "John" :last_name "Doe"}
-          response (accounts/create-people stripe-mock-client "acct_mock" params)]
-      (is (map? response))
-      ;; stripe-mock may return person or error depending on endpoint support
-      (is (map? response)))))
+    (let [response (accounts/create-people stripe-mock-client "acct_mock"
+                                           {:first_name "John" :last_name "Doe"})]
+      (is (= "person" (:object response)))
+      (is (string? (:id response)))))
 
-(deftest retrieve-people-test
   (testing "Retrieve people"
     (let [response (accounts/retrieve-people stripe-mock-client "acct_mock" "person_mock")]
-      (is (map? response))
-      ;; stripe-mock may return person or error depending on endpoint support  
-      (is (map? response)))))
+      (is (= "person" (:object response)))
+      (is (string? (:id response)))))
 
-(deftest update-people-test
   (testing "Update people"
-    (let [params {:first_name "Jane"}
-          response (accounts/update-people stripe-mock-client "acct_mock" "person_mock" params)]
-      (is (map? response))
-      ;; stripe-mock may return person or error depending on endpoint support
-      (is (map? response)))))
+    (let [response (accounts/update-people stripe-mock-client "acct_mock" "person_mock"
+                                           {:first_name "Jane"})]
+      (is (= "person" (:object response)))
+      (is (string? (:id response)))))
 
-(deftest delete-people-test
   (testing "Delete people"
     (let [response (accounts/delete-people stripe-mock-client "acct_mock" "person_mock")]
-      (is (map? response))
-      ;; stripe-mock may return person or error depending on endpoint support
-      (is (map? response)))))
+      (is (= "person" (:object response)))
+      (is (true? (:deleted response)))))
 
-(deftest list-people-test
   (testing "List people"
-    (let [response (accounts/list-people stripe-mock-client "acct_mock")]
-      (is (map? response))
-      ;; stripe-mock may return list or error depending on endpoint support
-      (is (map? response)))))
+    (let [response (accounts/list-people stripe-mock-client "acct_mock" {:limit 2})]
+      (is (= "list" (:object response)))
+      (is (vector? (:data response))))))
