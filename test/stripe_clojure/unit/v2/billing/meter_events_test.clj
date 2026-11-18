@@ -16,7 +16,7 @@
 
 (deftest docstrings-test
   (h/check-docstrings
-   [[#'v2-meter-events/create-meter-event #"event_name" #"payload" #"stripe_customer_id"]]))
+   [[#'v2-meter-events/create-meter-event #"(?i)meter event"]]))
 
 (deftest create-meter-event-request-test
   (testing "create-meter-event uses POST with correct endpoint and params"

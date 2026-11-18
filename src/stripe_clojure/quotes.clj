@@ -80,15 +80,21 @@
   ([stripe-client quote-id params]
    (list-computed-upfront-line-items stripe-client quote-id params {}))
   ([stripe-client quote-id params opts]
-   (request stripe-client :get 
-                (str stripe-quotes-endpoint "/" quote-id "/computed_upfront_line_items")
-                params
-                opts)))
+   (request stripe-client :get
+            (str stripe-quotes-endpoint "/" quote-id "/computed_upfront_line_items")
+            params
+            opts)))
 
 (defn get-pdf
-  "Retrieves the PDF for a quote.
+  "Retrieves the PDF for a finalized quote as a byte array.
+
+   Stripe serves quote PDFs from https://files.stripe.com, which is used
+   unless :base-url is given.
    \nStripe API docs: https://stripe.com/docs/api/quotes/pdf"
   ([stripe-client quote-id]
    (get-pdf stripe-client quote-id {}))
   ([stripe-client quote-id opts]
-   (request stripe-client :get (str stripe-quotes-endpoint "/" quote-id "/pdf") {} opts)))
+   (request stripe-client :get
+            (str stripe-quotes-endpoint "/" quote-id "/pdf")
+            {}
+            (merge {:base-url "https://files.stripe.com" :as :byte-array} opts))))

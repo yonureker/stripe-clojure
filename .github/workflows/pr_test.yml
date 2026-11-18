@@ -6,35 +6,41 @@ on:
     paths:
       - 'src/**'
       - 'test/**'
+      - 'scripts/**'
       - 'deps.edn'
       - '.github/workflows/**'
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    
-    services:
-      stripe-mock:
-        image: stripe/stripe-mock:latest
-        ports:
-          - 12111:12111
-          - 12112:12112
-    
-    container: 
+
+    container:
       image: clojure:temurin-17-tools-deps
       env:
         STRIPE_TEST_API_KEY: ${{ secrets.STRIPE_TEST_API_KEY }}
-        STRIPE_MOCK_HOST: stripe-mock
-    
+        STRIPE_MOCK_VERSION: 0.206.0
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Cache dependencies
       uses: actions/cache@v3
       with:
         path: ~/.m2/repository
         key: ${{ runner.os }}-deps-${{ hashFiles('**/deps.edn') }}
         restore-keys: ${{ runner.os }}-deps-
-    
-    - name: Run single test file
-      run: clj -M:test
+
+    - name: Start stripe-mock
+      run: |
+        curl -fsSL --retry 3 "https://github.com/stripe/stripe-mock/releases/download/v${STRIPE_MOCK_VERSION}/stripe-mock_${STRIPE_MOCK_VERSION}_linux_amd64.tar.gz" \
+          | tar -xz -C /usr/local/bin stripe-mock
+        nohup scripts/stripe-mock.sh > stripe-mock.log 2>&1 &
+        for i in $(seq 1 30); do
+          curl -fs -o /dev/null -H "Authorization: Bearer sk_test_123" http://localhost:12111/v1/balance && exit 0
+          sleep 1
+        done
+        cat stripe-mock.log
+        exit 1
+
+    - name: Run tests
+      run: clj -M:test -e :skip-mock

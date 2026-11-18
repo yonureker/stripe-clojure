@@ -50,4 +50,11 @@
           response (fa/update-features stripe-mock-client "fa_mock" params)]
       (is (map? response))
       (is (= "treasury.financial_account_features" (:object response)))
-      (is (= false (get-in response [:card_issuing :requested])))))) 
+      (is (= false (get-in response [:card_issuing :requested]))))))
+
+(deftest close-financial-account-test
+  (testing "Close treasury financial account"
+    (let [response (fa/close-financial-account stripe-mock-client "fa_mock")]
+      (is (map? response))
+      (is (= "treasury.financial_account" (:object response)))
+      (is (string? (:id response))))))

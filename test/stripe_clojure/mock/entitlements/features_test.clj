@@ -32,4 +32,11 @@
     (let [response (features/list-features stripe-mock-client)]
       (is (map? response))
       (is (= "list" (:object response)))
-      (is (vector? (:data response)))))) 
+      (is (vector? (:data response))))))
+
+(deftest retrieve-feature-test
+  (testing "Retrieve feature using stripe‑mock"
+    (let [response (features/retrieve-feature stripe-mock-client "feat_mock")]
+      (is (map? response))
+      (is (= "entitlements.feature" (:object response)))
+      (is (string? (:id response))))))

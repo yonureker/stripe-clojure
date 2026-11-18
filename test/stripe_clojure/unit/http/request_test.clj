@@ -74,7 +74,6 @@
                                             :content-type "application/json"})]
       (is (= "application/json" (get headers "content-type"))))))
 
-
 ;; Tests for generate-idempotency-key
 
 (deftest generate-idempotency-key-test
@@ -93,11 +92,11 @@
 (deftest build-http-options-test
   (testing "builds basic options for GET request"
     (let [opts (#'request/build-http-options {:headers {"auth" "Bearer key"}
-                                               :timeout 30000
-                                               :http-client nil
-                                               :method :get
-                                               :params {"limit" 10}
-                                               :is-v2 false})]
+                                              :timeout 30000
+                                              :http-client nil
+                                              :method :get
+                                              :params {"limit" 10}
+                                              :is-v2 false})]
       (is (= {"auth" "Bearer key"} (:headers opts)))
       (is (= 30000 (:timeout opts)))
       (is (= :json (:as opts)))
@@ -105,21 +104,21 @@
 
   (testing "builds options for POST request with form-params (v1)"
     (let [opts (#'request/build-http-options {:headers {"auth" "Bearer key"}
-                                               :timeout 30000
-                                               :http-client nil
-                                               :method :post
-                                               :params {"email" "test@example.com"}
-                                               :is-v2 false})]
+                                              :timeout 30000
+                                              :http-client nil
+                                              :method :post
+                                              :params {"email" "test@example.com"}
+                                              :is-v2 false})]
       (is (= {"email" "test@example.com"} (:form-params opts)))
       (is (nil? (:query-params opts)))))
 
   (testing "builds options for POST request with body (v2)"
     (let [opts (#'request/build-http-options {:headers {"auth" "Bearer key"}
-                                               :timeout 30000
-                                               :http-client nil
-                                               :method :post
-                                               :params "{\"email\":\"test@example.com\"}"
-                                               :is-v2 true})]
+                                              :timeout 30000
+                                              :http-client nil
+                                              :method :post
+                                              :params "{\"email\":\"test@example.com\"}"
+                                              :is-v2 true})]
       (is (= "{\"email\":\"test@example.com\"}" (:body opts)))
       (is (nil? (:form-params opts)))))
 
@@ -127,24 +126,38 @@
     (let [multipart [{:name "purpose" :content "dispute_evidence"}
                      {:name "file" :content "data" :content-type "application/pdf"}]
           opts (#'request/build-http-options {:headers {"content-type" "application/json"}
-                                               :timeout 30000
-                                               :http-client nil
-                                               :method :post
-                                               :params {}
-                                               :is-v2 false
-                                               :multipart multipart})]
+                                              :timeout 30000
+                                              :http-client nil
+                                              :method :post
+                                              :params {}
+                                              :is-v2 false
+                                              :multipart multipart})]
       (is (= multipart (:multipart opts)))
       (is (not (contains? (:headers opts) "content-type")) "content-type should be removed for multipart")))
 
   (testing "handles query-params for v2 POST"
     (let [opts (#'request/build-http-options {:headers {}
-                                               :timeout 30000
-                                               :http-client nil
-                                               :method :post
-                                               :params "{}"
-                                               :query-params {"include[0]" "data.payload"}
-                                               :is-v2 true})]
+                                              :timeout 30000
+                                              :http-client nil
+                                              :method :post
+                                              :params "{}"
+                                              :query-params {"include[0]" "data.payload"}
+                                              :is-v2 true})]
       (is (= {"include[0]" "data.payload"} (:query-params opts))))))
+
+;; Tests for the :as request option
+
+(deftest response-format-test
+  (let [config {:api-key "sk_test_123" :api-version "2026-01-28" :protocol "https"
+                :host "api.stripe.com" :port 443 :http-client nil}
+        options-for (fn [opts]
+                      (:options (#'request/prepare-request-context
+                                 :get "/v1/quotes/qt_123/pdf" {} opts config)))]
+    (testing "responses are decoded as JSON by default"
+      (is (= :json (:as (options-for {})))))
+
+    (testing ":as :byte-array asks for the raw bytes"
+      (is (= :byte-array (:as (options-for {:as :byte-array})))))))
 
 ;; Tests for construct-base-url
 

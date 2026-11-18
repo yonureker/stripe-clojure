@@ -108,4 +108,37 @@
    (request stripe-client :post
                 (str stripe-terminal-readers-endpoint "/" reader-id "/set_reader_display")
                 params
-                opts))) 
+                opts)))
+
+(defn collect-inputs
+  "Initiates an input collection flow on the reader.
+   \nStripe API docs: https://stripe.com/docs/api/terminal/readers/collect_inputs"
+  ([stripe-client reader-id params]
+   (collect-inputs stripe-client reader-id params {}))
+  ([stripe-client reader-id params opts]
+   (request stripe-client :post
+                (str stripe-terminal-readers-endpoint "/" reader-id "/collect_inputs")
+                params
+                opts)))
+
+(defn collect-payment-method
+  "Initiates a payment flow on the reader and updates the payment intent with card details before manual confirmation.
+   \nStripe API docs: https://stripe.com/docs/api/terminal/readers/collect_payment_method"
+  ([stripe-client reader-id params]
+   (collect-payment-method stripe-client reader-id params {}))
+  ([stripe-client reader-id params opts]
+   (request stripe-client :post
+                (str stripe-terminal-readers-endpoint "/" reader-id "/collect_payment_method")
+                params
+                opts)))
+
+(defn confirm-payment-intent
+  "Finalizes a payment on the reader.
+   \nStripe API docs: https://stripe.com/docs/api/terminal/readers/confirm_payment_intent"
+  ([stripe-client reader-id params]
+   (confirm-payment-intent stripe-client reader-id params {}))
+  ([stripe-client reader-id params opts]
+   (request stripe-client :post
+                (str stripe-terminal-readers-endpoint "/" reader-id "/confirm_payment_intent")
+                params
+                opts)))

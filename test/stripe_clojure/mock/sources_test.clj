@@ -46,14 +46,16 @@
       (is (vector? (:data response)))
       (is (boolean? (:has_more response))))))
 
-(deftest retrieve-source-transaction-test
+;; NOTE: Skipped because the pinned stripe-mock spec does not include this endpoint
+(deftest ^:skip-mock retrieve-source-transaction-test
   (testing "Retrieve source transaction"
     (let [response (sources/retrieve-source-transaction stripe-mock-client "src_mock" "srctxn_mock")]
       (is (map? response))
       (is (= "source_transaction" (:object response)))
       (is (string? (:id response))))))
 
-(deftest retrieve-mandate-notification-test
+;; NOTE: Skipped because the pinned stripe-mock spec does not include this endpoint
+(deftest ^:skip-mock retrieve-mandate-notification-test
   (testing "Retrieve mandate notification"
     (let [response (sources/retrieve-mandate-notification stripe-mock-client "src_mock" "srcmnd_mock")]
       (is (map? response))

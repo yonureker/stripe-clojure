@@ -2,7 +2,9 @@
   (:require [hato.client :as hato]
             [stripe-clojure.http.throttle :as throttle]
             [stripe-clojure.http.request :as request]
-            [stripe-clojure.config :as config]))
+            [stripe-clojure.config :as config])
+  (:import (java.net Authenticator Authenticator$RequestorType InetSocketAddress
+                     PasswordAuthentication ProxySelector)))
 
 ;; ================= HELPER FUNCTIONS =================
 (defn mask-client-config
@@ -30,13 +32,32 @@
   [_client-config]
   nil)
 
+(defn- proxy-selector
+  "Routes every request through the proxy at host:port."
+  [{:keys [host port]}]
+  (ProxySelector/of (InetSocketAddress. ^String host (int port))))
+
+(defn- proxy-authenticator
+  "Answers authentication challenges from the proxy, and only from the proxy,
+   with the configured credentials."
+  [{:keys [user password]}]
+  (proxy [Authenticator] []
+    (requestPasswordAuthenticationInstance
+      [_host _address _port _protocol _prompt _scheme _url requestor-type]
+      (when (= Authenticator$RequestorType/PROXY requestor-type)
+        (PasswordAuthentication. user (char-array password))))))
+
 (defn- create-http-client
   "Creates a Hato HTTP client with HTTP/2 support and optional proxy."
-  [{:keys [timeout proxy] :as opts}]
+  [{:keys [connect-timeout] proxy-config :proxy}]
   (hato/build-http-client
    (cond-> {:version :http-2
-            :connect-timeout (or timeout (:timeout config/default-client-config))}
-     proxy (assoc :proxy proxy))))
+            :connect-timeout (or connect-timeout (:connect-timeout config/default-client-config))}
+     proxy-config
+     (assoc :proxy (proxy-selector proxy-config))
+
+     (and (:user proxy-config) (:password proxy-config))
+     (assoc :authenticator (proxy-authenticator proxy-config)))))
 
 (defn- prepare-config
   "Merges user-provided options with defaults."
@@ -46,6 +67,7 @@
                                          :stripe-account
                                          :max-network-retries
                                          :timeout
+                                         :connect-timeout
                                          :protocol
                                          :host
                                          :port
@@ -96,6 +118,7 @@
    Options include:
    - :api-key (required),
    - :api-version, :stripe-account, :max-network-retries, :timeout,
+   - :connect-timeout (default: 30000) - milliseconds allowed for opening a connection,
    - :protocol (default: \"https\"),
    - :host (default: \"api.stripe.com\"), :port (default: 443),
    - :proxy (optional) - proxy configuration {:host :port :user :password},

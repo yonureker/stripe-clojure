@@ -6,7 +6,7 @@
    - Cancel events that were reported in error
    - Adjust usage values for billing corrections
 
-   Stripe docs: https://docs.stripe.com/api/v2/billing/meter_event_adjustments"
+   Docs: https://docs.stripe.com/api/v2/billing/meter-event-adjustments"
   (:require [stripe-clojure.http.client :refer [request]]
             [stripe-clojure.config :as config]))
 
@@ -19,23 +19,7 @@
    incorrectly. Adjustments can cancel events entirely or adjust their
    values.
 
-   Parameters:
-   - stripe-client: The Stripe client instance
-   - params: The adjustment parameters
-     - :event_name (required) - The name of the meter event to adjust
-     - :type (required) - The type of adjustment: \"cancel\"
-     - :cancel - Parameters for cancel adjustment
-       - :identifier (required) - The identifier of the event to cancel
-   - opts: Optional request options
-
-   Returns:
-   The created meter event adjustment object.
-
-   Example - Cancel a specific event:
-   (create-meter-event-adjustment client
-     {:event_name \"api_requests\"
-      :type \"cancel\"
-      :cancel {:identifier \"unique-event-id-123\"}})"
+   Docs: https://docs.stripe.com/api/v2/billing/meter-event-adjustments/create"
   ([stripe-client params]
    (create-meter-event-adjustment stripe-client params {}))
   ([stripe-client params opts]

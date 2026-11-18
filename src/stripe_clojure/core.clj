@@ -15,6 +15,8 @@
   (when (contains? opts :pool-options)
     (println "DEPRECATION WARNING: :pool-options is deprecated and ignored. Connection management is now handled automatically via HTTP/2.")))
 
+(def ^:private explain-client-opts (m/explainer schema/StripeClient))
+
 (defn init-stripe
   "Initializes a new Stripe client instance.
    
@@ -24,30 +26,29 @@
    - :stripe-account : For Connect, the Stripe account to use
    - :max-network-retries : Maximum number of retries for failed network requests
    - :timeout : Request timeout in milliseconds
+   - :connect-timeout : Time allowed for opening a connection in milliseconds (default: 30000)
    - :protocol : The protocol to use for requests (default: https)
    - :host : Host to connect to (default: api.stripe.com)
    - :port : Port to connect to (default: 443)
    - :rate-limits : Custom rate limits to use
+   - :mock : When true, use the local stripe-mock server defaults; other options still apply
    
    Deprecated options (ignored with warning):
    - :use-connection-pool? : No longer needed, HTTP/2 handles connection management
    - :pool-options : No longer needed, HTTP/2 handles connection management"
   [opts]
   (warn-deprecated-options opts)
-  (let [clean-opts (dissoc opts :use-connection-pool? :pool-options)]
-    (cond
-      (contains? opts :mock)
-      (client/create-instance config/mock-mode)
-      
-      (contains? clean-opts :api-key)
-      (if-let [errors (m/explain schema/StripeClient clean-opts)]
-        (let [humanized (me/humanize errors)]
-          (throw (ex-info (str "Validation failed when initializing Stripe client: " (pr-str humanized)) 
-                          {:errors humanized})))
-        (client/create-instance clean-opts))
-   
-      :else
-      (throw (ex-info "API key required for initialization" {:opts opts})))))
+  (let [clean-opts (dissoc opts :use-connection-pool? :pool-options :mock)
+        client-opts (if (:mock opts)
+                      (merge config/mock-mode clean-opts)
+                      clean-opts)]
+    (when-not (contains? client-opts :api-key)
+      (throw (ex-info "API key required for initialization" {:opts opts})))
+    (when-let [errors (explain-client-opts client-opts)]
+      (let [humanized (me/humanize errors)]
+        (throw (ex-info (str "Validation failed when initializing Stripe client: " (pr-str humanized))
+                        {:errors humanized}))))
+    (client/create-instance client-opts)))
 
 (defn shutdown-stripe-client!
   "Shuts down the given Stripe client instance, releasing any internal and pooled resources."

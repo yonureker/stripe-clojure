@@ -64,6 +64,16 @@
   ([stripe-client subscription-id params opts]
    (request stripe-client :post (str stripe-subscriptions-endpoint "/" subscription-id "/resume") params opts)))
 
+(defn pause-subscription
+  "Pauses a subscription.
+   \nStripe API docs: https://stripe.com/docs/api/subscriptions/pause"
+  ([stripe-client subscription-id]
+   (pause-subscription stripe-client subscription-id {}))
+  ([stripe-client subscription-id params]
+   (pause-subscription stripe-client subscription-id params {}))
+  ([stripe-client subscription-id params opts]
+   (request stripe-client :post (str stripe-subscriptions-endpoint "/" subscription-id "/pause") params opts)))
+
 (defn delete-discount
   "Removes the currently applied discount on a subscription.
    \nStripe API docs: https://stripe.com/docs/api/subscriptions/delete_discount"

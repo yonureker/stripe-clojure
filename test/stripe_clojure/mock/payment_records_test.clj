@@ -3,33 +3,41 @@
             [clojure.test :refer [deftest is testing]]
             [stripe-clojure.payment-records :as pr]))
 
-;; NOTE: These tests are skipped because stripe-mock doesn't support these endpoints yet
-(deftest ^:skip-mock report-payment-test
+(deftest report-payment-test
   (testing "Report payment"
     (let [params {:amount_requested {:currency "usd" :value 1000}
-                  :payment_method_details {:type "card"}
-                  :payment_reference "ref_123"}
+                  :initiated_at 1234567890
+                  :payment_method_details {:type "custom"
+                                           :custom {:type "cpmt_mock"}}}
           response (pr/report-payment stripe-mock-client params)]
       (is (map? response))
       (is (= "payment_record" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:skip-mock retrieve-payment-record-test
+(deftest retrieve-payment-record-test
   (testing "Retrieve payment record"
     (let [response (pr/retrieve-payment-record stripe-mock-client "payrec_mock")]
       (is (map? response))
       (is (= "payment_record" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:skip-mock report-payment-attempt-test
+(deftest list-payment-records-test
+  (testing "List payment records"
+    (let [response (pr/list-payment-records stripe-mock-client {:limit 2})]
+      (is (map? response))
+      (is (= "list" (:object response)))
+      (is (vector? (:data response))))))
+
+(deftest report-payment-attempt-test
   (testing "Report payment attempt"
-    (let [params {:failed {:failed_at 1234567890}}
+    (let [params {:initiated_at 1234567890
+                  :failed {:failed_at 1234567890}}
           response (pr/report-payment-attempt stripe-mock-client "payrec_mock" params)]
       (is (map? response))
       (is (= "payment_record" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:skip-mock report-payment-attempt-canceled-test
+(deftest report-payment-attempt-canceled-test
   (testing "Report payment attempt canceled"
     (let [params {:canceled_at 1234567890}
           response (pr/report-payment-attempt-canceled stripe-mock-client "payrec_mock" params)]
@@ -37,7 +45,7 @@
       (is (= "payment_record" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:skip-mock report-payment-attempt-failed-test
+(deftest report-payment-attempt-failed-test
   (testing "Report payment attempt failed"
     (let [params {:failed_at 1234567890}
           response (pr/report-payment-attempt-failed stripe-mock-client "payrec_mock" params)]
@@ -45,7 +53,7 @@
       (is (= "payment_record" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:skip-mock report-payment-attempt-guaranteed-test
+(deftest report-payment-attempt-guaranteed-test
   (testing "Report payment attempt guaranteed"
     (let [params {:guaranteed_at 1234567890}
           response (pr/report-payment-attempt-guaranteed stripe-mock-client "payrec_mock" params)]
@@ -53,7 +61,7 @@
       (is (= "payment_record" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:skip-mock report-payment-attempt-informational-test
+(deftest report-payment-attempt-informational-test
   (testing "Report payment attempt informational"
     (let [params {}
           response (pr/report-payment-attempt-informational stripe-mock-client "payrec_mock" params)]
@@ -61,9 +69,12 @@
       (is (= "payment_record" (:object response)))
       (is (string? (:id response))))))
 
-(deftest ^:skip-mock report-refund-test
+(deftest report-refund-test
   (testing "Report refund"
-    (let [params {:amount {:currency "usd" :value 500} :refund_id "ref_mock"}
+    (let [params {:outcome "refunded"
+                  :processor_details {:type "custom"
+                                      :custom {:refund_reference "ref_mock"}}
+                  :refunded {:refunded_at 1234567890}}
           response (pr/report-refund stripe-mock-client "payrec_mock" params)]
       (is (map? response))
       (is (= "payment_record" (:object response)))

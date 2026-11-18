@@ -2,17 +2,24 @@
   (:require [stripe-clojure.http.util :as util]
             [cheshire.core :as json]))
 
+(defn- parse-error-json
+  "Parses a JSON error body, or describes the failure when it is not JSON."
+  [text]
+  (try
+    (json/parse-string text true)
+    (catch Exception e
+      {:error {:message "Failed to parse error response body"
+               :original-body text
+               :parse-error (.getMessage e)}})))
+
 (defn- parse-body
-  "Parses the error body if it's a string, otherwise returns it as-is."
+  "Parses an undecoded error body: a string, or a byte array when the request
+   asked for `:as :byte-array`. Anything else is returned as-is."
   [body]
-  (if (string? body)
-    (try
-      (json/parse-string body true)
-      (catch Exception e
-        {:error {:message "Failed to parse error response body"
-                 :original-body body
-                 :parse-error (.getMessage e)}}))
-    body))
+  (cond
+    (string? body) (parse-error-json body)
+    (bytes? body) (parse-error-json (slurp body))
+    :else body))
 
 (defn create-error-response
   "Creates a structured error response from the original response.
@@ -34,14 +41,20 @@
 
 (defn process-response
   "Process the response based on its status and the full-response flag.
-   Optionally transforms keys to kebab-case based on the config."
+   Optionally transforms keys to kebab-case based on the config.
+
+   The originating request and HTTP client are removed first, since the
+   request carries the Authorization header."
   [response full-response? kebabify-keys?]
-  (let [transformed-response
-        (cond-> response
+  (let [error? (>= (:status response) 400)
+        transformed-response
+        (cond-> (dissoc response :request :http-client)
+          ;; Only error bodies arrive undecoded.
+          error? (update :body parse-body)
           kebabify-keys?
           (-> (update :headers #(util/transform-keys (into {} %)))
-              (update :body #(-> % parse-body util/transform-keys))))]
-    (if (>= (:status transformed-response) 400)
+              (update :body util/transform-keys)))]
+    (if error?
       (create-error-response transformed-response full-response? kebabify-keys?)
       (if full-response?
         transformed-response

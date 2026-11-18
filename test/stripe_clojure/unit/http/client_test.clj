@@ -1,8 +1,10 @@
 (ns stripe-clojure.unit.http.client-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.java.io :as io]
+            [clojure.test :refer [deftest is testing]]
             [stripe-clojure.http.client :as client]
             [malli.core :as m]
-            [stripe-clojure.schemas.client :as schema]))
+            [stripe-clojure.schemas.client :as schema])
+  (:import (java.net Authenticator$RequestorType ServerSocket)))
 
 ;; Tests for ProxyConfig schema
 
@@ -12,9 +14,9 @@
 
   (testing "validates proxy config with all fields"
     (is (m/validate schema/ProxyConfig {:host "proxy.example.com"
-                                         :port 8080
-                                         :user "proxyuser"
-                                         :password "proxypass"})))
+                                        :port 8080
+                                        :user "proxyuser"
+                                        :password "proxypass"})))
 
   (testing "rejects proxy config missing host"
     (is (not (m/validate schema/ProxyConfig {:port 8080}))))
@@ -33,20 +35,72 @@
 
 ;; Tests for create-http-client
 
+(defn- connect-timeout-ms [http-client]
+  (.toMillis (.get (.connectTimeout http-client))))
+
 (deftest create-http-client-test
   (testing "creates client without proxy when not specified"
     (let [client (#'client/create-http-client {:timeout 5000})]
       (is (some? client))))
 
-  (testing "creates client with timeout from options"
-    (let [client (#'client/create-http-client {:timeout 10000})]
-      (is (some? client))))
+  (testing "connect timeout defaults to 30 seconds, whatever the request timeout"
+    (is (= 30000 (connect-timeout-ms (#'client/create-http-client {}))))
+    (is (= 30000 (connect-timeout-ms (#'client/create-http-client {:timeout 80000})))))
+
+  (testing "connect timeout comes from :connect-timeout"
+    (is (= 2000 (connect-timeout-ms (#'client/create-http-client {:connect-timeout 2000})))))
 
   (testing "creates client with proxy when specified"
     (let [client (#'client/create-http-client {:timeout 5000
-                                                :proxy {:host "proxy.example.com"
-                                                        :port 8080}})]
+                                               :proxy {:host "proxy.example.com"
+                                                       :port 8080}})]
       (is (some? client)))))
+
+;; Tests for proxy support
+
+(defn- proxied-request-line
+  "Sends a request with a client whose proxy is a local one-shot server and
+   returns the request line that server received."
+  []
+  (with-open [server (ServerSocket. 0)]
+    (let [received (future
+                     (with-open [socket (.accept server)]
+                       (let [[request-line & headers] (line-seq (io/reader socket))]
+                         (dorun (take-while seq headers))
+                         (spit socket (str "HTTP/1.1 200 OK\r\n"
+                                           "Content-Type: application/json\r\n"
+                                           "Content-Length: 2\r\n\r\n{}"))
+                         request-line)))
+          stripe-client (client/create-instance {:api-key "sk_test_123"
+                                                 :protocol "http"
+                                                 :host "stripe.invalid"
+                                                 :port 80
+                                                 :max-network-retries 0
+                                                 :timeout 5000
+                                                 :proxy {:host "localhost"
+                                                         :port (.getLocalPort server)}})]
+      (client/request stripe-client :get "/v1/customers" {} {})
+      (deref received 5000 :no-request))))
+
+(deftest proxy-test
+  (testing "requests are sent to the configured proxy"
+    (is (= "GET http://stripe.invalid:80/v1/customers HTTP/1.1" (proxied-request-line))))
+
+  (testing "credentials answer proxy challenges only"
+    (let [authenticator (#'client/proxy-authenticator {:user "proxyuser" :password "proxypass"})
+          challenge (fn [requestor-type]
+                      (.requestPasswordAuthenticationInstance
+                       authenticator "proxy.example.com" nil 8080 "http" "realm" "basic" nil
+                       requestor-type))
+          answer (challenge Authenticator$RequestorType/PROXY)]
+      (is (= "proxyuser" (.getUserName answer)))
+      (is (= "proxypass" (apply str (.getPassword answer))))
+      (is (nil? (challenge Authenticator$RequestorType/SERVER)))))
+
+  (testing "an authenticator is set only when credentials are given"
+    (let [authenticator #(.isPresent (.authenticator (#'client/create-http-client {:proxy %})))]
+      (is (authenticator {:host "proxy.example.com" :port 8080 :user "u" :password "p"}))
+      (is (not (authenticator {:host "proxy.example.com" :port 8080}))))))
 
 ;; Tests for mask-client-config
 

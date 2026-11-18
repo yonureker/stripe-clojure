@@ -9,7 +9,7 @@
    - JSON encoding for request/response
    - Designed for real-time usage tracking
 
-   Stripe docs: https://docs.stripe.com/api/v2/billing/meter_events"
+   Docs: https://docs.stripe.com/api/v2/billing/meter-events/create"
   (:require [stripe-clojure.http.client :refer [request]]
             [stripe-clojure.config :as config]))
 
@@ -22,32 +22,7 @@
    Events are processed asynchronously and may not be immediately reflected
    in the customer's usage totals.
 
-   Parameters:
-   - stripe-client: The Stripe client instance
-   - params: The meter event parameters
-     - :event_name (required) - The name of the meter event (matches a meter's event_name)
-     - :payload (required) - The event payload
-       - :stripe_customer_id (required) - The customer's Stripe ID
-       - :value (required) - The usage value (must be a positive integer)
-       - :timestamp - Unix timestamp of when the event occurred (defaults to now)
-     - :identifier - A unique identifier for this event (for idempotency)
-   - opts: Optional request options
-
-   Returns:
-   The created meter event object.
-
-   Example:
-   (create-meter-event client
-     {:event_name \"api_requests\"
-      :payload {:stripe_customer_id \"cus_xxx\"
-                :value 1}})
-
-   (create-meter-event client
-     {:event_name \"api_requests\"
-      :payload {:stripe_customer_id \"cus_xxx\"
-                :value 100
-                :timestamp 1234567890}
-      :identifier \"unique-event-id-123\"})"
+   Docs: https://docs.stripe.com/api/v2/billing/meter-events/create"
   ([stripe-client params]
    (create-meter-event stripe-client params {}))
   ([stripe-client params opts]

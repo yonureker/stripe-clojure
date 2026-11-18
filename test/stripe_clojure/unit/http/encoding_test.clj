@@ -106,11 +106,11 @@
 
   (testing "v1 prefers :expand when both :expand and :include are provided"
     (is (= ["customer"] (encoding/get-expansion-fields :v1 {:expand ["customer"]
-                                                             :include ["data.payload"]}))))
+                                                            :include ["data.payload"]}))))
 
   (testing "v2 prefers :include when both :expand and :include are provided"
     (is (= ["data.payload"] (encoding/get-expansion-fields :v2 {:expand ["customer"]
-                                                                 :include ["data.payload"]})))))
+                                                                :include ["data.payload"]})))))
 
 (deftest encode-params-default-test
   (testing "default dispatch uses form-urlencoded (same as v1)"
@@ -128,10 +128,10 @@
 (deftest encode-params-v2-deep-nesting-test
   (testing "v2 handles deeply nested maps with arrays containing maps"
     (let [result (encoding/encode-params :v2 {:events [{:event-name "api_requests"
-                                                         :payload {:stripe-customer-id "cus_123"
-                                                                   :value 100}}]})
+                                                        :payload {:stripe-customer-id "cus_123"
+                                                                  :value 100}}]})
           parsed (json/parse-string result true)]
       (is (= {:events [{:event_name "api_requests"
-                         :payload {:stripe_customer_id "cus_123"
-                                   :value 100}}]}
+                        :payload {:stripe_customer_id "cus_123"
+                                  :value 100}}]}
              parsed)))))

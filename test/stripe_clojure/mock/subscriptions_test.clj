@@ -62,8 +62,15 @@
 
 (deftest resume-subscription-test
   (testing "Resume subscription"
-    (let [params {:billing_cycle_anchor "now"}
+    (let [params {:billing_cycle_anchor {:type "now"}}
           response (subscriptions/resume-subscription stripe-mock-client "sub_mock" params)]
+      (is (map? response))
+      (is (= "subscription" (:object response)))
+      (is (string? (:id response))))))
+
+(deftest pause-subscription-test
+  (testing "Pause subscription"
+    (let [response (subscriptions/pause-subscription stripe-mock-client "sub_mock")]
       (is (map? response))
       (is (= "subscription" (:object response)))
       (is (string? (:id response))))))

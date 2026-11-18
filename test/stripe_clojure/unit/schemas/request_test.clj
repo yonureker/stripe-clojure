@@ -54,7 +54,14 @@
     (is (valid? {:full-response? false})))
 
   (testing "full-response? rejects non-boolean"
-    (is (invalid? {:full-response? "yes"}))))
+    (is (invalid? {:full-response? "yes"})))
+
+  (testing "kebabify-keys? accepts boolean"
+    (is (valid? {:kebabify-keys? true}))
+    (is (valid? {:kebabify-keys? false})))
+
+  (testing "kebabify-keys? rejects non-boolean"
+    (is (invalid? {:kebabify-keys? "yes"}))))
 
 ;; -----------------------------------------------------------------------------
 ;; V1 expand field
@@ -105,6 +112,15 @@
 ;; -----------------------------------------------------------------------------
 ;; idempotency-key
 ;; -----------------------------------------------------------------------------
+
+(deftest on-pagination-error-test
+  (testing "on-pagination-error accepts :truncate and :throw"
+    (is (valid? {:on-pagination-error :truncate}))
+    (is (valid? {:on-pagination-error :throw})))
+
+  (testing "on-pagination-error rejects anything else"
+    (is (invalid? {:on-pagination-error :ignore}))
+    (is (invalid? {:on-pagination-error true}))))
 
 (deftest idempotency-key-test
   (testing "idempotency-key accepts string"
@@ -191,6 +207,19 @@
 
   (testing "multipart rejects non-vector"
     (is (invalid? {:multipart {:name "file" :content "data"}}))))
+
+;; -----------------------------------------------------------------------------
+;; as
+;; -----------------------------------------------------------------------------
+
+(deftest as-test
+  (testing "as accepts the supported response coercions"
+    (is (valid? {:as :json}))
+    (is (valid? {:as :byte-array})))
+
+  (testing "as rejects anything else"
+    (is (invalid? {:as :stream}))
+    (is (invalid? {:as "json"}))))
 
 ;; -----------------------------------------------------------------------------
 ;; Closed schema - unknown keys rejected

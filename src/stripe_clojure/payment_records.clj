@@ -26,6 +26,16 @@
             {}
             opts)))
 
+(defn list-payment-records
+  "Lists all payment records.
+   \nStripe API docs: https://docs.stripe.com/api/payment-record/list"
+  ([stripe-client]
+   (list-payment-records stripe-client {}))
+  ([stripe-client params]
+   (list-payment-records stripe-client params {}))
+  ([stripe-client params opts]
+   (request stripe-client :get stripe-payment-records-endpoint params opts)))
+
 (defn report-payment-attempt
   "Report a new payment attempt on the specified payment record.
    \nStripe API docs: https://docs.stripe.com/api/payment-record/report-payment-attempt/report"

@@ -1,6 +1,7 @@
 (ns stripe-clojure.mock.quotes-test
   (:require [stripe-clojure.test-util :refer [stripe-mock-client]]
             [clojure.test :refer [deftest is testing]]
+            [stripe-clojure.config :as config]
             [stripe-clojure.quotes :as quotes]))
 
 (deftest create-quote-test
@@ -85,12 +86,10 @@
         (is (= "item" (:object item)))
         (is (string? (:id item)))))))
 
-;; (deftest get-pdf-test
-;;   (testing "Get quote PDF"
-;;     (let [response (quotes/get-pdf "qt_mock")
-;;           _ (println response)]
-;;       (is (map? response))
-;;       (is (= "file" (:object response)))
-;;       (is (string? (:id response)))
-;;       (is (contains? response :url))
-;;       (is (string? (:url response)))))) 
+(deftest get-pdf-test
+  (testing "Get quote PDF as bytes"
+    (let [{:keys [protocol host port]} config/mock-mode
+          response (quotes/get-pdf stripe-mock-client "qt_mock"
+                                   {:base-url (str protocol "://" host ":" port)})]
+      (is (bytes? response))
+      (is (pos? (count response))))))

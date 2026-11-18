@@ -39,6 +39,17 @@
     (is (= {"items[0][price]" "price_123" "items[0][quantity]" 2}
            (util/flatten-params {:items [{:price "price_123" :quantity 2}]}))))
 
+  (testing "sends keyword values by name"
+    (is (= {"currency" "usd"} (util/flatten-params {:currency :usd})))
+    (is (= {"metadata[tier]" "gold"} (util/flatten-params {:metadata {:tier :gold}})))
+    (is (= {"types[0]" "card" "types[1]" "link"} (util/flatten-params {:types [:card :link]})))
+    (is (= {"metadata[plan]" "billing/annual"}
+           (util/flatten-params {:metadata {:plan :billing/annual}}))))
+
+  (testing "leaves other values as they are"
+    (is (= {"amount" 2000 "capture" true "note" ":not-a-keyword"}
+           (util/flatten-params {:amount 2000 :capture true :note ":not-a-keyword"}))))
+
   (testing "handles nil params"
     (is (nil? (util/flatten-params nil))))
 

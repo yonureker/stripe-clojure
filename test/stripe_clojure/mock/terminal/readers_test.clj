@@ -95,4 +95,29 @@
           response (readers/set-reader-display stripe-mock-client "tmr_mock" params)]
       (is (map? response))
       (is (= "terminal.reader" (:object response)))
-      (is (string? (:id response)))))) 
+      (is (string? (:id response))))))
+
+(deftest collect-inputs-test
+  (testing "Collect inputs on terminal reader"
+    (let [params {:inputs [{:type "signature"
+                            :custom_text {:title "Sign here"}}]}
+          response (readers/collect-inputs stripe-mock-client "tmr_mock" params)]
+      (is (map? response))
+      (is (= "terminal.reader" (:object response)))
+      (is (string? (:id response))))))
+
+(deftest collect-payment-method-test
+  (testing "Collect payment method on terminal reader"
+    (let [params {:payment_intent "pi_mock"}
+          response (readers/collect-payment-method stripe-mock-client "tmr_mock" params)]
+      (is (map? response))
+      (is (= "terminal.reader" (:object response)))
+      (is (string? (:id response))))))
+
+(deftest confirm-payment-intent-test
+  (testing "Confirm payment intent on terminal reader"
+    (let [params {:payment_intent "pi_mock"}
+          response (readers/confirm-payment-intent stripe-mock-client "tmr_mock" params)]
+      (is (map? response))
+      (is (= "terminal.reader" (:object response)))
+      (is (string? (:id response))))))

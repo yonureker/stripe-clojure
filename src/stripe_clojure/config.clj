@@ -14,6 +14,7 @@
    :accounts (str "/" stripe-api-namespace "/accounts")
    :apple-pay-domains (str "/" stripe-api-namespace "/apple_pay/domains")
    :application-fees (str "/" stripe-api-namespace "/application_fees")
+   :apps-installs (str "/" stripe-api-namespace "/apps/installs")
    :apps-secrets (str "/" stripe-api-namespace "/apps/secrets")
    :balance (str "/" stripe-api-namespace "/balance")
    :balance-settings (str "/" stripe-api-namespace "/balance_settings")
@@ -22,6 +23,7 @@
    :billing-credit-balance-summary (str "/" stripe-api-namespace "/billing/credit_balance_summary")
    :billing-credit-balance-transactions (str "/" stripe-api-namespace "/billing/credit_balance_transactions")
    :billing-credit-grants (str "/" stripe-api-namespace "/billing/credit_grants")
+   :billing-feedback-options (str "/" stripe-api-namespace "/billing/feedback_options")
    :billing-meter-event-adjustments (str "/" stripe-api-namespace "/billing/meter_event_adjustments")
    :billing-meter-events (str "/" stripe-api-namespace "/billing/meter_events")
    :billing-meters (str "/" stripe-api-namespace "/billing/meters")
@@ -78,6 +80,7 @@
    :payouts (str "/" stripe-api-namespace "/payouts")
    :plans (str "/" stripe-api-namespace "/plans")
    :prices (str "/" stripe-api-namespace "/prices")
+   :product-catalog-trial-offers (str "/" stripe-api-namespace "/product_catalog/trial_offers")
    :promotion-codes (str "/" stripe-api-namespace "/promotion_codes")
    :products (str "/" stripe-api-namespace "/products")
    :quotes (str "/" stripe-api-namespace "/quotes")
@@ -100,6 +103,7 @@
    :subscription-schedules (str "/" stripe-api-namespace "/subscription_schedules")
    :tax-associations (str "/" stripe-api-namespace "/tax/associations")
    :tax-calculations (str "/" stripe-api-namespace "/tax/calculations")
+   :tax-locations (str "/" stripe-api-namespace "/tax/locations")
    :tax-registrations (str "/" stripe-api-namespace "/tax/registrations")
    :tax-settings (str "/" stripe-api-namespace "/tax/settings")
    :tax-transactions (str "/" stripe-api-namespace "/tax/transactions")
@@ -114,6 +118,19 @@
    :terminal-refunds (str "/" stripe-api-namespace "/terminal/refunds")
    :test-helpers-customers (str "/" stripe-api-namespace "/test_helpers/customers")
    :test-helpers-confirmation-tokens (str "/" stripe-api-namespace "/test_helpers/confirmation_tokens")
+   :test-helpers-test-clocks (str "/" stripe-api-namespace "/test_helpers/test_clocks")
+   :test-helpers-refunds (str "/" stripe-api-namespace "/test_helpers/refunds")
+   :test-helpers-terminal-readers (str "/" stripe-api-namespace "/test_helpers/terminal/readers")
+   :test-helpers-treasury-inbound-transfers (str "/" stripe-api-namespace "/test_helpers/treasury/inbound_transfers")
+   :test-helpers-treasury-outbound-payments (str "/" stripe-api-namespace "/test_helpers/treasury/outbound_payments")
+   :test-helpers-treasury-outbound-transfers (str "/" stripe-api-namespace "/test_helpers/treasury/outbound_transfers")
+   :test-helpers-treasury-received-credits (str "/" stripe-api-namespace "/test_helpers/treasury/received_credits")
+   :test-helpers-treasury-received-debits (str "/" stripe-api-namespace "/test_helpers/treasury/received_debits")
+   :test-helpers-issuing-authorizations (str "/" stripe-api-namespace "/test_helpers/issuing/authorizations")
+   :test-helpers-issuing-cards (str "/" stripe-api-namespace "/test_helpers/issuing/cards")
+   :test-helpers-issuing-personalization-designs (str "/" stripe-api-namespace "/test_helpers/issuing/personalization_designs")
+   :test-helpers-issuing-transactions (str "/" stripe-api-namespace "/test_helpers/issuing/transactions")
+   :three-d-secure-authentications (str "/" stripe-api-namespace "/three_d_secure/authentications")
    :treasury-credit-reversals (str "/" stripe-api-namespace "/treasury/credit_reversals")
    :treasury-debit-reversals (str "/" stripe-api-namespace "/treasury/debit_reversals")
    :treasury-financial-accounts (str "/" stripe-api-namespace "/treasury/financial_accounts")
@@ -145,10 +162,28 @@
    :v2-core-accounts (str "/" stripe-v2-api-namespace "/core/accounts")
    :v2-core-events (str "/" stripe-v2-api-namespace "/core/events")
    :v2-core-event-destinations (str "/" stripe-v2-api-namespace "/core/event_destinations")
+   :v2-core-vault-gb-bank-accounts (str "/" stripe-v2-api-namespace "/core/vault/gb_bank_accounts")
+   :v2-core-vault-us-bank-accounts (str "/" stripe-v2-api-namespace "/core/vault/us_bank_accounts")
    :v2-billing-meter-event-session (str "/" stripe-v2-api-namespace "/billing/meter_event_session")
    :v2-billing-meter-event-stream (str "/" stripe-v2-api-namespace "/billing/meter_event_stream")
    :v2-billing-meter-event-adjustments (str "/" stripe-v2-api-namespace "/billing/meter_event_adjustments")
-   :v2-billing-meter-events (str "/" stripe-v2-api-namespace "/billing/meter_events")})
+   :v2-billing-meter-events (str "/" stripe-v2-api-namespace "/billing/meter_events")
+   :v2-money-management-adjustments (str "/" stripe-v2-api-namespace "/money_management/adjustments")
+   :v2-money-management-received-credits (str "/" stripe-v2-api-namespace "/money_management/received_credits")
+   :v2-money-management-transaction-entries (str "/" stripe-v2-api-namespace "/money_management/transaction_entries")
+   :v2-money-management-transactions (str "/" stripe-v2-api-namespace "/money_management/transactions")
+   :v2-money-management-payout-methods-bank-account-spec (str "/" stripe-v2-api-namespace "/money_management/payout_methods_bank_account_spec")
+   :v2-money-management-financial-accounts (str "/" stripe-v2-api-namespace "/money_management/financial_accounts")
+   :v2-money-management-financial-addresses (str "/" stripe-v2-api-namespace "/money_management/financial_addresses")
+   :v2-money-management-inbound-transfers (str "/" stripe-v2-api-namespace "/money_management/inbound_transfers")
+   :v2-money-management-outbound-payments (str "/" stripe-v2-api-namespace "/money_management/outbound_payments")
+   :v2-money-management-outbound-setup-intents (str "/" stripe-v2-api-namespace "/money_management/outbound_setup_intents")
+   :v2-money-management-payout-intents (str "/" stripe-v2-api-namespace "/money_management/payout_intents")
+   :v2-money-management-payout-methods (str "/" stripe-v2-api-namespace "/money_management/payout_methods")
+   :v2-money-management-recipient-verifications (str "/" stripe-v2-api-namespace "/money_management/recipient_verifications")
+   :v2-test-helpers-money-management-financial-addresses (str "/" stripe-v2-api-namespace "/money_management/test_helpers/financial_addresses")
+   :v2-test-helpers-money-management-recipient-verifications (str "/" stripe-v2-api-namespace "/test_helpers/money_management/recipient_verifications")
+   :v2-commerce-product-catalog-imports (str "/" stripe-v2-api-namespace "/commerce/product_catalog/imports")})
 
 (defn mask-api-key
   "Masks the middle portion of an API key, showing only the first 7 and last 4 characters.
@@ -161,7 +196,7 @@
             suffix (subs api-key (- (count api-key) 4))]
         (str prefix "..." suffix)))))
 
-(def base-api-version "2026-04-22.dahlia")
+(def base-api-version "2026-10-28.endive")
 
 (def default-client-config
   {:protocol "https"
@@ -170,6 +205,7 @@
    :api-version base-api-version
    :max-network-retries 1
    :timeout 80000
+   :connect-timeout 30000
    :full-response? false
    :kebabify-keys? false})
 
@@ -196,7 +232,7 @@
           ;; Note: Meter events count against basic limit in test mode
           }})
 
-(def mock-mode {:protocol "http" 
+(def mock-mode {:protocol "http"
                 :host (or (System/getenv "STRIPE_MOCK_HOST") "localhost")
-                :port 12111 
+                :port (or (some-> (System/getenv "STRIPE_MOCK_PORT") parse-long) 12111)
                 :api-key (:test api-keys)})

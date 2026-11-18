@@ -13,9 +13,33 @@
       (is (= "Failed to parse error response body" (get-in result [:error :message])))
       (is (= "invalid-json" (get-in result [:error :original-body])))))
 
+  (testing "Byte array input is decoded and parsed"
+    (is (= {:message "test"}
+           (#'response/parse-body (.getBytes "{\"message\":\"test\"}" "UTF-8")))))
+
   (testing "Non-string input passthrough"
     (is (= {:already "parsed"}
            (#'response/parse-body {:already "parsed"})))))
+
+(deftest byte-array-response-test
+  (let [pdf (.getBytes "%PDF-1.4" "UTF-8")
+        error-body (.getBytes "{\"error\":{\"message\":\"Not finalized\",\"decline_code\":\"x\"}}" "UTF-8")]
+    (testing "a successful byte body is returned untouched"
+      (is (identical? pdf (response/process-response {:status 200 :headers {} :body pdf} false false)))
+      (is (identical? pdf (response/process-response {:status 200 :headers {} :body pdf} false true))))
+
+    (testing "an error byte body becomes a regular error map"
+      (let [result (response/process-response
+                    {:status 400 :headers {"request-id" "req_1"} :body error-body} false false)]
+        (is (= "Not finalized" (:message result)))
+        (is (= 400 (:status result)))
+        (is (= "req_1" (:request-id result)))))
+
+    (testing "an error byte body is kebabified like any other error"
+      (let [result (response/process-response
+                    {:status 400 :headers {"request-id" "req_1"} :body error-body} false true)]
+        (is (= "Not finalized" (:message result)))
+        (is (= "x" (:decline-code result)))))))
 
 ;; Tests for process-response
 
@@ -54,6 +78,34 @@
                     :body {:id "test"}}
           result (response/process-response response true false)]
       (is (= "req_full789" (get-in result [:headers "request-id"]))))))
+
+(deftest process-response-strips-request-internals-test
+  (let [internals {:request {:headers {"authorization" "Bearer sk_test_secret"}}
+                   :http-client :http-client}]
+    (testing "full-response mode does not expose the request or HTTP client"
+      (let [response (merge internals {:status 200
+                                       :headers {"request-id" "req_1"}
+                                       :body {:id "cus_123"}})
+            result (response/process-response response true false)]
+        (is (= {:status 200
+                :headers {"request-id" "req_1"}
+                :body {:id "cus_123"}}
+               result))))
+
+    (testing "full-response errors do not expose the request or HTTP client"
+      (let [response (merge internals {:status 404
+                                       :headers {"request-id" "req_2"}
+                                       :body "{\"error\":{\"message\":\"Not found\"}}"})
+            result (response/process-response response true false)]
+        (is (= 404 (:status result)))
+        (is (= "Not found" (get-in result [:body :error :message])))
+        (is (not (contains? result :request)))
+        (is (not (contains? result :http-client)))))
+
+    (testing "other response keys are kept"
+      (let [response (merge internals {:status 200 :headers {} :body {} :request-time 12})
+            result (response/process-response response true true)]
+        (is (= 12 (:request-time result)))))))
 
 (deftest kebabify-keys-error-response-test
   (testing "error response with kebabify-keys does not double-transform"

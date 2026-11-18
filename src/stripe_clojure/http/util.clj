@@ -49,6 +49,14 @@
              acc
              m))
 
+(defn- stringify-keyword
+  "Returns a keyword as its name, so :usd is sent as \"usd\", the way JSON
+   encoding sends keywords for v2. Any other value is returned unchanged."
+  [v]
+  (if (keyword? v)
+    (str (symbol v))
+    v))
+
 (defn- flatten-value
   [acc ^String prefix v]
   (cond
@@ -57,7 +65,7 @@
     (and (coll? v) (not (string? v)))
     (flatten-collection acc prefix v)
 
-    :else (assoc! acc prefix v)))
+    :else (assoc! acc prefix (stringify-keyword v))))
 
 (defn flatten-params
   "Recursively flattens a nested map into a single-level map with keys formatted
@@ -68,6 +76,7 @@
     2. Nested maps use bracket notation (e.g., {:customer {:name \"Jane\"}} → {\"customer[name]\" \"Jane\"})
     3. Arrays/collections use indexed brackets (e.g., {:items [{:price \"x\"}]} → {\"items[0][price]\" \"x\"})
     4. String values are preserved as-is (not treated as collections)
+    5. Keyword values are sent by name (e.g., {:currency :usd} → {\"currency\" \"usd\"})
 
     Parameters:
     - params: A nested map of parameters.

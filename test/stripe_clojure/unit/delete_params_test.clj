@@ -49,12 +49,6 @@
      :method :delete
      :endpoint (str (:accounts config/stripe-endpoints) "/acct_123/persons/person_456")
      :params {}
-     :opts {}}
-    {:api-fn accounts/delete-people
-     :args ["acct_123" "person_789"]
-     :method :delete
-     :endpoint (str (:accounts config/stripe-endpoints) "/acct_123/people/person_789")
-     :params {}
      :opts {}}]))
 
 ;; Coupons

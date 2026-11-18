@@ -10,8 +10,7 @@
 (deftest create-payment-intent-test
   (testing "create-payment-intent returns a valid payment intent"
     (let [params {:amount 5000
-                  :currency "usd"
-                  :payment_method_types ["card"]}
+                  :currency "usd"}
           response (pi/create-payment-intent stripe-mock-client params)]
       (is (string? (:id response)) "Payment intent should have a string id")
       (is (= "payment_intent" (:object response))
@@ -102,8 +101,7 @@
           "Returned object should be 'payment_intent'")
       (is (contains? response :id) "Expected response to contain the :id key"))))
 
-;; NOTE: This test is skipped because stripe-mock doesn't support this endpoint yet
-(deftest ^:skip-mock list-amount-details-line-items-test
+(deftest list-amount-details-line-items-test
   (testing "list-amount-details-line-items returns line items for a payment intent"
     (let [dummy-id "pi_mock_123"
           response (pi/list-amount-details-line-items stripe-mock-client dummy-id)]

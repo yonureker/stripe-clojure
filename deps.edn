@@ -1,9 +1,9 @@
 {:paths ["src"]
 
  :deps {org.clojure/clojure {:mvn/version "1.11.0"}
-        cheshire/cheshire {:mvn/version "5.10.0"}
+        cheshire/cheshire {:mvn/version "6.2.1"}
         hato/hato {:mvn/version "1.0.0"}
-        metosin/malli {:mvn/version "0.9.0"}}
+        metosin/malli {:mvn/version "0.20.3"}}
 
  :aliases
  {:test {:extra-paths ["test"]
@@ -26,4 +26,4 @@
   :deploy {:extra-deps {slipset/deps-deploy {:mvn/version "RELEASE"}}
            :exec-fn deps-deploy.deps-deploy/deploy
            :exec-args {:installer :remote
-                       :artifact "target/stripe-clojure-2.3.0.jar"}}}}
+                       :artifact "target/stripe-clojure-3.0.0.jar"}}}}

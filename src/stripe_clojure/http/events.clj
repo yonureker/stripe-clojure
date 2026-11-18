@@ -28,30 +28,30 @@
   #{:request :response})
 
 (defn add-listener
-   "Adds an event listener to the client's configuration.
+  "Adds an event listener to the client's configuration.
   
   Example:
       (add-listener client :request my-handler)"
-   [client event-type handler]
-   (when-not (valid-event-types event-type)
-     (throw (ex-info "Unsupported event type"
-                     {:event-type event-type
-                      :valid-types valid-event-types})))
-   (swap! (-> client :config :listeners)
-          conj {:type event-type :handler handler}))
+  [client event-type handler]
+  (when-not (valid-event-types event-type)
+    (throw (ex-info "Unsupported event type"
+                    {:event-type event-type
+                     :valid-types valid-event-types})))
+  (swap! (-> client :config :listeners)
+         conj {:type event-type :handler handler}))
 
- (defn remove-listener
-   "Removes an event listener from the client's configuration."
-   [client event-type handler]
-   (when-not (valid-event-types event-type)
-     (throw (ex-info "Unsupported event type"
-                     {:event-type event-type
-                      :valid-types valid-event-types})))
-   (swap! (-> client :config :listeners)
-          (fn [listeners]
-            (vec (remove #(and (= (:type %) event-type)
-                               (= (:handler %) handler))
-                         listeners)))))
+(defn remove-listener
+  "Removes an event listener from the client's configuration."
+  [client event-type handler]
+  (when-not (valid-event-types event-type)
+    (throw (ex-info "Unsupported event type"
+                    {:event-type event-type
+                     :valid-types valid-event-types})))
+  (swap! (-> client :config :listeners)
+         (fn [listeners]
+           (vec (remove #(and (= (:type %) event-type)
+                              (= (:handler %) handler))
+                        listeners)))))
 
 (defn emit-event
   "Emits an event to all registered listeners of the specified type.
