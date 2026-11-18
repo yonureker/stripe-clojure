@@ -55,6 +55,34 @@
           result (response/process-response response true false)]
       (is (= "req_full789" (get-in result [:headers "request-id"]))))))
 
+(deftest process-response-strips-request-internals-test
+  (let [internals {:request {:headers {"authorization" "Bearer sk_test_secret"}}
+                   :http-client :http-client}]
+    (testing "full-response mode does not expose the request or HTTP client"
+      (let [response (merge internals {:status 200
+                                       :headers {"request-id" "req_1"}
+                                       :body {:id "cus_123"}})
+            result (response/process-response response true false)]
+        (is (= {:status 200
+                :headers {"request-id" "req_1"}
+                :body {:id "cus_123"}}
+               result))))
+
+    (testing "full-response errors do not expose the request or HTTP client"
+      (let [response (merge internals {:status 404
+                                       :headers {"request-id" "req_2"}
+                                       :body "{\"error\":{\"message\":\"Not found\"}}"})
+            result (response/process-response response true false)]
+        (is (= 404 (:status result)))
+        (is (= "Not found" (get-in result [:body :error :message])))
+        (is (not (contains? result :request)))
+        (is (not (contains? result :http-client)))))
+
+    (testing "other response keys are kept"
+      (let [response (merge internals {:status 200 :headers {} :body {} :request-time 12})
+            result (response/process-response response true true)]
+        (is (= 12 (:request-time result)))))))
+
 (deftest kebabify-keys-error-response-test
   (testing "error response with kebabify-keys does not double-transform"
     (let [response {:status 400

@@ -34,10 +34,13 @@
 
 (defn process-response
   "Process the response based on its status and the full-response flag.
-   Optionally transforms keys to kebab-case based on the config."
+   Optionally transforms keys to kebab-case based on the config.
+
+   The originating request and HTTP client are removed first, since the
+   request carries the Authorization header."
   [response full-response? kebabify-keys?]
   (let [transformed-response
-        (cond-> response
+        (cond-> (dissoc response :request :http-client)
           kebabify-keys?
           (-> (update :headers #(util/transform-keys (into {} %)))
               (update :body #(-> % parse-body util/transform-keys))))]
