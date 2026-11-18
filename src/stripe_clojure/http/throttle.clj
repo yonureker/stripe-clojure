@@ -177,16 +177,18 @@
   "True for test-mode keys (sk_test_, rk_test_, pk_test_) and when no key is given."
   [api-key]
   (or (nil? api-key)
-      (some? (re-find #"^[a-z]+_test_" api-key))))
+      (str/includes? api-key "_test_")))
 
 (defn- resource-type
   "The rate limit bucket a request URL counts against."
   [url]
-  (let [path (first (str/split url #"\?" 2))]
+  (let [query-start (str/index-of url "?")
+        path (if query-start (subs url 0 query-start) url)]
     (cond
       (str/includes? path "/v1/files") :files
       (str/ends-with? path "/search") :search
-      (re-find #"/billing/meter_event(s|_stream)$" path) :meter
+      (str/ends-with? path "/billing/meter_events") :meter
+      (str/ends-with? path "/billing/meter_event_stream") :meter
       :else :default)))
 
 ;; -----------------------------------------------------------

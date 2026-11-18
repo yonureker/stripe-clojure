@@ -135,16 +135,6 @@
       (is (= multipart (:multipart opts)))
       (is (not (contains? (:headers opts) "content-type")) "content-type should be removed for multipart")))
 
-  (testing "coerces the response as bytes when asked"
-    (let [opts (#'request/build-http-options {:headers {}
-                                              :timeout 30000
-                                              :http-client nil
-                                              :method :get
-                                              :params {}
-                                              :is-v2 false
-                                              :as :byte-array})]
-      (is (= :byte-array (:as opts)))))
-
   (testing "handles query-params for v2 POST"
     (let [opts (#'request/build-http-options {:headers {}
                                               :timeout 30000
@@ -154,6 +144,20 @@
                                               :query-params {"include[0]" "data.payload"}
                                               :is-v2 true})]
       (is (= {"include[0]" "data.payload"} (:query-params opts))))))
+
+;; Tests for the :as request option
+
+(deftest response-format-test
+  (let [config {:api-key "sk_test_123" :api-version "2026-01-28" :protocol "https"
+                :host "api.stripe.com" :port 443 :http-client nil}
+        options-for (fn [opts]
+                      (:options (#'request/prepare-request-context
+                                 :get "/v1/quotes/qt_123/pdf" {} opts config)))]
+    (testing "responses are decoded as JSON by default"
+      (is (= :json (:as (options-for {})))))
+
+    (testing ":as :byte-array asks for the raw bytes"
+      (is (= :byte-array (:as (options-for {:as :byte-array})))))))
 
 ;; Tests for construct-base-url
 
