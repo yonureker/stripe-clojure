@@ -5,8 +5,7 @@
 
 (deftest create-session-test
   (testing "Create a checkout session using stripe‑mock with required parameters"
-    (let [params {:payment_method_types ["card"]
-                  :line_items [{:price_data {:currency "usd"
+    (let [params {:line_items [{:price_data {:currency "usd"
                                              :product "prod_mock"
                                              :unit_amount 1000}
                                 :quantity 1}]

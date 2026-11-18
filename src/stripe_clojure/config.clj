@@ -161,7 +161,7 @@
             suffix (subs api-key (- (count api-key) 4))]
         (str prefix "..." suffix)))))
 
-(def base-api-version "2026-04-22.dahlia")
+(def base-api-version "2026-10-28.endive")
 
 (def default-client-config
   {:protocol "https"

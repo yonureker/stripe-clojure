@@ -10,8 +10,7 @@
 (deftest create-payment-intent-test
   (testing "create-payment-intent returns a valid payment intent"
     (let [params {:amount 5000
-                  :currency "usd"
-                  :payment_method_types ["card"]}
+                  :currency "usd"}
           response (pi/create-payment-intent stripe-mock-client params)]
       (is (string? (:id response)) "Payment intent should have a string id")
       (is (= "payment_intent" (:object response))
