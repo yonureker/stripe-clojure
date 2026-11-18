@@ -19,21 +19,31 @@
    [[#'v2-stream/send-meter-events #"(?i)session" #"(?i)events"]]))
 
 (deftest send-meter-events-request-test
-  (testing "send-meter-events uses POST with correct endpoint"
-    (let [params {:events [{:event_name "api_requests"
-                            :payload {:stripe_customer_id "cus_123" :value 1}}]}
-          custom-headers {"Authorization" "Bearer session_token_123"}]
+  (let [params {:events [{:event_name "api_requests"
+                          :payload {:stripe_customer_id "cus_123" :value 1}}]}
+        custom-headers {"Authorization" "Bearer session_token_123"}
+        stream-host "https://meter-events.stripe.com"]
+    (testing "send-meter-events POSTs to the meter events host"
       (h/check-request-calls
        [{:api-fn v2-stream/send-meter-events
          :args [params {:custom-headers custom-headers}]
          :method :post
          :endpoint "/v2/billing/meter_event_stream"
          :params params
-         :opts {:custom-headers custom-headers}}
-        ;; 2-arity defaults opts to {}
+         :opts {:custom-headers custom-headers :base-url stream-host}}
+        ;; 2-arity defaults opts to the stream host only
         {:api-fn v2-stream/send-meter-events
          :args [params]
          :method :post
          :endpoint "/v2/billing/meter_event_stream"
          :params params
-         :opts {}}]))))
+         :opts {:base-url stream-host}}]))
+
+    (testing "a caller-supplied :base-url wins"
+      (h/check-request-calls
+       [{:api-fn v2-stream/send-meter-events
+         :args [params {:base-url "http://localhost:12111"}]
+         :method :post
+         :endpoint "/v2/billing/meter_event_stream"
+         :params params
+         :opts {:base-url "http://localhost:12111"}}]))))

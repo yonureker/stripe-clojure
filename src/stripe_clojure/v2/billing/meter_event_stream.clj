@@ -16,6 +16,10 @@
 
 (def ^:private endpoint (:v2-billing-meter-event-stream config/stripe-v2-endpoints))
 
+(def ^:private stream-base-url
+  "Stripe serves the meter event stream from its own host, not api.stripe.com."
+  "https://meter-events.stripe.com")
+
 (defn send-meter-events
   "Sends meter events using a session authentication token.
 
@@ -25,8 +29,10 @@
    Note: This endpoint uses the session's authentication token instead of
    the standard API key. The token should be passed via custom-headers.
 
+   Requests go to https://meter-events.stripe.com unless :base-url is given.
+
    Docs: https://docs.stripe.com/api/v2/billing/meter-event-sessions/create-async"
   ([stripe-client params]
    (send-meter-events stripe-client params {}))
   ([stripe-client params opts]
-   (request stripe-client :post endpoint params opts)))
+   (request stripe-client :post endpoint params (merge {:base-url stream-base-url} opts))))
