@@ -42,5 +42,4 @@
     [:host {:optional true} string?]
     [:port {:optional true} pos-int?]
     [:proxy {:optional true} ProxyConfig]
-    [:rate-limits {:optional true} RateLimits]
-    [:kebabify-keys? {:optional true} boolean?]]))
+    [:rate-limits {:optional true} RateLimits]]))

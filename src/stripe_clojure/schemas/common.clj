@@ -8,4 +8,5 @@
    [:stripe-account {:optional true} string?]
    [:max-network-retries {:optional true} NonNegativeInt]
    [:timeout {:optional true} NonNegativeInt]
-   [:full-response? {:optional true} boolean?]])
+   [:full-response? {:optional true} boolean?]
+   [:kebabify-keys? {:optional true} boolean?]])

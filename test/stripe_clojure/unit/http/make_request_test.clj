@@ -113,3 +113,20 @@
             #(request/make-request :get "/v1/customers" {:limit 1} {:full-response? true} config))]
       (is (= 200 (:status result)))
       (is (= [{:id "cus_1"}] (get-in result [:body :data]))))))
+
+(deftest per-request-kebabify-keys-test
+  (testing ":kebabify-keys? can be turned on for a single request"
+    (let [{:keys [result]}
+          (with-stubbed-responses
+            [(ok {:id "cus_1" :default_source nil :invoice_settings {:default_payment_method "pm_1"}})]
+            #(request/make-request :get "/v1/customers/cus_1" {} {:kebabify-keys? true} config))]
+      (is (= {:id "cus_1" :default-source nil :invoice-settings {:default-payment-method "pm_1"}}
+             result))))
+
+  (testing ":kebabify-keys? can be turned off for a single request"
+    (let [{:keys [result]}
+          (with-stubbed-responses
+            [(ok {:id "cus_1" :default_source nil})]
+            #(request/make-request :get "/v1/customers/cus_1" {} {:kebabify-keys? false}
+                                   (assoc config :kebabify-keys? true)))]
+      (is (= {:id "cus_1" :default_source nil} result)))))

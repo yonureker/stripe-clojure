@@ -54,7 +54,14 @@
     (is (valid? {:full-response? false})))
 
   (testing "full-response? rejects non-boolean"
-    (is (invalid? {:full-response? "yes"}))))
+    (is (invalid? {:full-response? "yes"})))
+
+  (testing "kebabify-keys? accepts boolean"
+    (is (valid? {:kebabify-keys? true}))
+    (is (valid? {:kebabify-keys? false})))
+
+  (testing "kebabify-keys? rejects non-boolean"
+    (is (invalid? {:kebabify-keys? "yes"}))))
 
 ;; -----------------------------------------------------------------------------
 ;; V1 expand field
