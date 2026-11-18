@@ -35,7 +35,8 @@
       (is (seq? customers-seq)
           "Expected a lazy sequence even if full-response? is set to true due to auto-pagination")
       (is (every? map? fetched)
-          "Each item in the lazy sequence should be a customer map"))))
+          "Each item in the lazy sequence should be a customer map")
+      (is (>= (count fetched) 1) "Should fetch at least one customer"))))
 
 (deftest integration-full-response-single-page-test
   (testing "Full-response returns a complete response envelope when auto-pagination is disabled"

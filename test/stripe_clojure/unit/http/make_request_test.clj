@@ -95,3 +95,21 @@
       (is (= ["cus_1" "cus_2"] (map :id result)))
       (is (= "cus_0" (get-in (first sent) [:options :query-params "starting_after"])))
       (is (= "cus_1" (get-in (second sent) [:options :query-params "starting_after"]))))))
+
+(deftest auto-pagination-full-response-test
+  (testing "auto-pagination yields items even when full-response? is set"
+    (let [{:keys [result]}
+          (with-stubbed-responses
+            [(ok {:data [{:id "cus_1"}] :has_more true})
+             (ok {:data [{:id "cus_2"}] :has_more false})]
+            #(request/make-request :get "/v1/customers" {:limit 1}
+                                   {:auto-paginate? true :full-response? true} config))]
+      (is (= [{:id "cus_1"} {:id "cus_2"}] result))))
+
+  (testing "full-response? still returns the envelope without auto-pagination"
+    (let [{:keys [result]}
+          (with-stubbed-responses
+            [(ok {:data [{:id "cus_1"}] :has_more true})]
+            #(request/make-request :get "/v1/customers" {:limit 1} {:full-response? true} config))]
+      (is (= 200 (:status result)))
+      (is (= [{:id "cus_1"}] (get-in result [:body :data]))))))

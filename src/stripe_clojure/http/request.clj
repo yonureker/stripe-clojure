@@ -175,6 +175,9 @@
         {:keys [max-network-retries full-response? listeners kebabify-keys? throttler http-client]} merged
         request-fn (retry/with-retry #(send-stripe-api-request method full-url options) max-network-retries)
         should-paginate? (and is-get (:auto-paginate? opts))
+        ;; Auto-pagination yields the items of every page, so there is no
+        ;; single response envelope to return.
+        full-response? (and full-response? (not should-paginate?))
         start-time (System/currentTimeMillis)]
 
     (when (and listeners (seq @listeners))
