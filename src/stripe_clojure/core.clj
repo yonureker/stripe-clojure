@@ -24,6 +24,7 @@
    - :stripe-account : For Connect, the Stripe account to use
    - :max-network-retries : Maximum number of retries for failed network requests
    - :timeout : Request timeout in milliseconds
+   - :connect-timeout : Time allowed for opening a connection in milliseconds (default: 30000)
    - :protocol : The protocol to use for requests (default: https)
    - :host : Host to connect to (default: api.stripe.com)
    - :port : Port to connect to (default: 443)

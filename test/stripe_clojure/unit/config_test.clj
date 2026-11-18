@@ -92,6 +92,7 @@
     (is (contains? config/default-client-config :api-version))
     (is (contains? config/default-client-config :max-network-retries))
     (is (contains? config/default-client-config :timeout))
+    (is (contains? config/default-client-config :connect-timeout))
     (is (contains? config/default-client-config :full-response?))
     (is (contains? config/default-client-config :kebabify-keys?)))
 
@@ -100,6 +101,7 @@
     (is (= "api.stripe.com" (:host config/default-client-config)))
     (is (= 443 (:port config/default-client-config)))
     (is (pos-int? (:timeout config/default-client-config)))
+    (is (<= (:connect-timeout config/default-client-config) (:timeout config/default-client-config)))
     (is (pos-int? (:max-network-retries config/default-client-config)))
     (is (false? (:full-response? config/default-client-config))))
 

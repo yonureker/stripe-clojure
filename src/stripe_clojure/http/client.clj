@@ -49,10 +49,10 @@
 
 (defn- create-http-client
   "Creates a Hato HTTP client with HTTP/2 support and optional proxy."
-  [{:keys [timeout] proxy-config :proxy}]
+  [{:keys [connect-timeout] proxy-config :proxy}]
   (hato/build-http-client
    (cond-> {:version :http-2
-            :connect-timeout (or timeout (:timeout config/default-client-config))}
+            :connect-timeout (or connect-timeout (:connect-timeout config/default-client-config))}
      proxy-config
      (assoc :proxy (proxy-selector proxy-config))
 
@@ -67,6 +67,7 @@
                                          :stripe-account
                                          :max-network-retries
                                          :timeout
+                                         :connect-timeout
                                          :protocol
                                          :host
                                          :port
@@ -117,6 +118,7 @@
    Options include:
    - :api-key (required),
    - :api-version, :stripe-account, :max-network-retries, :timeout,
+   - :connect-timeout (default: 30000) - milliseconds allowed for opening a connection,
    - :protocol (default: \"https\"),
    - :host (default: \"api.stripe.com\"), :port (default: 443),
    - :proxy (optional) - proxy configuration {:host :port :user :password},

@@ -35,14 +35,20 @@
 
 ;; Tests for create-http-client
 
+(defn- connect-timeout-ms [http-client]
+  (.toMillis (.get (.connectTimeout http-client))))
+
 (deftest create-http-client-test
   (testing "creates client without proxy when not specified"
     (let [client (#'client/create-http-client {:timeout 5000})]
       (is (some? client))))
 
-  (testing "creates client with timeout from options"
-    (let [client (#'client/create-http-client {:timeout 10000})]
-      (is (some? client))))
+  (testing "connect timeout defaults to 30 seconds, whatever the request timeout"
+    (is (= 30000 (connect-timeout-ms (#'client/create-http-client {}))))
+    (is (= 30000 (connect-timeout-ms (#'client/create-http-client {:timeout 80000})))))
+
+  (testing "connect timeout comes from :connect-timeout"
+    (is (= 2000 (connect-timeout-ms (#'client/create-http-client {:connect-timeout 2000})))))
 
   (testing "creates client with proxy when specified"
     (let [client (#'client/create-http-client {:timeout 5000
