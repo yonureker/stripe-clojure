@@ -1,5 +1,6 @@
 (ns stripe-clojure.unit.core-test
   (:require [clojure.test :refer [deftest is testing]]
+            [stripe-clojure.config :as config]
             [stripe-clojure.core :as core]
             [stripe-clojure.http.client :as client]))
 
@@ -25,6 +26,24 @@
 (deftest init-stripe-missing-api-key-test
   (testing "Initialization without API key should throw an exception"
     (is (thrown? clojure.lang.ExceptionInfo (core/init-stripe {})))))
+
+(deftest init-stripe-mock-test
+  (testing ":mock uses the stripe-mock defaults"
+    (let [config (core/get-config (core/init-stripe {:mock true}))]
+      (is (= (select-keys config/mock-mode [:protocol :host :port])
+             (select-keys config [:protocol :host :port])))))
+
+  (testing "other options apply on top of the mock defaults"
+    (let [config (core/get-config (core/init-stripe {:mock true
+                                                     :kebabify-keys? true
+                                                     :max-network-retries 5}))]
+      (is (= "http" (:protocol config)))
+      (is (true? (:kebabify-keys? config)))
+      (is (= 5 (:max-network-retries config)))))
+
+  (testing "invalid options are rejected in mock mode too"
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Validation failed"
+                          (core/init-stripe {:mock true :timeout -1})))))
 
 (deftest init-stripe-additional-params-test
   (testing "Initialization returns a config with additional parameters correctly set"
