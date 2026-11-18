@@ -1,5 +1,57 @@
 # Change Log
 
+## [3.0.0] - 2026-11-18
+
+**Stripe API Version: `2026-10-28.endive`**
+
+This release moves to Stripe's `2026-10-28.endive` API, adds every endpoint that was still missing, and fixes bugs in pagination, proxies, rate limiting and events. No function was removed or renamed.
+
+### Breaking Changes
+Nothing was removed, but a few things behave differently. Check these before you upgrade.
+
+- **New default API version.** Requests now use `2026-10-28.endive`, and Stripe changed some parameters in it. For example, `payment_method_types` is gone from Checkout Sessions, PaymentIntents and SetupIntents, and `billing_cycle_anchor` is now a map like `{:type "now"}`. [Stripe's changelog](https://docs.stripe.com/changelog/endive) has the full list. If you need more time, set `:api-version "2026-04-22.dahlia"` on your client.
+- **`:full-response?` no longer returns `:request` and `:http-client`.** The request included your API key, so it should never have been there.
+- **Keyword values lose their colon.** `{:currency :usd}` now sends `usd`. Before, it sent `:usd`, which Stripe rejected for fields like currency and saved as it was in free-text fields like metadata.
+- **`:proxy` is now really used.** Earlier versions accepted the option but still connected directly. If you have it set, make sure the proxy lets requests through to Stripe.
+- **`{:mock true}` respects your other options.** They used to be ignored. An invalid option next to `:mock` now throws, and `{:mock false}` gives you a normal client.
+
+### New Endpoints
+The library now covers everything in Stripe's current API. That is 134 new functions.
+- v1: `apps/installs`, `billing/feedback_options`, `product_catalog/trial_offers`, `tax/locations`, `three_d_secure/authentications`
+- v1, on existing resources: unreject an account, pause a subscription, list payment records, close a treasury financial account, retrieve and list the refunds of a charge, retrieve an entitlements feature, and three terminal reader actions (collect inputs, collect payment method, confirm payment intent)
+- v1 test helpers: test clocks, refunds, terminal readers, issuing and treasury
+- v2: `core/vault` bank accounts (US and GB), `money_management`, `commerce/product_catalog/imports`
+
+### New Features
+- `:on-pagination-error :throw` makes auto-pagination raise an error when a page fails. By default it still stops quietly at that page.
+- `:connect-timeout` sets how long to wait for a connection. The default is 30 seconds.
+- `:kebabify-keys?` now works per request, not only on the client.
+- `:as :byte-array` returns the raw response body.
+- `scripts/stripe-mock.sh` starts stripe-mock with the right API spec for the tests. Set `STRIPE_MOCK_PORT` to run it on another port.
+
+### Bug Fixes
+- Auto-pagination stopped after the first page on v2 endpoints and on search endpoints.
+- Auto-pagination returned nothing when `:full-response?` was on.
+- Auto-pagination could repeat the same page when `starting_after` was passed in a sorted map or a large params map.
+- Pages after the first skipped rate limits and event listeners. Every page is now throttled and reported like any other request.
+- `quotes/get-pdf` never worked. It now returns the PDF as a byte array.
+- `send-meter-events` called the wrong host.
+- The `accounts/*-people` functions always got a 404 from Stripe.
+- `:search` and `:meter` rate limits were never applied, and restricted test keys (`rk_test_...`) were treated as live keys.
+- Request events were missing the idempotency key, and carried `:account nil` when no account was set.
+- Opening a connection could hang for the whole request timeout (80 seconds). It now gives up after 30.
+
+### Deprecated
+- `accounts/verify-bank-account`. Stripe has no such endpoint.
+- `accounts/create-people`, `retrieve-people`, `update-people`, `delete-people` and `list-people`. Use the `person` versions instead (`create-person`, `list-persons` and so on). The old names still work.
+
+### Performance
+- About 30% less overhead per request inside the library.
+
+### Changes
+- Updated cheshire to 6.2.1 and malli to 0.20.3. The library still passes its tests with the versions 2.3.0 used, in case you pin them.
+- Shorter v2 docstrings, with corrected docs links.
+
 ## [2.3.0] - 2026-04-23
 
 **Stripe API Version: `2026-04-22.dahlia`**
