@@ -80,6 +80,7 @@
    :payouts (str "/" stripe-api-namespace "/payouts")
    :plans (str "/" stripe-api-namespace "/plans")
    :prices (str "/" stripe-api-namespace "/prices")
+   :product-catalog-trial-offers (str "/" stripe-api-namespace "/product_catalog/trial_offers")
    :promotion-codes (str "/" stripe-api-namespace "/promotion_codes")
    :products (str "/" stripe-api-namespace "/products")
    :quotes (str "/" stripe-api-namespace "/quotes")
