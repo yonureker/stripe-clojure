@@ -170,6 +170,26 @@
                            :max-attempts max-acquire-attempts})))))))
 
 ;; -----------------------------------------------------------
+;; Request classification
+;; -----------------------------------------------------------
+
+(defn- test-mode?
+  "True for test-mode keys (sk_test_, rk_test_, pk_test_) and when no key is given."
+  [api-key]
+  (or (nil? api-key)
+      (some? (re-find #"^[a-z]+_test_" api-key))))
+
+(defn- resource-type
+  "The rate limit bucket a request URL counts against."
+  [url]
+  (let [path (first (str/split url #"\?" 2))]
+    (cond
+      (str/includes? path "/v1/files") :files
+      (str/ends-with? path "/search") :search
+      (re-find #"/billing/meter_event(s|_stream)$" path) :meter
+      :else :default)))
+
+;; -----------------------------------------------------------
 ;; Public Throttling API
 ;; -----------------------------------------------------------
 
@@ -201,13 +221,8 @@
   ;; ULTRA-FAST PATH: No throttler = zero overhead (most common case)
   (if (nil? throttler)
     (f)  ; Direct execution - no overhead at all
-    (let [mode (if (or (nil? api-key) (str/starts-with? api-key "sk_test")) :test :live)
-          ;; Pre-compute resource type only once
-          resource (cond
-                     (str/includes? url "/v1/files") :files
-                     (str/includes? url "/v1/search") :search
-                     (str/includes? url "/v1/meter") :meter
-                     :else :default)
+    (let [mode (if (test-mode? api-key) :test :live)
+          resource (resource-type url)
           operation (if (= method :get) :read :write)
           rate-limit (or (get-in (:rate-limit-config throttler) [mode resource operation])
                          (get-in (:rate-limit-config throttler) [mode :default operation])

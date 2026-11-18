@@ -6,6 +6,60 @@
             [stripe-clojure.config :as config]))
 
 ;; ===============================================================
+;; Request classification
+;; These tests verify which rate limit bucket and mode a request
+;; counts against.
+;; ===============================================================
+(deftest resource-type-test
+  (testing "search endpoints use the :search bucket"
+    (is (= :search (#'throttle/resource-type "https://api.stripe.com/v1/customers/search")))
+    (is (= :search (#'throttle/resource-type "https://api.stripe.com/v1/payment_intents/search"))))
+
+  (testing "meter event endpoints use the :meter bucket"
+    (is (= :meter (#'throttle/resource-type "https://api.stripe.com/v1/billing/meter_events")))
+    (is (= :meter (#'throttle/resource-type "https://api.stripe.com/v2/billing/meter_events")))
+    (is (= :meter (#'throttle/resource-type "https://meter-events.stripe.com/v2/billing/meter_event_stream"))))
+
+  (testing "file endpoints use the :files bucket"
+    (is (= :files (#'throttle/resource-type "https://files.stripe.com/v1/files")))
+    (is (= :files (#'throttle/resource-type "https://api.stripe.com/v1/files/file_123"))))
+
+  (testing "everything else uses the :default bucket"
+    (is (= :default (#'throttle/resource-type "https://api.stripe.com/v1/customers")))
+    (is (= :default (#'throttle/resource-type "https://api.stripe.com/v1/billing/meters")))
+    (is (= :default (#'throttle/resource-type "https://api.stripe.com/v1/billing/meter_event_adjustments")))
+    (is (= :default (#'throttle/resource-type "https://api.stripe.com/v1/file_links"))))
+
+  (testing "a query string does not change the bucket"
+    (is (= :search (#'throttle/resource-type "https://api.stripe.com/v1/customers/search?page=abc")))
+    (is (= :default (#'throttle/resource-type "https://api.stripe.com/v2/core/events?page=/search")))))
+
+(deftest test-mode-test
+  (testing "secret and restricted test keys are test mode"
+    (is (#'throttle/test-mode? "sk_test_123"))
+    (is (#'throttle/test-mode? "rk_test_123")))
+
+  (testing "a missing key is treated as test mode"
+    (is (#'throttle/test-mode? nil)))
+
+  (testing "live keys are live mode"
+    (is (not (#'throttle/test-mode? "sk_live_123")))
+    (is (not (#'throttle/test-mode? "rk_live_123")))))
+
+(deftest search-bucket-throttling-test
+  (testing "a :search limit delays search requests and leaves other reads alone"
+    (let [throttler (throttle/create-throttler {:test {:search {:read 1}}})
+          now #(System/currentTimeMillis)
+          search-url "https://api.stripe.com/v1/customers/search"
+          t0 (now)
+          t1 (throttle/with-throttling throttler :get search-url "rk_test_123" now)
+          t2 (throttle/with-throttling throttler :get search-url "rk_test_123" now)
+          t3 (throttle/with-throttling throttler :get "https://api.stripe.com/v1/customers" "rk_test_123" now)]
+      (is (< (- t1 t0) 200) "First search call should return quickly")
+      (is (>= (- t2 t1) 900) "Second search call should wait for the bucket to refill")
+      (is (< (- t3 t2) 200) "A list call does not use the search bucket"))))
+
+;; ===============================================================
 ;; Test 1: Read operation throttling (1 request per second)
 ;; This test verifies that read operations (GET requests) are properly
 ;; rate-limited according to the configured rate limit.
