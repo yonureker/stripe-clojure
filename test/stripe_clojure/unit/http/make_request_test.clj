@@ -71,3 +71,27 @@
             #(request/make-request :get "/v2/core/events" {} {:auto-paginate? true}
                                    (assoc config :kebabify-keys? true)))]
       (is (= ["evt_1" "evt_2"] (map :id result))))))
+
+(deftest search-auto-pagination-test
+  (testing "search pages are requested with the page token, not starting_after"
+    (let [{:keys [result sent]}
+          (with-stubbed-responses
+            [(ok {:object "search_result" :data [{:id "cus_1"}] :has_more true :next_page "tok_2"})
+             (ok {:object "search_result" :data [{:id "cus_2"}] :has_more false :next_page nil})]
+            #(request/make-request :get "/v1/customers/search" {:query "name:'Jane'" :limit 1}
+                                   {:auto-paginate? true} config))]
+      (is (= ["cus_1" "cus_2"] (map :id result)))
+      (is (= {"query" "name:'Jane'" "limit" 1 "page" "tok_2"}
+             (-> sent second :options :query-params))))))
+
+(deftest list-auto-pagination-cursor-test
+  (testing "a starting_after passed for the first page does not leak into later pages"
+    (let [params (into {:starting_after "cus_0"} (map (fn [n] [(keyword (str "filter" n)) n])) (range 9))
+          {:keys [result sent]}
+          (with-stubbed-responses
+            [(ok {:data [{:id "cus_1"}] :has_more true})
+             (ok {:data [{:id "cus_2"}] :has_more false})]
+            #(request/make-request :get "/v1/customers" params {:auto-paginate? true} config))]
+      (is (= ["cus_1" "cus_2"] (map :id result)))
+      (is (= "cus_0" (get-in (first sent) [:options :query-params "starting_after"])))
+      (is (= "cus_1" (get-in (second sent) [:options :query-params "starting_after"]))))))

@@ -37,6 +37,43 @@
             result (protocol/next-page-params paginator response {})]
         (is (nil? result))))))
 
+(deftest v1-paginator-search-next-page-params-test
+  (let [paginator (v1/create-paginator)]
+    (testing "search results continue with the next_page token"
+      (let [response {:object "search_result" :has_more true :next_page "tok_2"
+                      :data [{:id "cus_1"}]}
+            result (protocol/next-page-params paginator response {:query "email:'a@b.c'" :limit 1})]
+        (is (= {:query "email:'a@b.c'" :limit 1 :page "tok_2"} result))))
+
+    (testing "search results continue with a kebab-case next-page token"
+      (let [response {:has-more true :next-page "tok_2" :data [{:id "cus_1"}]}
+            result (protocol/next-page-params paginator response {:query "q"})]
+        (is (= {:query "q" :page "tok_2"} result))))
+
+    (testing "the token replaces the one used for the previous page"
+      (let [response {:has_more true :next_page "tok_3" :data [{:id "cus_2"}]}
+            result (protocol/next-page-params paginator response {:query "q" :page "tok_2"})]
+        (is (= {:query "q" :page "tok_3"} result))))
+
+    (testing "returns nil when the search has no more pages"
+      (let [response {:has_more false :next_page nil :data [{:id "cus_1"}]}]
+        (is (nil? (protocol/next-page-params paginator response {:query "q"})))))))
+
+(deftest v1-paginator-replaces-caller-cursor-test
+  (let [paginator (v1/create-paginator)
+        response {:has_more true :data [{:id "obj_2"}]}]
+    (testing "a snake_case :starting_after from the caller is replaced"
+      (is (= {:limit 1 :starting-after "obj_2"}
+             (protocol/next-page-params paginator response {:limit 1 :starting_after "obj_1"}))))
+
+    (testing "a string \"starting_after\" key from the caller is replaced"
+      (is (= {:limit 1 :starting-after "obj_2"}
+             (protocol/next-page-params paginator response {:limit 1 "starting_after" "obj_1"}))))
+
+    (testing "a kebab-case :starting-after from the caller is replaced"
+      (is (= {:limit 1 :starting-after "obj_2"}
+             (protocol/next-page-params paginator response {:limit 1 :starting-after "obj_1"}))))))
+
 (deftest v1-paginator-next-page-params-kebab-test
   (let [paginator (v1/create-paginator)]
     (testing "returns starting-after with kebab-case :has-more response"
