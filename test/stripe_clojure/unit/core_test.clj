@@ -40,10 +40,10 @@
 (deftest get-client-config-test
   (testing "get-config returns a sanitized config with masked API key"
     (let [instance (core/init-stripe {:api-key "sk_test_valid"
-                                    :api-version "2024-12-18.acacia"
-                                    :protocol "https"
-                                    :host "api.stripe.com"
-                                    :port 443})
+                                      :api-version "2024-12-18.acacia"
+                                      :protocol "https"
+                                      :host "api.stripe.com"
+                                      :port 443})
           display-config (core/get-config instance)]
       (is (map? display-config))
       (is (contains? display-config :api-key))

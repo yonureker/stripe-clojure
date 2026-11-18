@@ -54,7 +54,7 @@
     (str protocol "://" host)))
 
 (defn- build-headers [{:keys [api-key api-version stripe-account idempotency-key
-                               test-clock stripe-beta custom-headers content-type]}]
+                              test-clock stripe-beta custom-headers content-type]}]
   (cond-> {"authorization" (str "Bearer " api-key)
            "content-type" content-type
            "stripe-version" api-version}
@@ -132,8 +132,8 @@
      :merged merged}))
 
 (defn- make-page-request-fn [{:keys [headers timeout http-client method is-v2 is-get
-                                      detected-version expand-params full-url max-retries
-                                      full-response? kebabify-keys?]}]
+                                     detected-version expand-params full-url max-retries
+                                     full-response? kebabify-keys?]}]
   (fn [page-params]
     (let [next-url (:_next-page-url page-params)
           clean-params (dissoc page-params :_next-page-url)
@@ -180,19 +180,19 @@
               result (response/process-response raw-result full-response? kebabify-keys?)
               final-result (if should-paginate?
                              (pagination/paginate method full-url params opts
-                               (make-page-request-fn {:headers headers
-                                                      :timeout timeout
-                                                      :http-client http-client
-                                                      :method method
-                                                      :is-v2 is-v2
-                                                      :is-get is-get
-                                                      :detected-version detected-version
-                                                      :expand-params expand-params
-                                                      :full-url full-url
-                                                      :max-retries max-network-retries
-                                                      :full-response? full-response?
-                                                      :kebabify-keys? kebabify-keys?})
-                               result)
+                                                  (make-page-request-fn {:headers headers
+                                                                         :timeout timeout
+                                                                         :http-client http-client
+                                                                         :method method
+                                                                         :is-v2 is-v2
+                                                                         :is-get is-get
+                                                                         :detected-version detected-version
+                                                                         :expand-params expand-params
+                                                                         :full-url full-url
+                                                                         :max-retries max-network-retries
+                                                                         :full-response? full-response?
+                                                                         :kebabify-keys? kebabify-keys?})
+                                                  result)
                              result)]
           (when (and listeners (seq @listeners))
             (let [end-time (System/currentTimeMillis)]

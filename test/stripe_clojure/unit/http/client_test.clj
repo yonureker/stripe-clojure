@@ -12,9 +12,9 @@
 
   (testing "validates proxy config with all fields"
     (is (m/validate schema/ProxyConfig {:host "proxy.example.com"
-                                         :port 8080
-                                         :user "proxyuser"
-                                         :password "proxypass"})))
+                                        :port 8080
+                                        :user "proxyuser"
+                                        :password "proxypass"})))
 
   (testing "rejects proxy config missing host"
     (is (not (m/validate schema/ProxyConfig {:port 8080}))))
@@ -44,8 +44,8 @@
 
   (testing "creates client with proxy when specified"
     (let [client (#'client/create-http-client {:timeout 5000
-                                                :proxy {:host "proxy.example.com"
-                                                        :port 8080}})]
+                                               :proxy {:host "proxy.example.com"
+                                                       :port 8080}})]
       (is (some? client)))))
 
 ;; Tests for mask-client-config

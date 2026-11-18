@@ -169,7 +169,6 @@
                           {:limiter-key limiter-key
                            :max-attempts max-acquire-attempts})))))))
 
-
 ;; -----------------------------------------------------------
 ;; Public Throttling API
 ;; -----------------------------------------------------------
@@ -206,23 +205,23 @@
           ;; Pre-compute resource type only once
           resource (cond
                      (str/includes? url "/v1/files") :files
-                     (str/includes? url "/v1/search") :search  
+                     (str/includes? url "/v1/search") :search
                      (str/includes? url "/v1/meter") :meter
                      :else :default)
           operation (if (= method :get) :read :write)
           rate-limit (or (get-in (:rate-limit-config throttler) [mode resource operation])
                          (get-in (:rate-limit-config throttler) [mode :default operation])
                          0)]  ; Default to 0 (disabled)
-      
+
       ;; THREE-TIER PERFORMANCE MODEL:
       (cond
         ;; TIER 1: Disabled (0) - Zero overhead
         (zero? rate-limit) (f)
-        
+
         ;; TIER 2: Very High (≥500) - Minimal overhead
         ;; Most Stripe limits are 25-100 req/s, so 500+ is effectively unlimited
         (>= rate-limit 500) (f)
-        
+
         ;; TIER 3: Normal (1-499) - Full throttling
         ;; This covers most realistic Stripe usage scenarios
         :else (do (acquire! throttler mode resource operation) (f))))))

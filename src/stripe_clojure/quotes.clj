@@ -80,10 +80,10 @@
   ([stripe-client quote-id params]
    (list-computed-upfront-line-items stripe-client quote-id params {}))
   ([stripe-client quote-id params opts]
-   (request stripe-client :get 
-                (str stripe-quotes-endpoint "/" quote-id "/computed_upfront_line_items")
-                params
-                opts)))
+   (request stripe-client :get
+            (str stripe-quotes-endpoint "/" quote-id "/computed_upfront_line_items")
+            params
+            opts)))
 
 (defn get-pdf
   "Retrieves the PDF for a quote.

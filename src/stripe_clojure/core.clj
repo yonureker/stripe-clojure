@@ -38,14 +38,14 @@
     (cond
       (contains? opts :mock)
       (client/create-instance config/mock-mode)
-      
+
       (contains? clean-opts :api-key)
       (if-let [errors (m/explain schema/StripeClient clean-opts)]
         (let [humanized (me/humanize errors)]
-          (throw (ex-info (str "Validation failed when initializing Stripe client: " (pr-str humanized)) 
+          (throw (ex-info (str "Validation failed when initializing Stripe client: " (pr-str humanized))
                           {:errors humanized})))
         (client/create-instance clean-opts))
-   
+
       :else
       (throw (ex-info "API key required for initialization" {:opts opts})))))
 

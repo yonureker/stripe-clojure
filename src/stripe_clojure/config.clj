@@ -231,7 +231,7 @@
           ;; Note: Meter events count against basic limit in test mode
           }})
 
-(def mock-mode {:protocol "http" 
+(def mock-mode {:protocol "http"
                 :host (or (System/getenv "STRIPE_MOCK_HOST") "localhost")
                 :port (or (some-> (System/getenv "STRIPE_MOCK_PORT") parse-long) 12111)
                 :api-key (:test api-keys)})
