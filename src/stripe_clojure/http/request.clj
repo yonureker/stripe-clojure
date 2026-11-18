@@ -129,7 +129,9 @@
                                      :is-v2 is-v2
                                      :multipart multipart
                                      :as (:as opts)})]
-    {:base-url base-url
+    {:method method
+     :url url
+     :base-url base-url
      :full-url full-url
      :options options
      :headers headers
@@ -152,9 +154,32 @@
       stripe-account (assoc :account stripe-account)
       idempotency-key (assoc :idempotency-key idempotency-key))))
 
-(defn- make-page-request-fn [{:keys [headers timeout http-client method is-v2 is-get
-                                     detected-version expand-params base-url full-url
-                                     max-retries full-response? kebabify-keys?]}]
+(defn- send-instrumented
+  "Sends one request through the throttler with retries, emitting a request
+   event before and a response event after. Returns the raw HTTP response."
+  [{:keys [method url headers merged]} request-url http-options]
+  (let [{:keys [api-key listeners throttler kebabify-keys? max-network-retries]} merged
+        start-time (System/currentTimeMillis)
+        event (event-data method url merged headers start-time)
+        send-once #(send-stripe-api-request method request-url http-options)
+        send-with-retry (retry/with-retry send-once max-network-retries)]
+    (events/emit-event listeners :request event nil kebabify-keys?)
+    (let [response (throttle/with-throttling throttler method request-url api-key send-with-retry)
+          end-time (System/currentTimeMillis)]
+      (events/emit-event listeners :response event
+                         {:request-end-time end-time
+                          :elapsed (- end-time start-time)
+                          :status (:status response)
+                          :request-id (get-in response [:headers "request-id"])}
+                         kebabify-keys?)
+      response)))
+
+(defn- make-page-request-fn
+  "Returns a function that fetches the page the paginator's params point at.
+   Each page is throttled, retried and instrumented like the first request."
+  [{:keys [method headers timeout is-v2 is-get detected-version expand-params
+           base-url full-url merged]
+    :as context}]
   (fn [page-params]
     (let [next-url (:_next-page-url page-params)
           clean-params (dissoc page-params :_next-page-url)
@@ -169,61 +194,27 @@
           page-query (when (and is-v2 (not is-get) (seq page-expand)) page-expand)
           page-opts (build-http-options {:headers headers
                                          :timeout timeout
-                                         :http-client http-client
+                                         :http-client (:http-client merged)
                                          :method method
                                          :params page-encoded
                                          :query-params page-query
-                                         :is-v2 is-v2})
-          req-fn (retry/with-retry #(send-stripe-api-request method request-url page-opts) max-retries)]
-      (response/process-response (req-fn) full-response? kebabify-keys?))))
+                                         :is-v2 is-v2})]
+      (-> (send-instrumented context request-url page-opts)
+          (response/process-response false (:kebabify-keys? merged))))))
 
 (defn make-request
   "Makes an HTTP request to the Stripe API."
   [method url params opts config]
   (let [opts (or opts {})
         _ (validate-request-opts! opts)
-        {:keys [base-url full-url options headers timeout is-v2 is-get
-                detected-version expand-params merged]} (prepare-request-context method url params opts config)
-        {:keys [max-network-retries full-response? listeners kebabify-keys? throttler http-client]} merged
-        request-fn (retry/with-retry #(send-stripe-api-request method full-url options) max-network-retries)
-        should-paginate? (and is-get (:auto-paginate? opts))
+        {:keys [full-url options is-get merged] :as context}
+        (prepare-request-context method url params opts config)
+        paginate? (and is-get (:auto-paginate? opts))
         ;; Auto-pagination yields the items of every page, so there is no
         ;; single response envelope to return.
-        full-response? (and full-response? (not should-paginate?))
-        start-time (System/currentTimeMillis)
-        event (event-data method url merged headers start-time)]
-
-    (when (and listeners (seq @listeners))
-      (events/emit-event listeners :request event nil kebabify-keys?))
-
-    (throttle/with-throttling throttler method full-url (:api-key merged)
-      (fn []
-        (let [raw-result (request-fn)
-              result (response/process-response raw-result full-response? kebabify-keys?)
-              final-result (if should-paginate?
-                             (pagination/paginate method url params opts
-                                                  (make-page-request-fn {:headers headers
-                                                                         :timeout timeout
-                                                                         :http-client http-client
-                                                                         :method method
-                                                                         :is-v2 is-v2
-                                                                         :is-get is-get
-                                                                         :detected-version detected-version
-                                                                         :expand-params expand-params
-                                                                         :base-url base-url
-                                                                         :full-url full-url
-                                                                         :max-retries max-network-retries
-                                                                         :full-response? full-response?
-                                                                         :kebabify-keys? kebabify-keys?})
-                                                  result)
-                             result)]
-          (when (and listeners (seq @listeners))
-            (let [end-time (System/currentTimeMillis)]
-              (events/emit-event listeners :response
-                                 event
-                                 {:request-end-time end-time
-                                  :elapsed (- end-time start-time)
-                                  :status (:status raw-result)
-                                  :request-id (get-in raw-result [:headers "request-id"])}
-                                 kebabify-keys?)))
-          final-result)))))
+        full-response? (and (:full-response? merged) (not paginate?))
+        first-page (-> (send-instrumented context full-url options)
+                       (response/process-response full-response? (:kebabify-keys? merged)))]
+    (if paginate?
+      (pagination/paginate method url params opts (make-page-request-fn context) first-page)
+      first-page)))

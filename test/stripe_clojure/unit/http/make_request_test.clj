@@ -1,7 +1,8 @@
 (ns stripe-clojure.unit.http.make-request-test
   "End-to-end tests of make-request with the HTTP send stubbed."
   (:require [clojure.test :refer [deftest is testing]]
-            [stripe-clojure.http.request :as request]))
+            [stripe-clojure.http.request :as request]
+            [stripe-clojure.http.throttle :as throttle]))
 
 (def ^:private config
   {:api-key "sk_test_123"
@@ -171,3 +172,33 @@
       (is (= 200 (:status response-event)))
       (is (= "req_123" (:request_id response-event)))
       (is (nat-int? (:elapsed response-event))))))
+
+(deftest auto-pagination-instrumentation-test
+  (let [pages [(ok {:data [{:id "cus_1"}] :has_more true})
+               (ok {:data [{:id "cus_2"}] :has_more true})
+               (ok {:data [{:id "cus_3"}] :has_more false})]
+        paginate #(request/make-request :get "/v1/customers" {:limit 1} {:auto-paginate? true} %)]
+    (testing "every page emits a request and a response event"
+      (let [events (atom [])
+            listeners (atom [{:type :request :handler #(swap! events conj [:request (:path %)])}
+                             {:type :response :handler #(swap! events conj [:response (:status %)])}])]
+        (with-stubbed-responses pages #(paginate (assoc config :listeners listeners)))
+        (is (= [[:request "/v1/customers"] [:response 200]
+                [:request "/v1/customers"] [:response 200]
+                [:request "/v1/customers"] [:response 200]]
+               @events))))
+
+    (testing "every page goes through the throttler"
+      (let [throttled (atom [])]
+        (with-redefs [throttle/with-throttling (fn [_throttler method url _api-key f]
+                                                 (swap! throttled conj [method url])
+                                                 (f))]
+          (with-stubbed-responses pages #(paginate config)))
+        (is (= (repeat 3 [:get "https://api.stripe.com/v1/customers"]) @throttled))))
+
+    (testing "pages wait for the rate limit"
+      (let [throttler (throttle/create-throttler {:test {:default {:read 2}}})
+            start (System/currentTimeMillis)]
+        (with-stubbed-responses pages #(paginate (assoc config :throttler throttler)))
+        (is (>= (- (System/currentTimeMillis) start) 400)
+            "the third page waits for the two-per-second bucket to refill")))))
