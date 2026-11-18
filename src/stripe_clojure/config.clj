@@ -165,7 +165,10 @@
    :v2-money-management-financial-addresses (str "/" stripe-v2-api-namespace "/money_management/financial_addresses")
    :v2-money-management-inbound-transfers (str "/" stripe-v2-api-namespace "/money_management/inbound_transfers")
    :v2-money-management-outbound-payments (str "/" stripe-v2-api-namespace "/money_management/outbound_payments")
-   :v2-money-management-outbound-setup-intents (str "/" stripe-v2-api-namespace "/money_management/outbound_setup_intents")})
+   :v2-money-management-outbound-setup-intents (str "/" stripe-v2-api-namespace "/money_management/outbound_setup_intents")
+   :v2-money-management-payout-intents (str "/" stripe-v2-api-namespace "/money_management/payout_intents")
+   :v2-money-management-payout-methods (str "/" stripe-v2-api-namespace "/money_management/payout_methods")
+   :v2-money-management-recipient-verifications (str "/" stripe-v2-api-namespace "/money_management/recipient_verifications")})
 
 (defn mask-api-key
   "Masks the middle portion of an API key, showing only the first 7 and last 4 characters.
