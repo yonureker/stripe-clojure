@@ -120,6 +120,7 @@
    :test-helpers-confirmation-tokens (str "/" stripe-api-namespace "/test_helpers/confirmation_tokens")
    :test-helpers-test-clocks (str "/" stripe-api-namespace "/test_helpers/test_clocks")
    :test-helpers-refunds (str "/" stripe-api-namespace "/test_helpers/refunds")
+   :test-helpers-terminal-readers (str "/" stripe-api-namespace "/test_helpers/terminal/readers")
    :three-d-secure-authentications (str "/" stripe-api-namespace "/three_d_secure/authentications")
    :treasury-credit-reversals (str "/" stripe-api-namespace "/treasury/credit_reversals")
    :treasury-debit-reversals (str "/" stripe-api-namespace "/treasury/debit_reversals")
