@@ -68,6 +68,13 @@
       (is (= "subscription" (:object response)))
       (is (string? (:id response))))))
 
+(deftest pause-subscription-test
+  (testing "Pause subscription"
+    (let [response (subscriptions/pause-subscription stripe-mock-client "sub_mock")]
+      (is (map? response))
+      (is (= "subscription" (:object response)))
+      (is (string? (:id response))))))
+
 (deftest delete-discount-test
   (testing "Delete subscription discount"
     (let [response (subscriptions/delete-discount stripe-mock-client "sub_mock")]

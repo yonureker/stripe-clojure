@@ -61,6 +61,17 @@
                 {:reason reason}
                 opts)))
 
+(defn unreject-account
+  "Unrejects a Stripe account that was previously rejected by the platform.
+   \nStripe API docs: https://stripe.com/docs/api/accounts/unreject"
+  ([stripe-client account-id]
+   (unreject-account stripe-client account-id {}))
+  ([stripe-client account-id opts]
+   (request stripe-client :post 
+                (str stripe-accounts-endpoint "/" account-id "/unreject")
+                {}
+                opts)))
+
 ;; Capabilities
 (defn retrieve-capability
   "Retrieves an account capability.

@@ -58,6 +58,13 @@
       (is (= "account" (:object response)))
       (is (string? (:id response))))))
 
+(deftest unreject-account-test
+  (testing "Unreject account"
+    (let [response (accounts/unreject-account stripe-mock-client "acct_mock")]
+      (is (map? response))
+      (is (= "account" (:object response)))
+      (is (string? (:id response))))))
+
 (deftest retrieve-capability-test
   (testing "Retrieve capability"
     (let [response (accounts/retrieve-capability stripe-mock-client "acct_mock" "cap_mock")]
