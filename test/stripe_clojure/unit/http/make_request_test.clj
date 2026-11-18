@@ -130,3 +130,44 @@
             #(request/make-request :get "/v1/customers/cus_1" {} {:kebabify-keys? false}
                                    (assoc config :kebabify-keys? true)))]
       (is (= {:id "cus_1" :default_source nil} result)))))
+
+(defn- recorded-events
+  "Makes a stubbed request with listeners attached and returns the request
+   and response events it emitted."
+  [method url params opts config]
+  (let [events (atom [])
+        record #(swap! events conj %)
+        listeners (atom [{:type :request :handler record}
+                         {:type :response :handler record}])]
+    (with-stubbed-responses
+      [(ok {:id "cus_1"})]
+      #(request/make-request method url params opts (assoc config :listeners listeners)))
+    @events))
+
+(deftest event-fields-test
+  (testing "events carry the idempotency key that was sent"
+    (let [[request-event response-event]
+          (recorded-events :post "/v1/customers" {:name "Jane"} {:idempotency-key "idem_123"} config)]
+      (is (= "idem_123" (:idempotency_key request-event)))
+      (is (= "idem_123" (:idempotency_key response-event)))))
+
+  (testing "events carry the generated idempotency key of a POST"
+    (let [[request-event] (recorded-events :post "/v1/customers" {:name "Jane"} {} config)]
+      (is (string? (:idempotency_key request-event)))))
+
+  (testing "events of a GET have no idempotency key"
+    (let [[request-event response-event] (recorded-events :get "/v1/customers" {} {} config)]
+      (is (not (contains? request-event :idempotency_key)))
+      (is (not (contains? response-event :idempotency_key)))))
+
+  (testing "events carry the account only when one is set"
+    (let [[without-account] (recorded-events :get "/v1/customers" {} {} config)
+          [with-account] (recorded-events :get "/v1/customers" {} {:stripe-account "acct_123"} config)]
+      (is (not (contains? without-account :account)))
+      (is (= "acct_123" (:account with-account)))))
+
+  (testing "the response event reports status, request id and timing"
+    (let [[_ response-event] (recorded-events :get "/v1/customers" {} {} config)]
+      (is (= 200 (:status response-event)))
+      (is (= "req_123" (:request_id response-event)))
+      (is (nat-int? (:elapsed response-event))))))

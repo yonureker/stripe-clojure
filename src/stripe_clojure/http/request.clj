@@ -140,6 +140,18 @@
      :expand-params expand-params
      :merged merged}))
 
+(defn- event-data
+  "The fields shared by the request and response events of one request.
+   The account and idempotency key are present only when they are sent."
+  [method url {:keys [api-version stripe-account]} headers start-time]
+  (let [idempotency-key (get headers "idempotency-key")]
+    (cond-> {:method method
+             :url url
+             :api-version api-version
+             :request-start-time start-time}
+      stripe-account (assoc :account stripe-account)
+      idempotency-key (assoc :idempotency-key idempotency-key))))
+
 (defn- make-page-request-fn [{:keys [headers timeout http-client method is-v2 is-get
                                      detected-version expand-params base-url full-url
                                      max-retries full-response? kebabify-keys?]}]
@@ -178,13 +190,11 @@
         ;; Auto-pagination yields the items of every page, so there is no
         ;; single response envelope to return.
         full-response? (and full-response? (not should-paginate?))
-        start-time (System/currentTimeMillis)]
+        start-time (System/currentTimeMillis)
+        event (event-data method url merged headers start-time)]
 
     (when (and listeners (seq @listeners))
-      (events/emit-event listeners :request
-                         {:method method :url url :api-version (:api-version merged)
-                          :request-start-time start-time :account (:stripe-account merged)}
-                         nil kebabify-keys?))
+      (events/emit-event listeners :request event nil kebabify-keys?))
 
     (throttle/with-throttling throttler method full-url (:api-key merged)
       (fn []
@@ -210,8 +220,7 @@
           (when (and listeners (seq @listeners))
             (let [end-time (System/currentTimeMillis)]
               (events/emit-event listeners :response
-                                 {:method method :url url :api-version (:api-version merged)
-                                  :request-start-time start-time :account (:stripe-account merged)}
+                                 event
                                  {:request-end-time end-time
                                   :elapsed (- end-time start-time)
                                   :status (:status raw-result)
