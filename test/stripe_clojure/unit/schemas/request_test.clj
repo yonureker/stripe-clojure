@@ -193,6 +193,19 @@
     (is (invalid? {:multipart {:name "file" :content "data"}}))))
 
 ;; -----------------------------------------------------------------------------
+;; as
+;; -----------------------------------------------------------------------------
+
+(deftest as-test
+  (testing "as accepts the supported response coercions"
+    (is (valid? {:as :json}))
+    (is (valid? {:as :byte-array})))
+
+  (testing "as rejects anything else"
+    (is (invalid? {:as :stream}))
+    (is (invalid? {:as "json"}))))
+
+;; -----------------------------------------------------------------------------
 ;; Closed schema - unknown keys rejected
 ;; -----------------------------------------------------------------------------
 

@@ -18,6 +18,7 @@
     [:stripe-beta {:optional true} string?]
     [:custom-headers {:optional true} [:map-of string? string?]]
     [:base-url {:optional true} string?]
+    [:as {:optional true} [:enum :json :byte-array]]
     [:multipart {:optional true} [:vector [:map
                                            [:name string?]
                                            [:content any?]

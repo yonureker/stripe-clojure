@@ -13,9 +13,33 @@
       (is (= "Failed to parse error response body" (get-in result [:error :message])))
       (is (= "invalid-json" (get-in result [:error :original-body])))))
 
+  (testing "Byte array input is decoded and parsed"
+    (is (= {:message "test"}
+           (#'response/parse-body (.getBytes "{\"message\":\"test\"}" "UTF-8")))))
+
   (testing "Non-string input passthrough"
     (is (= {:already "parsed"}
            (#'response/parse-body {:already "parsed"})))))
+
+(deftest byte-array-response-test
+  (let [pdf (.getBytes "%PDF-1.4" "UTF-8")
+        error-body (.getBytes "{\"error\":{\"message\":\"Not finalized\",\"decline_code\":\"x\"}}" "UTF-8")]
+    (testing "a successful byte body is returned untouched"
+      (is (identical? pdf (response/process-response {:status 200 :headers {} :body pdf} false false)))
+      (is (identical? pdf (response/process-response {:status 200 :headers {} :body pdf} false true))))
+
+    (testing "an error byte body becomes a regular error map"
+      (let [result (response/process-response
+                    {:status 400 :headers {"request-id" "req_1"} :body error-body} false false)]
+        (is (= "Not finalized" (:message result)))
+        (is (= 400 (:status result)))
+        (is (= "req_1" (:request-id result)))))
+
+    (testing "an error byte body is kebabified like any other error"
+      (let [result (response/process-response
+                    {:status 400 :headers {"request-id" "req_1"} :body error-body} false true)]
+        (is (= "Not finalized" (:message result)))
+        (is (= "x" (:decline-code result)))))))
 
 ;; Tests for process-response
 

@@ -64,9 +64,9 @@
     stripe-beta (assoc "stripe-beta" stripe-beta)
     (seq custom-headers) (merge custom-headers)))
 
-(defn- build-http-options [{:keys [headers timeout http-client method params query-params is-v2 multipart]}]
+(defn- build-http-options [{:keys [headers timeout http-client method params query-params is-v2 multipart as]}]
   (let [is-get (= method :get)
-        base {:headers headers :as :json :timeout timeout :http-client http-client}]
+        base {:headers headers :as (or as :json) :timeout timeout :http-client http-client}]
     (if multipart
       (-> base
           (assoc :multipart multipart)
@@ -120,7 +120,8 @@
                                      :params encoded-params
                                      :query-params v2-post-query-params
                                      :is-v2 is-v2
-                                     :multipart multipart})]
+                                     :multipart multipart
+                                     :as (:as opts)})]
     {:full-url full-url
      :options options
      :headers headers

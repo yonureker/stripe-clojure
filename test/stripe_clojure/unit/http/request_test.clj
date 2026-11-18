@@ -135,6 +135,16 @@
       (is (= multipart (:multipart opts)))
       (is (not (contains? (:headers opts) "content-type")) "content-type should be removed for multipart")))
 
+  (testing "coerces the response as bytes when asked"
+    (let [opts (#'request/build-http-options {:headers {}
+                                              :timeout 30000
+                                              :http-client nil
+                                              :method :get
+                                              :params {}
+                                              :is-v2 false
+                                              :as :byte-array})]
+      (is (= :byte-array (:as opts)))))
+
   (testing "handles query-params for v2 POST"
     (let [opts (#'request/build-http-options {:headers {}
                                               :timeout 30000
