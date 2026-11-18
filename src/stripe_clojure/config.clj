@@ -22,6 +22,7 @@
    :billing-credit-balance-summary (str "/" stripe-api-namespace "/billing/credit_balance_summary")
    :billing-credit-balance-transactions (str "/" stripe-api-namespace "/billing/credit_balance_transactions")
    :billing-credit-grants (str "/" stripe-api-namespace "/billing/credit_grants")
+   :billing-feedback-options (str "/" stripe-api-namespace "/billing/feedback_options")
    :billing-meter-event-adjustments (str "/" stripe-api-namespace "/billing/meter_event_adjustments")
    :billing-meter-events (str "/" stripe-api-namespace "/billing/meter_events")
    :billing-meters (str "/" stripe-api-namespace "/billing/meters")
