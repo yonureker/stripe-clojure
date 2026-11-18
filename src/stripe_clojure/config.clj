@@ -160,7 +160,9 @@
    :v2-money-management-received-credits (str "/" stripe-v2-api-namespace "/money_management/received_credits")
    :v2-money-management-transaction-entries (str "/" stripe-v2-api-namespace "/money_management/transaction_entries")
    :v2-money-management-transactions (str "/" stripe-v2-api-namespace "/money_management/transactions")
-   :v2-money-management-payout-methods-bank-account-spec (str "/" stripe-v2-api-namespace "/money_management/payout_methods_bank_account_spec")})
+   :v2-money-management-payout-methods-bank-account-spec (str "/" stripe-v2-api-namespace "/money_management/payout_methods_bank_account_spec")
+   :v2-money-management-financial-accounts (str "/" stripe-v2-api-namespace "/money_management/financial_accounts")
+   :v2-money-management-financial-addresses (str "/" stripe-v2-api-namespace "/money_management/financial_addresses")})
 
 (defn mask-api-key
   "Masks the middle portion of an API key, showing only the first 7 and last 4 characters.
