@@ -15,6 +15,8 @@
   (when (contains? opts :pool-options)
     (println "DEPRECATION WARNING: :pool-options is deprecated and ignored. Connection management is now handled automatically via HTTP/2.")))
 
+(def ^:private explain-client-opts (m/explainer schema/StripeClient))
+
 (defn init-stripe
   "Initializes a new Stripe client instance.
    
@@ -42,7 +44,7 @@
                       clean-opts)]
     (when-not (contains? client-opts :api-key)
       (throw (ex-info "API key required for initialization" {:opts opts})))
-    (when-let [errors (m/explain schema/StripeClient client-opts)]
+    (when-let [errors (explain-client-opts client-opts)]
       (let [humanized (me/humanize errors)]
         (throw (ex-info (str "Validation failed when initializing Stripe client: " (pr-str humanized))
                         {:errors humanized}))))
