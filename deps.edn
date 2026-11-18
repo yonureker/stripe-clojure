@@ -1,9 +1,9 @@
 {:paths ["src"]
 
  :deps {org.clojure/clojure {:mvn/version "1.11.0"}
-        cheshire/cheshire {:mvn/version "5.10.0"}
+        cheshire/cheshire {:mvn/version "6.2.1"}
         hato/hato {:mvn/version "1.0.0"}
-        metosin/malli {:mvn/version "0.9.0"}}
+        metosin/malli {:mvn/version "0.20.3"}}
 
  :aliases
  {:test {:extra-paths ["test"]
