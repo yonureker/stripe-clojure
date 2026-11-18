@@ -53,6 +53,13 @@
     (str protocol "://" host ":" port)
     (str protocol "://" host)))
 
+(defn- resolve-page-url
+  "Stripe returns v2 `next_page_url` as a path relative to the API host."
+  [base-url page-url]
+  (if (re-matches url-pattern page-url)
+    page-url
+    (str base-url page-url)))
+
 (defn- build-headers [{:keys [api-key api-version stripe-account idempotency-key
                               test-clock stripe-beta custom-headers content-type]}]
   (cond-> {"authorization" (str "Bearer " api-key)
@@ -122,7 +129,8 @@
                                      :is-v2 is-v2
                                      :multipart multipart
                                      :as (:as opts)})]
-    {:full-url full-url
+    {:base-url base-url
+     :full-url full-url
      :options options
      :headers headers
      :timeout timeout
@@ -133,12 +141,12 @@
      :merged merged}))
 
 (defn- make-page-request-fn [{:keys [headers timeout http-client method is-v2 is-get
-                                     detected-version expand-params full-url max-retries
-                                     full-response? kebabify-keys?]}]
+                                     detected-version expand-params base-url full-url
+                                     max-retries full-response? kebabify-keys?]}]
   (fn [page-params]
     (let [next-url (:_next-page-url page-params)
           clean-params (dissoc page-params :_next-page-url)
-          request-url (or next-url full-url)
+          request-url (if next-url (resolve-page-url base-url next-url) full-url)
           ;; When using next-page-url, don't re-add expand params (already in URL)
           page-expand (when-not next-url expand-params)
           page-encoded (encode-request-params {:params clean-params
@@ -162,7 +170,7 @@
   [method url params opts config]
   (let [opts (or opts {})
         _ (validate-request-opts! opts)
-        {:keys [full-url options headers timeout is-v2 is-get
+        {:keys [base-url full-url options headers timeout is-v2 is-get
                 detected-version expand-params merged]} (prepare-request-context method url params opts config)
         {:keys [max-network-retries full-response? listeners kebabify-keys? throttler http-client]} merged
         request-fn (retry/with-retry #(send-stripe-api-request method full-url options) max-network-retries)
@@ -180,7 +188,7 @@
         (let [raw-result (request-fn)
               result (response/process-response raw-result full-response? kebabify-keys?)
               final-result (if should-paginate?
-                             (pagination/paginate method full-url params opts
+                             (pagination/paginate method url params opts
                                                   (make-page-request-fn {:headers headers
                                                                          :timeout timeout
                                                                          :http-client http-client
@@ -189,6 +197,7 @@
                                                                          :is-get is-get
                                                                          :detected-version detected-version
                                                                          :expand-params expand-params
+                                                                         :base-url base-url
                                                                          :full-url full-url
                                                                          :max-retries max-network-retries
                                                                          :full-response? full-response?
