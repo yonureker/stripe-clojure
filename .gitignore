@@ -28,6 +28,9 @@ settings.xml
 #hidden test files
 /test/stripe_clojure/unit/spec3*.json
 
+#OpenAPI spec and fixtures downloaded by scripts/stripe-mock.sh
+/.stripe-spec/
+
 #local env files
 .env
 .env.local
