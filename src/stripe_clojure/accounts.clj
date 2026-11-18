@@ -227,7 +227,7 @@
    so this call always returns a 404 error. Microdeposit verification exists
    only for customer bank accounts (see customers/verify-bank-account).
    This function will be removed in 3.0."
-  {:deprecated "2.4.0"}
+  {:deprecated "3.0.0"}
   ([stripe-client account-id bank-account-id params]
    (verify-bank-account stripe-client account-id bank-account-id params {}))
   ([stripe-client account-id bank-account-id params opts]
@@ -313,7 +313,7 @@
 ;; functions above. They will be removed in 3.0.
 (defn create-people
   "Deprecated: use create-person."
-  {:deprecated "2.4.0"}
+  {:deprecated "3.0.0"}
   ([stripe-client account-id person-payload]
    (create-person stripe-client account-id person-payload))
   ([stripe-client account-id person-payload opts]
@@ -321,7 +321,7 @@
 
 (defn retrieve-people
   "Deprecated: use retrieve-person."
-  {:deprecated "2.4.0"}
+  {:deprecated "3.0.0"}
   ([stripe-client account-id person-id]
    (retrieve-person stripe-client account-id person-id))
   ([stripe-client account-id person-id opts]
@@ -329,7 +329,7 @@
 
 (defn update-people
   "Deprecated: use update-person."
-  {:deprecated "2.4.0"}
+  {:deprecated "3.0.0"}
   ([stripe-client account-id person-id person-payload]
    (update-person stripe-client account-id person-id person-payload))
   ([stripe-client account-id person-id person-payload opts]
@@ -337,7 +337,7 @@
 
 (defn delete-people
   "Deprecated: use delete-person."
-  {:deprecated "2.4.0"}
+  {:deprecated "3.0.0"}
   ([stripe-client account-id person-id]
    (delete-person stripe-client account-id person-id))
   ([stripe-client account-id person-id opts]
@@ -345,7 +345,7 @@
 
 (defn list-people
   "Deprecated: use list-persons."
-  {:deprecated "2.4.0"}
+  {:deprecated "3.0.0"}
   ([stripe-client account-id]
    (list-persons stripe-client account-id))
   ([stripe-client account-id params]
