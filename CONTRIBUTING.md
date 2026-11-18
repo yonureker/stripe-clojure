@@ -15,22 +15,27 @@ Contributions are welcome! This document covers the process for contributing to 
    clj -P
    ```
 
-3. Install [stripe-mock](https://github.com/stripe/stripe-mock) for running integration tests:
+3. Install [stripe-mock](https://github.com/stripe/stripe-mock) (0.206.0 or later) for running integration tests:
    ```bash
    brew install stripe/stripe-mock/stripe-mock
-   brew services start stripe-mock
    ```
 
 ## Running Tests
 
-Run the full test suite (requires stripe-mock and a test API key):
+Start stripe-mock with the API spec this library targets. The script downloads the spec once and serves it on port 12111 (set `STRIPE_MOCK_PORT` to change it):
+
+```bash
+scripts/stripe-mock.sh
+```
+
+Then, in another terminal, run the full test suite with a test API key:
 
 ```bash
 export STRIPE_TEST_API_KEY='sk_test_...'
 clj -M:test -e :skip-mock
 ```
 
-Run only unit tests (no external dependencies needed):
+Run only unit tests (no stripe-mock needed; a few of them call Stripe's test mode with `STRIPE_TEST_API_KEY`):
 
 ```bash
 clj -M:test --namespace-regex "stripe-clojure\.unit\..*"
@@ -48,6 +53,7 @@ clj -M:test --namespace-regex "stripe-clojure\.unit\..*"
 - `test/stripe_clojure/` - Tests
   - `unit/` - Unit tests (no network required)
   - `mock/` - Integration tests against stripe-mock
+- `scripts/stripe-mock.sh` - Starts stripe-mock with the pinned OpenAPI spec
 
 ## Adding a New Stripe Resource
 

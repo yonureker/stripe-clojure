@@ -6,7 +6,7 @@
 
 Clojure SDK for the [Stripe API](https://stripe.com/docs/api). Listed by Stripe as a [community-supported SDK](https://docs.stripe.com/sdks/community).
 
-**Stripe API Version: `2026-04-22.dahlia`**
+**Stripe API Version: `2026-10-28.endive`**
 
 ## Features
 
@@ -25,15 +25,15 @@ Clojure SDK for the [Stripe API](https://stripe.com/docs/api). Listed by Stripe 
 
 Add to your `deps.edn`:
 ```clojure
-{:deps {io.github.yonureker/stripe-clojure {:mvn/version "2.3.0"}}}
+{:deps {io.github.yonureker/stripe-clojure {:mvn/version "3.0.0"}}}
 ```
 
 Or in `project.clj`:
 ```clojure
-[io.github.yonureker/stripe-clojure "2.3.0"]
+[io.github.yonureker/stripe-clojure "3.0.0"]
 ```
 
-> **Note:** Version 2.x requires Java 11+. For Java 8 support, use version 1.1.0.
+> **Note:** Versions 2.0 and later require Java 11+. For Java 8 support, use version 1.1.0.
 
 ## Basic Usage
 
@@ -82,8 +82,12 @@ V2 endpoints are automatically detected by their `/v2/` path prefix. The library
 ```
 
 Available V2 resources:
-- **Core:** `v2.core.accounts`, `v2.core.events`, `v2.core.event-destinations`, `v2.core.persons`, `v2.core.person-tokens`
+- **Core:** `v2.core.accounts`, `v2.core.account-links`, `v2.core.account-tokens`, `v2.core.events`, `v2.core.event-destinations`, `v2.core.persons`, `v2.core.person-tokens`
+- **Core vault:** `v2.core.vault.gb-bank-accounts`, `v2.core.vault.us-bank-accounts`
 - **Billing:** `v2.billing.meter-events`, `v2.billing.meter-event-session`, `v2.billing.meter-event-stream`, `v2.billing.meter-event-adjustments`
+- **Money management:** `v2.money-management.adjustments`, `v2.money-management.financial-accounts`, `v2.money-management.financial-addresses`, `v2.money-management.inbound-transfers`, `v2.money-management.outbound-payments`, `v2.money-management.outbound-setup-intents`, `v2.money-management.payout-intents`, `v2.money-management.payout-methods`, `v2.money-management.payout-methods-bank-account-spec`, `v2.money-management.received-credits`, `v2.money-management.recipient-verifications`, `v2.money-management.transaction-entries`, `v2.money-management.transactions`
+- **Commerce:** `v2.commerce.product-catalog.imports`
+- **Test helpers:** `v2.test-helpers.money-management.financial-addresses`, `v2.test-helpers.money-management.recipient-verifications`
 
 ## Client Configuration
 
@@ -93,7 +97,7 @@ Create isolated client instances with custom configurations:
 (def production-client
   (stripe/init-stripe
     {:api-key "sk_live_..."
-     :api-version "2026-04-22.dahlia"
+     :api-version "2026-10-28.endive"
      :max-network-retries 3
      :timeout 30000
      :rate-limits {:live {:default {:read 50 :write 25}}}}))
@@ -112,15 +116,18 @@ Create isolated client instances with custom configurations:
      :proxy {:host "proxy.corp.com" :port 8080}}))
 ```
 
+Create each client once and reuse it. Every client owns its own HTTP connections, so creating one per request wastes them.
+
 ### Configuration Options
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `:api-key` | **Required** | Your Stripe secret API key |
-| `:api-version` | `"2026-04-22.dahlia"` | Stripe API version to use |
+| `:api-version` | `"2026-10-28.endive"` | Stripe API version to use |
 | `:stripe-account` | `nil` | Connect account ID for platform requests |
 | `:max-network-retries` | `1` | Number of automatic retries for failed requests |
 | `:timeout` | `80000` | Request timeout in milliseconds |
+| `:connect-timeout` | `30000` | Time allowed for opening a connection, in milliseconds |
 | `:host` | `"api.stripe.com"` | Stripe API hostname |
 | `:port` | `443` | API port number |
 | `:protocol` | `"https"` | Protocol to use (always use HTTPS in production) |
@@ -128,23 +135,39 @@ Create isolated client instances with custom configurations:
 | `:rate-limits` | [See config](src/stripe_clojure/config.clj) | Custom rate limiting configuration |
 | `:full-response?` | `false` | Return complete HTTP response or just body |
 | `:kebabify-keys?` | `false` | Convert response keys to kebab-case |
+| `:mock` | `false` | Use the local stripe-mock defaults (see [Testing](#testing)); other options still apply |
+
+### Proxy
+
+All requests go through the proxy when `:proxy` is set. For a proxy that asks for credentials, add `:user` and `:password`:
+
+```clojure
+(stripe/init-stripe
+  {:api-key "sk_live_..."
+   :proxy {:host "proxy.corp.com" :port 8080 :user "jane" :password "secret"}})
+```
+
+The credentials are only ever sent to the proxy. The JDK refuses Basic authentication on HTTPS tunnels by default, so a proxy that uses it also needs the JVM option `-Djdk.http.auth.tunneling.disabledSchemes=""`.
 
 ## Per-Request Options
 
 Many API methods allow you to override options on a per-request basis via the `opts` map:
 
-- `:api-version`, `:stripe-account` – to dynamically switch contexts
-- `:max-network-retries`, `:timeout` – for alternative networking parameters
-- `:full-response?` – for detailed request/response info
-- `:idempotency-key` – for safely retryable POST requests
-- `:expand` – to expand linked objects in a single request (v1)
-- `:include` – to include fields in the response (v2)
-- `:auto-paginate?` – to return complete dataset as a lazy sequence
-- `:base-url` – to override the API base URL for a single request
-- `:custom-headers` – to add custom HTTP headers
-- `:test-clock` – to use a Stripe test clock
-- `:stripe-beta` – to access beta API features
-- `:multipart` – for file upload requests
+- `:api-version`, `:stripe-account`: to dynamically switch contexts
+- `:max-network-retries`, `:timeout`: for alternative networking parameters
+- `:full-response?`: for detailed request/response info
+- `:kebabify-keys?`: to convert the keys of one response to kebab-case, or to turn that off
+- `:idempotency-key`: for safely retryable POST requests
+- `:expand`: to expand linked objects in a single request (v1)
+- `:include`: to include fields in the response (v2)
+- `:auto-paginate?`: to return complete dataset as a lazy sequence
+- `:on-pagination-error`: `:truncate` (default) or `:throw`, see [Auto-Pagination](#auto-pagination)
+- `:as`: `:byte-array` to receive the raw response body instead of parsed JSON
+- `:base-url`: to override the API base URL for a single request
+- `:custom-headers`: to add custom HTTP headers
+- `:test-clock`: to use a Stripe test clock
+- `:stripe-beta`: to access beta API features
+- `:multipart`: for file upload requests
 
 ```clojure
 ;; passing params and opts
@@ -270,6 +293,20 @@ Pass `:auto-paginate? true` on any GET request to receive all pages as a lazy se
   (println (:id customer)))
 ```
 
+Pages are fetched as the sequence is consumed. Each page is a request of its own: it is retried, counts against your rate limits and emits request and response events. The sequence contains the items themselves, also when `:full-response?` is set.
+
+If a page fails, the sequence ends there by default. Pass `:on-pagination-error :throw` to get an exception instead when the failing page is reached. Its `ex-data` is the error map:
+
+```clojure
+(try
+  (doseq [customer (customers/list-customers stripe-client {:limit 100}
+                                             {:auto-paginate? true
+                                              :on-pagination-error :throw})]
+    (println (:id customer)))
+  (catch clojure.lang.ExceptionInfo e
+    (println "Stopped at a failed page:" (:status (ex-data e)) (:message (ex-data e)))))
+```
+
 ## Request and Response Events
 
 The client emits `request` and `response` events for logging, debugging, or modifying requests and responses.
@@ -293,9 +330,9 @@ The client emits `request` and `response` events for logging, debugging, or modi
 
 `request` object:
 ```clojure
-{:api_version "2026-04-22.dahlia"
- :account "acct_TEST"              ;; Only present if provided
- :idempotency_key "abc123"         ;; Only present if provided
+{:api_version "2026-10-28.endive"
+ :account "acct_TEST"              ;; Only present if a Stripe account is set
+ :idempotency_key "abc123"         ;; Present on POST requests, and when provided
  :method "POST"
  :path "/v1/customers"
  :request_start_time 1565125303932 ;; Unix timestamp in milliseconds
@@ -304,9 +341,9 @@ The client emits `request` and `response` events for logging, debugging, or modi
 
 `response` object:
 ```clojure
-{:api_version "2026-04-22.dahlia"
- :account "acct_TEST"              ;; Only present if provided
- :idempotency_key "abc123"         ;; Only present if provided
+{:api_version "2026-10-28.endive"
+ :account "acct_TEST"              ;; Only present if a Stripe account is set
+ :idempotency_key "abc123"         ;; Present on POST requests, and when provided
  :method "POST"
  :path "/v1/customers"
  :status 402
@@ -316,6 +353,8 @@ The client emits `request` and `response` events for logging, debugging, or modi
  :request_end_time 1565125304377   ;; Unix timestamp in milliseconds
 }
 ```
+
+With auto-pagination, every page emits its own pair of events.
 
 ## File Uploads
 
@@ -336,6 +375,19 @@ Upload files to Stripe using the Files API:
 
 Supported file types: PDF, JPEG, PNG, CSV. The library automatically detects MIME types and routes uploads to `files.stripe.com`.
 
+If you build a `:multipart` request yourself, pass files as a `File` or a byte array. An `InputStream` can only be read once, so a retried request would upload an empty file; set `:max-network-retries 0` if you have to use one.
+
+## Quote PDFs
+
+`quotes/get-pdf` downloads the PDF of a finalized quote from `files.stripe.com` and returns it as a byte array:
+
+```clojure
+(require '[stripe-clojure.quotes :as quotes]
+         '[clojure.java.io :as io])
+
+(io/copy (quotes/get-pdf stripe-client "qt_123") (io/file "quote.pdf"))
+```
+
 ## Network Retries
 
 Unless `:max-network-retries` is set to zero, requests are automatically retried for:
@@ -348,11 +400,11 @@ Retry delay is determined by Stripe's `Retry-After` header when present, falling
 
 ## Error Handling
 
-API errors are returned as maps (not thrown as exceptions):
+API errors are returned as maps (not thrown as exceptions). An error map carries the HTTP status as an integer under `:status`:
 
 ```clojure
 (let [result (customers/retrieve-customer stripe-client "invalid_id")]
-  (if (:type result)  ;; error responses have :type
+  (if (integer? (:status result))  ;; only error maps have an integer :status
     (do
       (println "Error:" (:message result))   ;; "No such customer: invalid_id"
       (println "Type:" (:type result))       ;; "invalid_request_error"
@@ -360,6 +412,8 @@ API errors are returned as maps (not thrown as exceptions):
       (println "Status:" (:status result)))  ;; 404
     (process-customer result)))
 ```
+
+Do not test for `:type` or a non-nil `:status`: many successful objects have a `type` (payment methods, events) or a string `status` (payment intents, subscriptions). With `:full-response?` the status is always present, so check `(>= (:status response) 400)` there.
 
 Error response structure:
 ```clojure
@@ -384,9 +438,11 @@ By default, the library returns just the response body. Enable `:full-response?`
 
 ;; Full response structure
 {:status 200
- :headers {"request-id" "req_abc123" "stripe-version" "2026-04-22.dahlia" ...}
+ :headers {"request-id" "req_abc123" "stripe-version" "2026-10-28.endive" ...}
  :body {:id "cus_123" :name "Jane Doe" ...}}
 ```
+
+The full response never contains the outgoing request, so your API key is not part of it.
 
 ## Multiple Environments
 
@@ -401,9 +457,11 @@ Manage different environments with separate clients:
 (customers/create-customer us-client customer-data)
 (customers/create-customer eu-client customer-data)
 
-;; Clean up when done
+;; Optional, see below
 (stripe/shutdown-stripe-client! us-client)
 ```
+
+`shutdown-stripe-client!` is kept for compatibility and currently does nothing. The JVM releases a client's connections once the client is no longer referenced.
 
 ## Rate Limiting
 
@@ -415,9 +473,36 @@ Configure rate limiting aligned with Stripe's limits:
     {:api-key "sk_live_..."
      :rate-limits {:live {:default {:read 100 :write 50}
                           :files   {:read 20  :write 20}
-                          :search  {:read 20  :write 0}}
+                          :search  {:read 20  :write 0}
+                          :meter   {:read 100 :write 100}}
                    :test {:default {:read 25  :write 25}}}}))
 ```
+
+Limits are requests per second. Nothing is throttled unless you configure it.
+
+- **Mode:** `:test` applies to test keys (`sk_test_...`, `rk_test_...`), `:live` to all others.
+- **Bucket:** `:files` covers the Files API, `:search` every search endpoint, `:meter` meter events and the meter event stream, and `:default` everything else. A bucket you leave out falls back to `:default`.
+- **Values:** `0` switches a limit off, and 500 or more is treated as unlimited.
+- **Pagination:** every auto-paginated page counts as a request.
+
+## Test Helpers
+
+Stripe's test helper endpoints live under `stripe-clojure.test-helpers` and only work with test keys:
+
+```clojure
+(require '[stripe-clojure.test-helpers.test-clocks :as test-clocks])
+
+(def clock (test-clocks/create-test-clock stripe-client {:frozen_time 1767225600}))
+
+;; Move the clock forward by a month
+(test-clocks/advance-test-clock stripe-client (:id clock) {:frozen_time 1769904000})
+```
+
+Available namespaces:
+- `test-helpers.test-clocks`, `test-helpers.customers`, `test-helpers.confirmation-tokens`, `test-helpers.refunds`
+- `test-helpers.terminal.readers`
+- `test-helpers.issuing.authorizations`, `test-helpers.issuing.cards`, `test-helpers.issuing.personalization-designs`, `test-helpers.issuing.transactions`
+- `test-helpers.treasury.inbound-transfers`, `test-helpers.treasury.outbound-payments`, `test-helpers.treasury.outbound-transfers`, `test-helpers.treasury.received-credits`, `test-helpers.treasury.received-debits`
 
 ## Webhook Verification
 
@@ -442,21 +527,28 @@ Verify webhook signatures:
 
 ## Testing
 
-1. **Install stripe-mock:**
+1. **Install stripe-mock** (0.206.0 or later):
    ```bash
    brew install stripe/stripe-mock/stripe-mock
-   brew services start stripe-mock
    ```
 
-2. **Set your test API key:**
+2. **Start it with the API spec this library targets:**
+   ```bash
+   scripts/stripe-mock.sh
+   ```
+   The script downloads the matching OpenAPI spec once and serves it on port 12111. The spec built into stripe-mock is older, so `brew services start stripe-mock` alone fails part of the suite. Set `STRIPE_MOCK_PORT` to use another port, for the script and for the tests.
+
+3. **Set your test API key** (a few tests call Stripe's test mode):
    ```bash
    export STRIPE_TEST_API_KEY='sk_test_...'
    ```
 
-3. **Run tests:**
+4. **Run tests:**
    ```bash
    clj -M:test -e :skip-mock
    ```
+
+To use stripe-mock in your own tests, create the client with `(stripe/init-stripe {:mock true})`. It points at `localhost:12111`, or at `STRIPE_MOCK_HOST` and `STRIPE_MOCK_PORT` when they are set.
 
 ## Contributing
 
