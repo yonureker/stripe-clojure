@@ -12,6 +12,17 @@
   ([stripe-client params opts]
    (request stripe-client :post stripe-entitlements-features-endpoint params opts)))
 
+(defn retrieve-feature
+  "Retrieves a feature.
+   \nStripe API docs: https://stripe.com/docs/api/entitlements/feature/retrieve"
+  ([stripe-client id]
+   (retrieve-feature stripe-client id {}))
+  ([stripe-client id opts]
+   (request stripe-client :get
+                (str stripe-entitlements-features-endpoint "/" id)
+                {}
+                opts)))
+
 (defn update-feature
   "Updates a feature.
    \nStripe API docs: https://stripe.com/docs/api/entitlements/feature/update"

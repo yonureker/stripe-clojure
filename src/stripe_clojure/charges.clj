@@ -99,3 +99,21 @@
    (update-refund stripe-client charge-id refund-id params {}))
   ([stripe-client charge-id refund-id params opts]
    (request stripe-client :post (str stripe-charges-endpoint "/" charge-id "/refunds/" refund-id) params opts)))
+
+(defn retrieve-refund
+  "Retrieves the details of an existing refund for a charge.
+   \nStripe API docs: https://stripe.com/docs/api/refunds/retrieve"
+  ([stripe-client charge-id refund-id]
+   (retrieve-refund stripe-client charge-id refund-id {}))
+  ([stripe-client charge-id refund-id opts]
+   (request stripe-client :get (str stripe-charges-endpoint "/" charge-id "/refunds/" refund-id) {} opts)))
+
+(defn list-refunds
+  "Lists all refunds for a charge.
+   \nStripe API docs: https://stripe.com/docs/api/refunds/list"
+  ([stripe-client charge-id]
+   (list-refunds stripe-client charge-id {}))
+  ([stripe-client charge-id params]
+   (list-refunds stripe-client charge-id params {}))
+  ([stripe-client charge-id params opts]
+   (request stripe-client :get (str stripe-charges-endpoint "/" charge-id "/refunds") params opts)))

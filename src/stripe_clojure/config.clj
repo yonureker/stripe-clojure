@@ -170,7 +170,8 @@
    :v2-money-management-payout-methods (str "/" stripe-v2-api-namespace "/money_management/payout_methods")
    :v2-money-management-recipient-verifications (str "/" stripe-v2-api-namespace "/money_management/recipient_verifications")
    :v2-test-helpers-money-management-financial-addresses (str "/" stripe-v2-api-namespace "/money_management/test_helpers/financial_addresses")
-   :v2-test-helpers-money-management-recipient-verifications (str "/" stripe-v2-api-namespace "/test_helpers/money_management/recipient_verifications")})
+   :v2-test-helpers-money-management-recipient-verifications (str "/" stripe-v2-api-namespace "/test_helpers/money_management/recipient_verifications")
+   :v2-commerce-product-catalog-imports (str "/" stripe-v2-api-namespace "/commerce/product_catalog/imports")})
 
 (defn mask-api-key
   "Masks the middle portion of an API key, showing only the first 7 and last 4 characters.

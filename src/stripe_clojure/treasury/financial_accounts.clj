@@ -64,4 +64,17 @@
    (request stripe-client :post
                 (str stripe-treasury-financial-accounts-endpoint "/" financial-account-id "/features")
                 params
-                opts))) 
+                opts)))
+
+(defn close-financial-account
+  "Closes a financial account.
+   \nStripe API docs: https://stripe.com/docs/api/treasury/financial_accounts/close"
+  ([stripe-client financial-account-id]
+   (close-financial-account stripe-client financial-account-id {} {}))
+  ([stripe-client financial-account-id params]
+   (close-financial-account stripe-client financial-account-id params {}))
+  ([stripe-client financial-account-id params opts]
+   (request stripe-client :post
+                (str stripe-treasury-financial-accounts-endpoint "/" financial-account-id "/close")
+                params
+                opts)))

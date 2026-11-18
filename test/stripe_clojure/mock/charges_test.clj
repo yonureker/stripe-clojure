@@ -140,3 +140,17 @@
       (is (map? response))
       (is (= "refund" (:object response)))
       (is (string? (:id response))))))
+
+(deftest retrieve-refund-test
+  (testing "Retrieve refund"
+    (let [response (charges/retrieve-refund stripe-mock-client "ch_mock" "re_mock")]
+      (is (map? response))
+      (is (= "refund" (:object response)))
+      (is (string? (:id response))))))
+
+(deftest list-refunds-test
+  (testing "List refunds"
+    (let [response (charges/list-refunds stripe-mock-client "ch_mock" {:limit 2})]
+      (is (map? response))
+      (is (= "list" (:object response)))
+      (is (vector? (:data response))))))
