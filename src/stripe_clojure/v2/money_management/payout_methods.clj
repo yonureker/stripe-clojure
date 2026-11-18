@@ -4,7 +4,7 @@
    Payout methods are the destinations, such as bank accounts, that
    outbound payments and transfers can be sent to.
 
-   Stripe docs: https://docs.stripe.com/api/v2/money-management/payout-methods"
+   Docs: https://docs.stripe.com/api/v2/money-management/payout-methods"
   (:require [stripe-clojure.http.client :refer [request]]
             [stripe-clojure.config :as config]))
 
@@ -13,16 +13,7 @@
 (defn retrieve-payout-method
   "Retrieves a payout method by ID.
 
-   Parameters:
-   - stripe-client: The Stripe client instance
-   - payout-method-id: The ID of the payout method
-   - opts: Optional request options
-
-   Returns:
-   The payout method object.
-
-   Example:
-   (retrieve-payout-method client \"usba_xxx\")"
+   Docs: https://docs.stripe.com/api/v2/money-management/payout-methods/retrieve"
   ([stripe-client payout-method-id]
    (retrieve-payout-method stripe-client payout-method-id {}))
   ([stripe-client payout-method-id opts]
@@ -31,18 +22,7 @@
 (defn list-payout-methods
   "Lists all payout methods.
 
-   Parameters:
-   - stripe-client: The Stripe client instance
-   - params: Optional query parameters
-     - :limit - The page size
-     - :usage_status - Usage status filter
-   - opts: Optional request options
-
-   Returns:
-   A list object containing payout methods.
-
-   Example:
-   (list-payout-methods client {:limit 10})"
+   Docs: https://docs.stripe.com/api/v2/money-management/payout-methods/list"
   ([stripe-client]
    (list-payout-methods stripe-client {}))
   ([stripe-client params]
@@ -55,16 +35,7 @@
    being used for outbound payments or transfers and omits it from
    normal list results.
 
-   Parameters:
-   - stripe-client: The Stripe client instance
-   - payout-method-id: The ID of the payout method to archive
-   - opts: Optional request options
-
-   Returns:
-   The archived payout method object.
-
-   Example:
-   (archive-payout-method client \"usba_xxx\")"
+   Docs: https://docs.stripe.com/api/v2/money-management/payout-methods/archive"
   ([stripe-client payout-method-id]
    (archive-payout-method stripe-client payout-method-id {}))
   ([stripe-client payout-method-id opts]
@@ -73,16 +44,7 @@
 (defn unarchive-payout-method
   "Unarchives a payout method, restoring it to normal list results.
 
-   Parameters:
-   - stripe-client: The Stripe client instance
-   - payout-method-id: The ID of the payout method to unarchive
-   - opts: Optional request options
-
-   Returns:
-   The unarchived payout method object.
-
-   Example:
-   (unarchive-payout-method client \"usba_xxx\")"
+   Docs: https://docs.stripe.com/api/v2/money-management/payout-methods/unarchive"
   ([stripe-client payout-method-id]
    (unarchive-payout-method stripe-client payout-method-id {}))
   ([stripe-client payout-method-id opts]

@@ -4,7 +4,7 @@
    Person Tokens are single-use tokens that tokenize person information,
    used for creating or updating a Person.
 
-   Docs: https://docs.stripe.com/api/v2/person-tokens"
+   Docs: https://docs.stripe.com/api/v2/core/person-tokens"
   (:require [stripe-clojure.http.client :refer [request]]
             [stripe-clojure.config :as config]))
 
@@ -19,7 +19,7 @@
    Person Tokens tokenize sensitive person information and can be used
    when creating or updating a Person.
 
-   Docs: https://docs.stripe.com/api/v2/person-tokens/create"
+   Docs: https://docs.stripe.com/api/v2/core/person-tokens/create"
   ([stripe-client account-id params]
    (create-person-token stripe-client account-id params {}))
   ([stripe-client account-id params opts]
@@ -28,7 +28,7 @@
 (defn retrieve-person-token
   "Retrieves a Person Token by ID.
 
-   Docs: https://docs.stripe.com/api/v2/person-tokens/retrieve"
+   Docs: https://docs.stripe.com/api/v2/core/person-tokens/retrieve"
   ([stripe-client account-id token-id]
    (retrieve-person-token stripe-client account-id token-id {}))
   ([stripe-client account-id token-id opts]

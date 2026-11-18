@@ -5,7 +5,7 @@
    meter event streaming. A session token is valid for a limited time and
    can be used to send meter events without per-request authentication.
 
-   Stripe docs: https://docs.stripe.com/api/v2/billing/meter_event_session"
+   Docs: https://docs.stripe.com/api/v2/meter-event-streams"
   (:require [stripe-clojure.http.client :refer [request]]
             [stripe-clojure.config :as config]))
 
@@ -18,24 +18,7 @@
    sending meter events without per-request API key authentication.
    This is useful for high-volume usage tracking scenarios.
 
-   Parameters:
-   - stripe-client: The Stripe client instance
-   - params: Optional session parameters (currently no parameters supported)
-   - opts: Optional request options
-
-   Returns:
-   A meter event session object containing:
-   - :authentication_token - Token for authenticating meter event requests
-   - :expires_at - Unix timestamp when the session expires
-   - :created - Unix timestamp when the session was created
-
-   Example:
-   (create-meter-event-session client)
-
-   Usage with the streaming endpoint:
-   (let [session (create-meter-event-session client)]
-     ;; Use session's authentication_token for streaming meter events
-     (:authentication_token session))"
+   Docs: https://docs.stripe.com/api/v2/meter-event-streams/meter-event-sessions/create"
   ([stripe-client]
    (create-meter-event-session stripe-client {}))
   ([stripe-client params]

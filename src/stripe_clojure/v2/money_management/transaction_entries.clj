@@ -4,7 +4,7 @@
    Transaction entries model funds moving between availability states
    for a given transaction.
 
-   Stripe docs: https://docs.stripe.com/api/v2/money-management/transaction-entries"
+   Docs: https://docs.stripe.com/api/v2/money-management/transaction-entries"
   (:require [stripe-clojure.http.client :refer [request]]
             [stripe-clojure.config :as config]))
 
@@ -13,16 +13,7 @@
 (defn retrieve-transaction-entry
   "Retrieves a transaction entry by ID.
 
-   Parameters:
-   - stripe-client: The Stripe client instance
-   - transaction-entry-id: The ID of the transaction entry
-   - opts: Optional request options
-
-   Returns:
-   The transaction entry object.
-
-   Example:
-   (retrieve-transaction-entry client \"trxne_xxx\")"
+   Docs: https://docs.stripe.com/api/v2/money-management/transaction-entries/retrieve"
   ([stripe-client transaction-entry-id]
    (retrieve-transaction-entry stripe-client transaction-entry-id {}))
   ([stripe-client transaction-entry-id opts]
@@ -31,19 +22,7 @@
 (defn list-transaction-entries
   "Lists all transaction entries.
 
-   Parameters:
-   - stripe-client: The Stripe client instance
-   - params: Optional query parameters
-     - :created - Filter by creation time
-     - :limit - The page limit
-     - :transaction - Filter for entries belonging to a specific transaction
-   - opts: Optional request options
-
-   Returns:
-   A list object containing transaction entries.
-
-   Example:
-   (list-transaction-entries client {:transaction \"trxn_xxx\"})"
+   Docs: https://docs.stripe.com/api/v2/money-management/transaction-entries/list"
   ([stripe-client]
    (list-transaction-entries stripe-client {}))
   ([stripe-client params]

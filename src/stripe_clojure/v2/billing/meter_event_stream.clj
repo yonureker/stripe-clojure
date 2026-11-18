@@ -10,7 +10,7 @@
    - Supports higher throughput
    - Is optimized for bulk event submission
 
-   Stripe docs: https://docs.stripe.com/api/v2/billing/meter_event_stream"
+   Docs: https://docs.stripe.com/api/v2/meter-event-streams"
   (:require [stripe-clojure.http.client :refer [request]]
             [stripe-clojure.config :as config]))
 
@@ -25,29 +25,7 @@
    Note: This endpoint uses the session's authentication token instead of
    the standard API key. The token should be passed via custom-headers.
 
-   Parameters:
-   - stripe-client: The Stripe client instance
-   - params: The stream parameters
-     - :events (required) - Array of meter events to send
-       Each event should have:
-         - :event_name - The meter's event name
-         - :payload - Event payload with stripe_customer_id and value
-         - :identifier - Optional unique identifier
-   - opts: Optional request options
-     - :custom-headers - Should include the Authorization header with session token
-
-   Returns:
-   Confirmation of events submitted.
-
-   Example:
-   (let [session (meter-event-session/create-meter-event-session client)
-         token (:authentication_token session)]
-     (send-meter-events client
-       {:events [{:event_name \"api_requests\"
-                  :payload {:stripe_customer_id \"cus_xxx\" :value 1}}
-                 {:event_name \"api_requests\"
-                  :payload {:stripe_customer_id \"cus_yyy\" :value 5}}]}
-       {:custom-headers {\"Authorization\" (str \"Bearer \" token)}}))"
+   Docs: https://docs.stripe.com/api/v2/billing/meter-event-sessions/create-async"
   ([stripe-client params]
    (send-meter-events stripe-client params {}))
   ([stripe-client params opts]

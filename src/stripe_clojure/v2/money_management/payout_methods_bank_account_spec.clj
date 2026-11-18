@@ -4,7 +4,7 @@
    The bank account spec describes which credential fields are required
    for a set of countries and the validations for each field.
 
-   Stripe docs: https://docs.stripe.com/api/v2/money-management/payout-methods-bank-account-spec"
+   Docs: https://docs.stripe.com/api/v2/money-management/payout-methods-bank-account-specs"
   (:require [stripe-clojure.http.client :refer [request]]
             [stripe-clojure.config :as config]))
 
@@ -13,17 +13,7 @@
 (defn retrieve-payout-methods-bank-account-spec
   "Retrieves the bank account specifications for a set of countries.
 
-   Parameters:
-   - stripe-client: The Stripe client instance
-   - params: Optional query parameters
-     - :countries - The countries to fetch the bank account spec for
-   - opts: Optional request options
-
-   Returns:
-   The payout methods bank account spec object.
-
-   Example:
-   (retrieve-payout-methods-bank-account-spec client {:countries [\"US\" \"GB\"]})"
+   Docs: https://docs.stripe.com/api/v2/money-management/payout-methods-bank-account-specs/retrieve"
   ([stripe-client]
    (retrieve-payout-methods-bank-account-spec stripe-client {}))
   ([stripe-client params]
