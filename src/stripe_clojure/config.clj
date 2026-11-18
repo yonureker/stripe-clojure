@@ -155,7 +155,12 @@
    :v2-billing-meter-event-session (str "/" stripe-v2-api-namespace "/billing/meter_event_session")
    :v2-billing-meter-event-stream (str "/" stripe-v2-api-namespace "/billing/meter_event_stream")
    :v2-billing-meter-event-adjustments (str "/" stripe-v2-api-namespace "/billing/meter_event_adjustments")
-   :v2-billing-meter-events (str "/" stripe-v2-api-namespace "/billing/meter_events")})
+   :v2-billing-meter-events (str "/" stripe-v2-api-namespace "/billing/meter_events")
+   :v2-money-management-adjustments (str "/" stripe-v2-api-namespace "/money_management/adjustments")
+   :v2-money-management-received-credits (str "/" stripe-v2-api-namespace "/money_management/received_credits")
+   :v2-money-management-transaction-entries (str "/" stripe-v2-api-namespace "/money_management/transaction_entries")
+   :v2-money-management-transactions (str "/" stripe-v2-api-namespace "/money_management/transactions")
+   :v2-money-management-payout-methods-bank-account-spec (str "/" stripe-v2-api-namespace "/money_management/payout_methods_bank_account_spec")})
 
 (defn mask-api-key
   "Masks the middle portion of an API key, showing only the first 7 and last 4 characters.
