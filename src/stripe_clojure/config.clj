@@ -14,6 +14,7 @@
    :accounts (str "/" stripe-api-namespace "/accounts")
    :apple-pay-domains (str "/" stripe-api-namespace "/apple_pay/domains")
    :application-fees (str "/" stripe-api-namespace "/application_fees")
+   :apps-installs (str "/" stripe-api-namespace "/apps/installs")
    :apps-secrets (str "/" stripe-api-namespace "/apps/secrets")
    :balance (str "/" stripe-api-namespace "/balance")
    :balance-settings (str "/" stripe-api-namespace "/balance_settings")
