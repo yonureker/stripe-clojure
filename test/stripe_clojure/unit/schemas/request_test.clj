@@ -113,6 +113,15 @@
 ;; idempotency-key
 ;; -----------------------------------------------------------------------------
 
+(deftest on-pagination-error-test
+  (testing "on-pagination-error accepts :truncate and :throw"
+    (is (valid? {:on-pagination-error :truncate}))
+    (is (valid? {:on-pagination-error :throw})))
+
+  (testing "on-pagination-error rejects anything else"
+    (is (invalid? {:on-pagination-error :ignore}))
+    (is (invalid? {:on-pagination-error true}))))
+
 (deftest idempotency-key-test
   (testing "idempotency-key accepts string"
     (is (valid? {:idempotency-key "idem_abc123"})))

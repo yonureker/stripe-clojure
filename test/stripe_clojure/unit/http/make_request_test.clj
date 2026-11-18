@@ -202,3 +202,43 @@
         (with-stubbed-responses pages #(paginate (assoc config :throttler throttler)))
         (is (>= (- (System/currentTimeMillis) start) 400)
             "the third page waits for the two-per-second bucket to refill")))))
+
+(deftest pagination-error-test
+  (let [pages [(ok {:data [{:id "cus_1"}] :has_more true})
+               {:status 429
+                :headers {"request-id" "req_429"}
+                :body "{\"error\":{\"type\":\"rate_limit_error\",\"message\":\"Too many requests\"}}"}
+               (ok {:data [{:id "cus_3"}] :has_more false})]
+        paginate (fn [opts]
+                   #(request/make-request :get "/v1/customers" {:limit 1}
+                                          (assoc opts :auto-paginate? true) config))]
+    (testing "by default an error page ends the sequence"
+      (let [{:keys [result sent]} (with-stubbed-responses pages (paginate {}))]
+        (is (= [{:id "cus_1"}] result))
+        (is (= 2 (count sent)) "no page is requested after the error")))
+
+    (testing ":truncate is the default behavior"
+      (let [{:keys [result]} (with-stubbed-responses pages (paginate {:on-pagination-error :truncate}))]
+        (is (= [{:id "cus_1"}] result))))
+
+    (testing ":throw raises the error map when the failed page is reached"
+      (let [error (try
+                    (with-stubbed-responses pages (paginate {:on-pagination-error :throw}))
+                    (catch clojure.lang.ExceptionInfo e e))]
+        (is (= "Auto-pagination failed: Too many requests" (ex-message error)))
+        (is (= {:type "rate_limit_error"
+                :message "Too many requests"
+                :status 429
+                :request-id "req_429"}
+               (ex-data error)))))
+
+    (testing ":throw also raises an error on the first page"
+      (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Auto-pagination failed"
+                            (with-stubbed-responses (rest pages)
+                              (paginate {:on-pagination-error :throw})))))
+
+    (testing ":throw changes nothing when every page succeeds"
+      (let [{:keys [result]} (with-stubbed-responses
+                               [(first pages) (last pages)]
+                               (paginate {:on-pagination-error :throw}))]
+        (is (= [{:id "cus_1"} {:id "cus_3"}] result))))))

@@ -14,6 +14,7 @@
                                 string?
                                 [:vector string?]]]
     [:auto-paginate? {:optional true} boolean?]
+    [:on-pagination-error {:optional true} [:enum :truncate :throw]]
     [:test-clock {:optional true} string?]
     [:stripe-beta {:optional true} string?]
     [:custom-headers {:optional true} [:map-of string? string?]]
