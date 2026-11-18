@@ -2,7 +2,7 @@
   (:require [stripe-clojure.http.util :as util]
             [cheshire.core :as json]))
 
-(defn- parse-json
+(defn- parse-error-json
   "Parses a JSON error body, or describes the failure when it is not JSON."
   [text]
   (try
@@ -17,8 +17,8 @@
    asked for `:as :byte-array`. Anything else is returned as-is."
   [body]
   (cond
-    (string? body) (parse-json body)
-    (bytes? body) (parse-json (slurp body))
+    (string? body) (parse-error-json body)
+    (bytes? body) (parse-error-json (slurp body))
     :else body))
 
 (defn create-error-response

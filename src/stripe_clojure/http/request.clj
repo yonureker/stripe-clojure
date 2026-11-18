@@ -141,7 +141,7 @@
      :expand-params expand-params
      :merged merged}))
 
-(defn- event-data
+(defn- base-event
   "The fields shared by the request and response events of one request.
    The account and idempotency key are present only when they are sent."
   [method url {:keys [api-version stripe-account]} headers start-time]
@@ -154,13 +154,14 @@
       idempotency-key (assoc :idempotency-key idempotency-key))))
 
 (defn- send-with-events
-  "Calls `send`, emitting a request event before and a response event after."
-  [send {:keys [method url options merged]}]
+  "Calls `send-throttled`, emitting a request event before and a response
+   event after."
+  [send-throttled {:keys [method url options merged]}]
   (let [{:keys [listeners kebabify-keys?]} merged
         start-time (System/currentTimeMillis)
-        event (event-data method url merged (:headers options) start-time)]
+        event (base-event method url merged (:headers options) start-time)]
     (events/emit-event listeners :request event nil kebabify-keys?)
-    (let [response (send)
+    (let [response (send-throttled)
           end-time (System/currentTimeMillis)]
       (events/emit-event listeners :response event
                          {:request-end-time end-time
@@ -170,22 +171,24 @@
                          kebabify-keys?)
       response)))
 
-(defn- send-instrumented
-  "Sends one request through the throttler with retries and reports it to
-   the client's listeners. Returns the raw HTTP response."
+(defn- send-request
+  "Sends one request the way the client is configured: throttled, retried on
+   failure and reported to the client's listeners. Returns the raw HTTP
+   response."
   [{:keys [method merged] :as context} request-url http-options]
   (let [{:keys [api-key listeners throttler max-network-retries]} merged
         send-once #(send-stripe-api-request method request-url http-options)
         send-with-retry (retry/with-retry send-once max-network-retries)
-        send #(throttle/with-throttling throttler method request-url api-key send-with-retry)]
+        send-throttled #(throttle/with-throttling throttler method request-url api-key send-with-retry)]
     ;; Event data is only built when someone is listening.
     (if (and listeners (seq @listeners))
-      (send-with-events send context)
-      (send))))
+      (send-with-events send-throttled context)
+      (send-throttled))))
 
 (defn- make-page-request-fn
   "Returns a function that fetches the page the paginator's params point at.
-   Each page is throttled, retried and instrumented like the first request."
+   Each page is sent like the first request: throttled, retried and reported
+   to listeners."
   [{:keys [method detected-version expand-params base-url full-url options merged]
     :as context}]
   (let [{:keys [headers timeout http-client]} options
@@ -210,7 +213,7 @@
                                            :params page-encoded
                                            :query-params page-query
                                            :is-v2 is-v2})]
-        (-> (send-instrumented context request-url page-opts)
+        (-> (send-request context request-url page-opts)
             (response/process-response false (:kebabify-keys? merged)))))))
 
 (defn make-request
@@ -224,7 +227,7 @@
         ;; Auto-pagination yields the items of every page, so there is no
         ;; single response envelope to return.
         full-response? (and (:full-response? merged) (not paginate?))
-        first-page (-> (send-instrumented context full-url options)
+        first-page (-> (send-request context full-url options)
                        (response/process-response full-response? (:kebabify-keys? merged)))]
     (if paginate?
       (pagination/paginate method url params opts (make-page-request-fn context) first-page)

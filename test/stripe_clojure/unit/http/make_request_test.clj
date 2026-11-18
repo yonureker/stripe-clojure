@@ -12,7 +12,7 @@
    :port 443
    :max-network-retries 0})
 
-(defn- ok [body]
+(defn- ok-response [body]
   {:status 200 :headers {"request-id" "req_123"} :body body})
 
 (defn- with-stubbed-responses
@@ -34,8 +34,8 @@
   (testing "follows a relative next_page_url on the API host"
     (let [{:keys [result sent]}
           (with-stubbed-responses
-            [(ok {:data [{:id "evt_1"}] :next_page_url "/v2/core/events?page=abc&limit=1"})
-             (ok {:data [{:id "evt_2"}] :next_page_url nil})]
+            [(ok-response {:data [{:id "evt_1"}] :next_page_url "/v2/core/events?page=abc&limit=1"})
+             (ok-response {:data [{:id "evt_2"}] :next_page_url nil})]
             #(request/make-request :get "/v2/core/events" {:limit 1} {:auto-paginate? true} config))]
       (is (= ["evt_1" "evt_2"] (map :id result)))
       (is (= ["https://api.stripe.com/v2/core/events"
@@ -48,8 +48,8 @@
   (testing "follows an absolute next_page_url as is"
     (let [{:keys [result sent]}
           (with-stubbed-responses
-            [(ok {:data [{:id "evt_1"}] :next_page_url "https://api.stripe.com/v2/core/events?page=abc"})
-             (ok {:data [{:id "evt_2"}] :next_page_url nil})]
+            [(ok-response {:data [{:id "evt_1"}] :next_page_url "https://api.stripe.com/v2/core/events?page=abc"})
+             (ok-response {:data [{:id "evt_2"}] :next_page_url nil})]
             #(request/make-request :get "/v2/core/events" {} {:auto-paginate? true} config))]
       (is (= ["evt_1" "evt_2"] (map :id result)))
       (is (= "https://api.stripe.com/v2/core/events?page=abc" (-> sent second :url)))))
@@ -57,8 +57,8 @@
   (testing "resolves a relative next_page_url against a custom :base-url"
     (let [{:keys [sent]}
           (with-stubbed-responses
-            [(ok {:data [{:id "evt_1"}] :next_page_url "/v2/core/events?page=abc"})
-             (ok {:data [{:id "evt_2"}] :next_page_url nil})]
+            [(ok-response {:data [{:id "evt_1"}] :next_page_url "/v2/core/events?page=abc"})
+             (ok-response {:data [{:id "evt_2"}] :next_page_url nil})]
             #(request/make-request :get "/v2/core/events" {}
                                    {:auto-paginate? true :base-url "http://localhost:12111"}
                                    config))]
@@ -67,8 +67,8 @@
   (testing "follows kebab-case next-page-url when keys are kebabified"
     (let [{:keys [result]}
           (with-stubbed-responses
-            [(ok {:data [{:id "evt_1"}] :next_page_url "/v2/core/events?page=abc"})
-             (ok {:data [{:id "evt_2"}] :next_page_url nil})]
+            [(ok-response {:data [{:id "evt_1"}] :next_page_url "/v2/core/events?page=abc"})
+             (ok-response {:data [{:id "evt_2"}] :next_page_url nil})]
             #(request/make-request :get "/v2/core/events" {} {:auto-paginate? true}
                                    (assoc config :kebabify-keys? true)))]
       (is (= ["evt_1" "evt_2"] (map :id result))))))
@@ -77,8 +77,8 @@
   (testing "search pages are requested with the page token, not starting_after"
     (let [{:keys [result sent]}
           (with-stubbed-responses
-            [(ok {:object "search_result" :data [{:id "cus_1"}] :has_more true :next_page "tok_2"})
-             (ok {:object "search_result" :data [{:id "cus_2"}] :has_more false :next_page nil})]
+            [(ok-response {:object "search_result" :data [{:id "cus_1"}] :has_more true :next_page "tok_2"})
+             (ok-response {:object "search_result" :data [{:id "cus_2"}] :has_more false :next_page nil})]
             #(request/make-request :get "/v1/customers/search" {:query "name:'Jane'" :limit 1}
                                    {:auto-paginate? true} config))]
       (is (= ["cus_1" "cus_2"] (map :id result)))
@@ -90,8 +90,8 @@
     (let [params (into {:starting_after "cus_0"} (map (fn [n] [(keyword (str "filter" n)) n])) (range 9))
           {:keys [result sent]}
           (with-stubbed-responses
-            [(ok {:data [{:id "cus_1"}] :has_more true})
-             (ok {:data [{:id "cus_2"}] :has_more false})]
+            [(ok-response {:data [{:id "cus_1"}] :has_more true})
+             (ok-response {:data [{:id "cus_2"}] :has_more false})]
             #(request/make-request :get "/v1/customers" params {:auto-paginate? true} config))]
       (is (= ["cus_1" "cus_2"] (map :id result)))
       (is (= "cus_0" (get-in (first sent) [:options :query-params "starting_after"])))
@@ -100,8 +100,8 @@
   (testing "sorted-map params paginate like any other map"
     (let [{:keys [result sent]}
           (with-stubbed-responses
-            [(ok {:data [{:id "cus_1"}] :has_more true})
-             (ok {:data [{:id "cus_2"}] :has_more false})]
+            [(ok-response {:data [{:id "cus_1"}] :has_more true})
+             (ok-response {:data [{:id "cus_2"}] :has_more false})]
             #(request/make-request :get "/v1/customers" (sorted-map :limit 1 :starting_after "cus_0")
                                    {:auto-paginate? true} config))]
       (is (= ["cus_1" "cus_2"] (map :id result)))
@@ -111,8 +111,8 @@
   (testing "auto-pagination yields items even when full-response? is set"
     (let [{:keys [result]}
           (with-stubbed-responses
-            [(ok {:data [{:id "cus_1"}] :has_more true})
-             (ok {:data [{:id "cus_2"}] :has_more false})]
+            [(ok-response {:data [{:id "cus_1"}] :has_more true})
+             (ok-response {:data [{:id "cus_2"}] :has_more false})]
             #(request/make-request :get "/v1/customers" {:limit 1}
                                    {:auto-paginate? true :full-response? true} config))]
       (is (= [{:id "cus_1"} {:id "cus_2"}] result))))
@@ -120,7 +120,7 @@
   (testing "full-response? still returns the envelope without auto-pagination"
     (let [{:keys [result]}
           (with-stubbed-responses
-            [(ok {:data [{:id "cus_1"}] :has_more true})]
+            [(ok-response {:data [{:id "cus_1"}] :has_more true})]
             #(request/make-request :get "/v1/customers" {:limit 1} {:full-response? true} config))]
       (is (= 200 (:status result)))
       (is (= [{:id "cus_1"}] (get-in result [:body :data]))))))
@@ -129,7 +129,7 @@
   (testing ":kebabify-keys? can be turned on for a single request"
     (let [{:keys [result]}
           (with-stubbed-responses
-            [(ok {:id "cus_1" :default_source nil :invoice_settings {:default_payment_method "pm_1"}})]
+            [(ok-response {:id "cus_1" :default_source nil :invoice_settings {:default_payment_method "pm_1"}})]
             #(request/make-request :get "/v1/customers/cus_1" {} {:kebabify-keys? true} config))]
       (is (= {:id "cus_1" :default-source nil :invoice-settings {:default-payment-method "pm_1"}}
              result))))
@@ -137,7 +137,7 @@
   (testing ":kebabify-keys? can be turned off for a single request"
     (let [{:keys [result]}
           (with-stubbed-responses
-            [(ok {:id "cus_1" :default_source nil})]
+            [(ok-response {:id "cus_1" :default_source nil})]
             #(request/make-request :get "/v1/customers/cus_1" {} {:kebabify-keys? false}
                                    (assoc config :kebabify-keys? true)))]
       (is (= {:id "cus_1" :default_source nil} result)))))
@@ -151,7 +151,7 @@
         listeners (atom [{:type :request :handler record}
                          {:type :response :handler record}])]
     (with-stubbed-responses
-      [(ok {:id "cus_1"})]
+      [(ok-response {:id "cus_1"})]
       #(request/make-request method url params opts (assoc config :listeners listeners)))
     @events))
 
@@ -184,9 +184,9 @@
       (is (nat-int? (:elapsed response-event))))))
 
 (deftest auto-pagination-instrumentation-test
-  (let [pages [(ok {:data [{:id "cus_1"}] :has_more true})
-               (ok {:data [{:id "cus_2"}] :has_more true})
-               (ok {:data [{:id "cus_3"}] :has_more false})]
+  (let [pages [(ok-response {:data [{:id "cus_1"}] :has_more true})
+               (ok-response {:data [{:id "cus_2"}] :has_more true})
+               (ok-response {:data [{:id "cus_3"}] :has_more false})]
         paginate #(request/make-request :get "/v1/customers" {:limit 1} {:auto-paginate? true} %)]
     (testing "every page emits a request and a response event"
       (let [events (atom [])
@@ -214,11 +214,11 @@
             "the third page waits for the two-per-second bucket to refill")))))
 
 (deftest pagination-error-test
-  (let [pages [(ok {:data [{:id "cus_1"}] :has_more true})
+  (let [pages [(ok-response {:data [{:id "cus_1"}] :has_more true})
                {:status 429
                 :headers {"request-id" "req_429"}
                 :body "{\"error\":{\"type\":\"rate_limit_error\",\"message\":\"Too many requests\"}}"}
-               (ok {:data [{:id "cus_3"}] :has_more false})]
+               (ok-response {:data [{:id "cus_3"}] :has_more false})]
         paginate (fn [opts]
                    #(request/make-request :get "/v1/customers" {:limit 1}
                                           (assoc opts :auto-paginate? true) config))]

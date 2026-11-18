@@ -49,8 +49,9 @@
              acc
              m))
 
-(defn- param-value
-  "Keyword values are sent by name, the way JSON encoding sends them for v2."
+(defn- stringify-keyword
+  "Returns a keyword as its name, so :usd is sent as \"usd\", the way JSON
+   encoding sends keywords for v2. Any other value is returned unchanged."
   [v]
   (if (keyword? v)
     (str (symbol v))
@@ -64,7 +65,7 @@
     (and (coll? v) (not (string? v)))
     (flatten-collection acc prefix v)
 
-    :else (assoc! acc prefix (param-value v))))
+    :else (assoc! acc prefix (stringify-keyword v))))
 
 (defn flatten-params
   "Recursively flattens a nested map into a single-level map with keys formatted

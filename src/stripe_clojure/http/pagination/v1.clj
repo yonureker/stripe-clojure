@@ -30,10 +30,11 @@
     (str/replace (name k) "-" "_")
     (str k)))
 
-(defn- set-param
-  "Sets a page param on a plain copy of params, replacing the value the caller
-   passed for the first page however its key is spelled (:starting_after,
-   :starting-after or \"starting_after\"). The copy keeps sorted maps working."
+(defn- assoc-param
+  "Like assoc, for a request param: returns a plain copy of params with `k`
+   set to `value`. It replaces the value the caller passed for the first page
+   however its key is spelled (:starting_after, :starting-after or
+   \"starting_after\"). The copy keeps sorted maps working."
   [params k value]
   (let [sent-as (param-name k)]
     (-> (into {} (remove #(= sent-as (param-name (key %)))) params)
@@ -50,9 +51,9 @@
     (next-page-params [_ response current-params]
       (when (response-has-more? response)
         (if-let [token (next-page-token response)]
-          (set-param current-params :page token)
+          (assoc-param current-params :page token)
           (when-let [last-id (-> response :data last :id)]
-            (set-param current-params :starting-after last-id)))))
+            (assoc-param current-params :starting-after last-id)))))
 
     (get-items [_ response]
       (:data response))))

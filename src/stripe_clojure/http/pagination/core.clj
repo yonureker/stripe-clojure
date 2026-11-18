@@ -23,7 +23,7 @@
   (let [status (:status page)]
     (and (integer? status) (>= status 400))))
 
-(defn- checked-page
+(defn- page-or-throw
   "Returns the page, unless it is an error and the caller set
    :on-pagination-error to :throw, in which case the error map is thrown as
    ex-data. Otherwise an error page simply ends the sequence, as it has no items."
@@ -56,7 +56,7 @@
      (let [version (api-version/detect-version url)
            paginator (get-paginator version)]
        (lazy-seq
-        (let [response (checked-page (or first-page-result (make-request-fn params)) options)
+        (let [response (page-or-throw (or first-page-result (make-request-fn params)) options)
               items (protocol/get-items paginator response)]
           (if-let [next-params (protocol/next-page-params paginator response params)]
             (if (api-version/v2? version)
